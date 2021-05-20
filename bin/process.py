@@ -8,8 +8,7 @@ from recipes.atcapolhelpers import qufromgain
 from pathlib2 import Path
 from astropy.io import fits, votable
 import os
-import pyfits 
-
+import pyfits
 
 # Reading in variables from the bash script (TODO: setup actual bash script lol)
 data_dir = os.environ['PROJECT']
