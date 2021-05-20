@@ -5,7 +5,6 @@
 
 # Importing relevant python packages
 from recipes.atcapolhelpers import qufromgain
-from pathlib2 import Path
 from astropy.io import fits, votable
 import os
 import pyfits
@@ -28,9 +27,9 @@ src_dir = data_dir + src
 process_dir = data_dir + "processing/"
 img_dir = data_dir + src + "images/"
 visname = data_dir + "{0}_{1}.ms".format(epoch, ATCA_band)
-msname = "{0}_{1}_{2}.ms".format(epoch, ATCA_band, tar_nm)
-targetms = "{0}_{1}_{2}_img.ms".format(epoch, ATCA_band, tar_nm)
-tar_ms = "{0}_{1}_{2}_selfcal.ms".format(epoch, ATCA_band, tar_nm)
+msname = data_dir + "{0}_{1}_{2}.ms".format(epoch, ATCA_band, tar_nm)
+targetms = data_dir + "{0}_{1}_{2}_img.ms".format(epoch, ATCA_band, tar_nm)
+tar_ms = data_dir + "{0}_{1}_{2}_selfcal.ms".format(epoch, ATCA_band, tar_nm)
 ref = "CA04"
 if ATCA_band == "L":
     n_spw = 8
@@ -42,20 +41,7 @@ elif ATCA_band == "X":
     n_spw = 4
     if_centre = 1
 
-# TODO: fix this bad boy
-pri_cal_no = 0
-sec_cal_no = 3
-tar_cal_no = 5
-
-pri_cal_id = 0
-tar_cal_id = 2
-sec_cal_id = 1
-
-pipeline_options = raw_input("Flag {0} for RFI ? ".format(visname))
-if pipeline_options in ["Y", "y", "Yes", "yes"]:
-    print("+ + + + + + + + + + + + +")
-    print("+ Preliminary Flagging  +")
-    print("+ + + + + + + + + + + + +")
+def flag_ms(visname, epoch, ATCA_band, pri,sec,tar,tar_nm):
     flagmanager(vis=visname, mode="save", versionname="before_online_flagging")
     print("Flagging antennae affected by shadowing...")
     flagdata(vis=visname, mode="shadow", tolerance=0.0, flagbackup=False)
@@ -63,25 +49,25 @@ if pipeline_options in ["Y", "y", "Yes", "yes"]:
     flagdata(vis=visname, mode="clip", clipzeros=True, flagbackup=False)
     print("Quacking visibilities ...")
     flagdata(vis=visname,
-             mode="quack",
-             quackinterval=5.0,
-             quackmode="beg",
-             flagbackup=False)
+                mode="quack",
+                quackinterval=5.0,
+                quackmode="beg",
+                flagbackup=False)
     flagmanager(vis=visname, mode="save", versionname="after_online_flagging")
     print(
         "Inspecting {0} amplitude as a function of channel to identify RFI...".
         format(pri))
     plotms(vis=visname,
-           field=pri,
-           xaxis="channel",
-           yaxis="amp",
-           correlation="xy,yx",
-           ydatacolumn="data",
-           plotfile="{0}_{1}_{2}_ampvschan_pre_RFIflag_.png".format(
-               epoch, ATCA_band, pri),
-           showgui=False,
-           overwrite=True
-           )  # change all the plotms outputs to encode the IF band as well
+            field=pri,
+            xaxis="channel",
+            yaxis="amp",
+            correlation="xy,yx",
+            ydatacolumn="data",
+            plotfile="{0}_{1}_{2}_ampvschan_pre_RFIflag_.png".format(
+                epoch, ATCA_band, pri),
+            showgui=False,
+            overwrite=True
+            )  # change all the plotms outputs to encode the IF band as well
     print("+ + + + + + + + +")
     print("+ RFI Flagging  +")
     print("+ + + + + + + + +")
@@ -89,76 +75,72 @@ if pipeline_options in ["Y", "y", "Yes", "yes"]:
         "Using 'mode=tfcrop' to calculate flags based on time & frequency window."
     )
     flagdata(vis=visname,
-             mode="tfcrop",
-             datacolumn="data",
-             action="apply",
-             display="report",
-             flagbackup=True,
-             extendpols=True,
-             correlation="",
-             flagdimension="freqtime",
-             growtime=95.0,
-             growfreq=95.0,
-             timecutoff=4.,
-             timefit="line",
-             freqfit="poly",
-             maxnpieces=5,
-             combinescans=False,
-             ntime="scan",
-             extendflags=False)
+                mode="tfcrop",
+                datacolumn="data",
+                action="apply",
+                display="report",
+                flagbackup=True,
+                extendpols=True,
+                correlation="",
+                flagdimension="freqtime",
+                growtime=95.0,
+                growfreq=95.0,
+                timecutoff=4.,
+                timefit="line",
+                freqfit="poly",
+                maxnpieces=5,
+                combinescans=False,
+                ntime="scan",
+                extendflags=False)
     print("Extending flags to all correlations")
     flagdata(vis=visname,
-             mode="extend",
-             action="apply",
-             display="report",
-             flagbackup=False,
-             extendpols=True,
-             correlation="",
-             growtime=95.0,
-             growfreq=95.0,
-             growaround=True,
-             flagneartime=False,
-             flagnearfreq=False,
-             combinescans=False,
-             ntime="scan")
+                mode="extend",
+                action="apply",
+                display="report",
+                flagbackup=False,
+                extendpols=True,
+                correlation="",
+                growtime=95.0,
+                growfreq=95.0,
+                growaround=True,
+                flagneartime=False,
+                flagnearfreq=False,
+                combinescans=False,
+                ntime="scan")
     print(
         "Inspecting {0} amplitude as a function of channel to inspect RFI before_online_flagging..."
         .format(pri))
     plotms(vis=visname,
-           field=pri,
-           xaxis="channel",
-           yaxis="amp",
-           correlation="xy,yx",
-           ydatacolumn="data",
-           plotfile="{0}_{1}_{2}_ampvschan_postRFI_flag.png".format(
-               epoch, ATCA_band, pri),
-           showgui=False,
-           overwrite=True)
+            field=pri,
+            xaxis="channel",
+            yaxis="amp",
+            correlation="xy,yx",
+            ydatacolumn="data",
+            plotfile="{0}_{1}_{2}_ampvschan_postRFI_flag.png".format(
+                epoch, ATCA_band, pri),
+            showgui=False,
+            overwrite=True)
     plotms(vis=visname,
-           field=sec,
-           xaxis="channel",
-           yaxis="amp",
-           correlation="xy,yx",
-           ydatacolumn="data",
-           plotfile="{0}_{1}_{2}_ampvschan_postRFI_flag.png".format(
-               epoch, ATCA_band, sec),
-           showgui=False,
-           overwrite=True)
+            field=sec,
+            xaxis="channel",
+            yaxis="amp",
+            correlation="xy,yx",
+            ydatacolumn="data",
+            plotfile="{0}_{1}_{2}_ampvschan_postRFI_flag.png".format(
+                epoch, ATCA_band, sec),
+            showgui=False,
+            overwrite=True)
     plotms(vis=visname,
-           field=tar,
-           xaxis="channel",
-           yaxis="amp",
-           correlation="xy,yx",
-           ydatacolumn="data",
-           plotfile="{0}_{1}_{2}_ampvschan_postRFI_flag.png".format(
-               epoch, ATCA_band, tar_nm),
-           showgui=False,
-           overwrite=True)
-    print("+ + + + + + + + + + + + + + + +")
-    print("+ Automated Flagging complete +")
-    print("+ + + + + + + + + + + + + + + +")
-else:
-    print("Skipping...")
+            field=tar,
+            xaxis="channel",
+            yaxis="amp",
+            correlation="xy,yx",
+            ydatacolumn="data",
+            plotfile="{0}_{1}_{2}_ampvschan_postRFI_flag.png".format(
+                epoch, ATCA_band, tar_nm),
+            showgui=False,
+            overwrite=True)
+    return 
 
 pipeline_options = raw_input("Split the target to make its own ms? ")
 if pipeline_options in ["Y", "y", "Yes", "yes"]:
@@ -175,12 +157,9 @@ if pipeline_options in ["Y", "y", "Yes", "yes"]:
                 mode="channel",
                 spw=str(if_centre),
                 nspw=n_spw,
-                field="{0},{1},{2}".format(str(pri_cal_no), str(sec_cal_no),
-                                           str(tar_cal_no)))
+                field="{0},{1},{2}".format(pri, sec, tar)
     listobs(vis=msname,
-            listfile="listobs_{0}_{1}_{2}.dat".format(epoch, ATCA_band,
-                                                      tar_nm),
-            overwrite=True)
+            listfile="listobs_{0}_{1}_{2}.dat".format(epoch, ATCA_band, tar_nm), overwrite=True)
     flagmanager(vis=msname, mode="save", versionname="after_transform")
     plotms(vis=msname,
            field=pri,
@@ -205,7 +184,7 @@ if pipeline_options in ["Y", "y", "Yes", "yes"]:
            showgui=False,
            overwrite=True)
 
-pipeline_options = raw_input("Begin calibration ? ")
+pipeline_options=raw_input("Begin calibration ? ")
 if pipeline_options in ["Y", "y", "Yes", "yes"]:
     print("+ + + + + + + + + + + + + + + + + +")
     print("+ Performing initial calibration  +")
@@ -250,10 +229,10 @@ if pipeline_options in ["Y", "y", "Yes", "yes"]:
     print("+ + + + + + + + + + + + + + + + +")
     print("+ Final calibration & applying  +")
     print("+ + + + + + + + + + + + + + + + +")
-    qu = qufromgain("cal_{0}_{1}.G1".format(pri, ATCA_band),
-                    fieldids=[sec_cal_id
-                              ])  # MAKE SURE THIS IS SET TO THE CORRECT FIELD
-    smodel = [1, qu[sec_cal_id][0], qu[sec_cal_id][1], 0]
+    # TODO: Check that this works for the string name of sec_cal
+    qu=qufromgain("cal_{0}_{1}.G1".format(pri, ATCA_band),
+                    fieldids=[sec])
+    smodel=[1, qu[sec][0], qu[sec][1], 0]
     print("smodel parameters = {0}".format(smodel))
     print(
         "Repeating entire calibration using best estimates for gains, leakages and secondary polarisation"
@@ -295,7 +274,7 @@ if pipeline_options in ["Y", "y", "Yes", "yes"]:
     print(
         "Correcting the flux scale using comparison between the primary and secondary calibrator."
     )
-    flux_transfer = fluxscale(vis=msname,
+    flux_transfer=fluxscale(vis=msname,
                               caltable="cal_{0}_{1}.G2".format(pri, ATCA_band),
                               fluxtable="cal_{0}_{1}.F0".format(
                                   pri, ATCA_band),
@@ -305,7 +284,7 @@ if pipeline_options in ["Y", "y", "Yes", "yes"]:
 else:
     print("Skipping...")
 
-pipeline_options = raw_input("Apply calibration?")
+pipeline_options=raw_input("Apply calibration?")
 if pipeline_options in ["Y", "y", "Yes", "yes"]:
     print("Applying calibration tables to {0}".format(pri))
     applycal(vis=msname,
@@ -313,9 +292,9 @@ if pipeline_options in ["Y", "y", "Yes", "yes"]:
                  "cal_{0}_{1}.B1".format(pri, ATCA_band),
                  "cal_{0}_{1}.F0".format(pri, ATCA_band)
              ],
-             gainfield=[str(pri_cal_id),
-                        str(pri_cal_id),
-                        str(pri_cal_id)],
+             gainfield=[pri,
+                        pri,
+                        pri],
              field="{0}".format(pri_cal_id),
              parang=True,
              flagbackup=False)
@@ -324,17 +303,17 @@ if pipeline_options in ["Y", "y", "Yes", "yes"]:
                  "cal_{0}_{1}.B1".format(pri, ATCA_band),
                  "cal_{0}_{1}.F0".format(pri, ATCA_band)
              ],
-             gainfield=[str(pri_cal_id),
-                        str(pri_cal_id),
-                        str(sec_cal_id)],
-             field="{0},{1}".format(sec_cal_id, tar_cal_id),
+             gainfield=[pri,
+                        pri,
+                        sec],
+             field="{0},{1}".format(sec, tar),
              parang=True,
              flagbackup=False)
     print("Applying calibration tables to {0}".format(sec))
 else:
     print("Skipping...")
 
-pipeline_options = raw_input("Inspect calibrated {0} & {1} data ? ".format(
+pipeline_options=raw_input("Inspect calibrated {0} & {1} data ? ".format(
     pri, sec))
 if pipeline_options in ["Y", "y", "Yes", "yes"]:
     plotms(vis=msname,
@@ -373,12 +352,12 @@ if pipeline_options in ["Y", "y", "Yes", "yes"]:
 else:
     print("Skipping...")
 
-pipeline_options = raw_input(
+pipeline_options=raw_input(
     "Flag calibrated {0} & {1} data for RFI ? ".format(pri, sec))
 if pipeline_options in ["Y", "y", "Yes", "yes"]:
     # add print statements here.
     flagmanager(vis=msname, mode="save", versionname="before_rflag")
-    spw = "0~{0}".format(str(n_spw - 1))
+    spw="0~{0}".format(str(n_spw - 1))
     flagdata(vis=msname,
              mode="rflag",
              field=pri,
@@ -448,11 +427,11 @@ if pipeline_options in ["Y", "y", "Yes", "yes"]:
 else:
     print("Skipping...")
 
-pipeline_options = raw_input("RFI flag and inspect {0} data ?".format(tar))
+pipeline_options=raw_input("RFI flag and inspect {0} data ?".format(tar))
 if pipeline_options in ["Y", "y", "Yes", "yes"]:
     print("Applying calibration tables to {0}".format(tar))
     plotms(vis=msname,
-           field=str(tar_cal_id),
+           field=tar,
            xaxis="frequency",
            yaxis="amp",
            correlation="xx,yy",
@@ -468,12 +447,12 @@ if pipeline_options in ["Y", "y", "Yes", "yes"]:
                  "cal_{0}_{1}.F0".format(pri, ATCA_band)
              ],
              gainfield=[pri, pri, sec],
-             field=str(tar_cal_id),
+             field=tar,
              parang=True,
              flagbackup=False)
     print("Inspecting {0} amp vs freq Before RFI flagging".format(tar))
     plotms(vis=msname,
-           field=str(tar_cal_id),
+           field=tar,
            xaxis="frequency",
            yaxis="amp",
            correlation="xx,yy",
@@ -485,7 +464,7 @@ if pipeline_options in ["Y", "y", "Yes", "yes"]:
            overwrite=True)
     flagdata(vis=msname,
              mode="rflag",
-             field=str(tar_cal_id),
+             field=tar,
              spw=spw,
              datacolumn="corrected",
              action="apply",
@@ -500,7 +479,7 @@ if pipeline_options in ["Y", "y", "Yes", "yes"]:
              flagbackup=False)
     print("Inspecting {0} amp vs freq AFTER RFI flagging".format(tar))
     plotms(vis=msname,
-           field=str(tar_cal_id),
+           field=tar,
            xaxis="frequency",
            yaxis="amp",
            correlation="xx,yy",
@@ -511,7 +490,7 @@ if pipeline_options in ["Y", "y", "Yes", "yes"]:
            showgui=False,
            overwrite=True)
     plotms(vis=msname,
-           field=str(tar_cal_id),
+           field=tar,
            xaxis="u",
            yaxis="v",
            plotfile="{0}_{1}_uv.png".format(epoch, tar),
@@ -520,7 +499,7 @@ if pipeline_options in ["Y", "y", "Yes", "yes"]:
 else:
     print("Skipping...")
 
-pipeline_options = raw_input("Begin automated imaging of {0} ?".format(tar))
+pipeline_options=raw_input("Begin automated imaging of {0} ?".format(tar))
 if pipeline_options in ["Y", "y", "Yes", "yes"]:
     print("+ + + + + +")
     print("+ Imaging +")
@@ -529,22 +508,22 @@ if pipeline_options in ["Y", "y", "Yes", "yes"]:
         "This round is just to get hte mask, its using the mfs so you have high S/N and then it doesnt need the rest, use the mask generated here for all future rounds"
     )
     # set up parameters for imaging.
-    mode = "mfs"
-    nterms = 2
-    niter = 3000
+    mode="mfs"
+    nterms=2
+    niter=3000
     if ATCA_band == "L":
-        imsize = 2240
+        imsize=2240
     if ATCA_band == "C":
-        imsize = 1120
+        imsize=1120
     if ATCA_band == "X":
         imsize == 940
-    cell = "0.1arcsec"
-    stokes = "I"
-    weighting = "briggs"
-    robust = 0.5
-    interactive = True
-    gain = 0.01
-    threshold = "2e-2Jy"
+    cell="0.1arcsec"
+    stokes="I"
+    weighting="briggs"
+    robust=0.5
+    interactive=True
+    gain=0.01
+    threshold="2e-2Jy"
 
     os.system('rm -r {0}*'.format(targetms))
     split(vis=msname, datacolumn='corrected', field=tar, outputvis=targetms)
@@ -553,8 +532,8 @@ if pipeline_options in ["Y", "y", "Yes", "yes"]:
                 epoch, ATCA_band, tar_nm, "preimage"),
             overwrite=True)
     os.system("rm -r {0}_{1}_{2}_mfs*".format(tar_nm, epoch, ATCA_band))
-    imagename = "{0}_{1}_{2}_mfs".format(tar_nm, epoch, ATCA_band)
-    spw = "0~{0}".format(str(n_spw - 1))
+    imagename="{0}_{1}_{2}_mfs".format(tar_nm, epoch, ATCA_band)
+    spw="0~{0}".format(str(n_spw - 1))
     flagmanager(vis=targetms, mode="save", versionname="before_selfcal")
     print("Initiating interactive cleaning on {0}".format(imagename))
 
@@ -597,27 +576,27 @@ if pipeline_options in ["Y", "y", "Yes", "yes"]:
            calcres=False,
            calcpsf=False)
 
-    pipeline_options = raw_input(
+    pipeline_options=raw_input(
         "Begin first round of imaging for {0} ?".format(tar))
     if pipeline_options in ["Y", "y", "Yes", "yes"]:
-        os.system("rm -r {0}_{1}_{2}_preself*".format(tar_nm, epoch, ATCA_band,
-                                                      str(i)))
-        mode = "mfs"
-        nterms = 2
-        niter = 2000
-        threshold = "5e-3Jy"
-        cell = "0.1arcsec"
-        stokes = "I"
-        weighting = "briggs"
-        robust = 0.5
-        interactive = False
-        gain = 0.01
+        os.system(
+            "rm -r {0}_{1}_{2}_preself*".format(tar_nm, epoch, ATCA_band))
+        mode="mfs"
+        nterms=2
+        niter=2000
+        threshold="5e-3Jy"
+        cell="0.1arcsec"
+        stokes="I"
+        weighting="briggs"
+        robust=0.5
+        interactive=False
+        gain=0.01
         flagmanager(vis=msname, mode="save", versionname="preself")
 
         for i in range(0, n_spw):
-            spw = str(i)
+            spw=str(i)
             print("Cleaning on band: " + str(spw))
-            imagename = "{0}_{1}_{2}_{3}".format(tar_nm, epoch, ATCA_band,
+            imagename="{0}_{1}_{2}_{3}".format(tar_nm, epoch, ATCA_band,
                                                  str(i))
             tclean(vis=targetms,
                    imagename=imagename + "_preself",
@@ -661,21 +640,21 @@ if pipeline_options in ["Y", "y", "Yes", "yes"]:
                    calcres=False,
                    calcpsf=False)
 
-    pipeline_options = raw_input(
+    pipeline_options=raw_input(
         "Begin first round of selfcal for {0} ?".format(tar))
     if pipeline_options in ["Y", "y", "Yes", "yes"]:
         os.system("rm -r {0}_{1}_{2}_self1*".format(tar_nm, epoch, ATCA_band,
                                                     str(i)))
-        mode = "mfs"
-        nterms = 2
-        niter = 2000
-        threshold = "5e-4Jy"
-        cell = "0.1arcsec"
-        stokes = "I"
-        weighting = "briggs"
-        robust = 0.5
-        interactive = False
-        gain = 0.01
+        mode="mfs"
+        nterms=2
+        niter=2000
+        threshold="5e-4Jy"
+        cell="0.1arcsec"
+        stokes="I"
+        weighting="briggs"
+        robust=0.5
+        interactive=False
+        gain=0.01
 
         # for i in range(0,n_spw):
         rmtables("pcal1")
@@ -692,7 +671,7 @@ if pipeline_options in ["Y", "y", "Yes", "yes"]:
         flagmanager(vis=targetms, mode="save", versionname="post self1")
 
         for i in range(0, n_spw):
-            spw = str(i)
+            spw=str(i)
             print("Cleaning on band: " + str(spw))
             tclean(vis=targetms,
                    imagename=imagename + "_self1",
@@ -736,21 +715,21 @@ if pipeline_options in ["Y", "y", "Yes", "yes"]:
                    calcres=False,
                    calcpsf=False)
 
-    pipeline_options = raw_input(
+    pipeline_options=raw_input(
         "Begin second round of selfcal for {0} ?".format(tar))
     if pipeline_options in ["Y", "y", "Yes", "yes"]:
         os.system("rm -r {0}_{1}_{2}_self2*".format(tar_nm, epoch, ATCA_band,
                                                     str(i)))
-        mode = "mfs"
-        nterms = 2
-        niter = 2000
-        threshold = "5e-5Jy"
-        cell = "0.1arcsec"
-        stokes = "I"
-        weighting = "briggs"
-        robust = 0.5
-        interactive = False
-        gain = 0.01
+        mode="mfs"
+        nterms=2
+        niter=2000
+        threshold="5e-5Jy"
+        cell="0.1arcsec"
+        stokes="I"
+        weighting="briggs"
+        robust=0.5
+        interactive=False
+        gain=0.01
         rmtables("pcal2")
         gaincal(vis=targetms,
                 caltable="pcal2",
@@ -765,7 +744,7 @@ if pipeline_options in ["Y", "y", "Yes", "yes"]:
                  flagbackup=False)
         flagmanager(vis=targetms, mode="save", versionname="post self2")
         for i in range(0, n_spw):
-            spw = str(i)
+            spw=str(i)
             print("Cleaning on band: " + str(spw))
             tclean(vis=targetms,
                    imagename=imagename + "_self2",
@@ -809,23 +788,23 @@ if pipeline_options in ["Y", "y", "Yes", "yes"]:
                    calcres=False,
                    calcpsf=False)
 
-    pipeline_options = raw_input(
+    pipeline_options=raw_input(
         "Begin third round of selfcal for {0} ?".format(tar))
     if pipeline_options in ["Y", "y", "Yes", "yes"]:
 
         os.system("rm -r {0}_{1}_{2}_self3*".format(tar_nm, epoch, ATCA_band,
                                                     str(i)))
-        mode = "mfs"
-        nterms = 2
-        niter = 2000
-        threshold = "5e-6Jy"
-        cell = "0.1arcsec"
-        stokes = "I"
-        weighting = "briggs"
-        robust = 0.5
-        interactive = False
+        mode="mfs"
+        nterms=2
+        niter=2000
+        threshold="5e-6Jy"
+        cell="0.1arcsec"
+        stokes="I"
+        weighting="briggs"
+        robust=0.5
+        interactive=False
         rmtables("pcal3")
-        gain = 0.01
+        gain=0.01
         gaincal(vis=targetms,
                 caltable="pcal3",
                 gaintable=["pcal1", "pcal2"],
@@ -839,7 +818,7 @@ if pipeline_options in ["Y", "y", "Yes", "yes"]:
                  flagbackup=False)
         flagmanager(vis=targetms, mode="save", versionname="post self3")
         for i in range(0, n_spw):
-            spw = str(i)
+            spw=str(i)
             print("Cleaning on band: " + str(spw))
             tclean(vis=targetms,
                    imagename=imagename + "_self3",
@@ -883,18 +862,18 @@ if pipeline_options in ["Y", "y", "Yes", "yes"]:
                    calcres=False,
                    calcpsf=False)
 
-pipeline_options = raw_input("PBcorr of {0}?".format(tar))
+pipeline_options=raw_input("PBcorr of {0}?".format(tar))
 if pipeline_options in ["Y", "y", "Yes", "yes"]:
-    mode = "mfs"
-    nterms = 2
-    niter = 2000
-    threshold = "5e-5Jy"
-    cell = "0.1arcsec"
-    stokes = "I"
-    weighting = "briggs"
-    robust = 0.5
-    interactive = False
-    gain = 0.01
+    mode="mfs"
+    nterms=2
+    niter=2000
+    threshold="5e-5Jy"
+    cell="0.1arcsec"
+    stokes="I"
+    weighting="briggs"
+    robust=0.5
+    interactive=False
+    gain=0.01
     for i in range(0, n_spw):
         os.system("rm -r " + imagename + "_pbcor")
         impbcor(imagename=imagename + "_self3.image.tt0",
@@ -903,16 +882,16 @@ if pipeline_options in ["Y", "y", "Yes", "yes"]:
                 cutoff=0.1,
                 overwrite=True)
 
-pipeline_options = raw_input(
+pipeline_options=raw_input(
     "Measure flux from visibilities of {0}?".format(tar))
 if pipeline_options in ["Y", "y", "Yes", "yes"]:
     split(vis=targetms, datacolumn='corrected', outputvis=tar_ms)
-    int_flux_c = []
-    err_int_flux_c = []
+    int_flux_c=[]
+    err_int_flux_c=[]
     for i in range(n_spw):
-        spw = str(i)
+        spw=str(i)
         # If things look like theyre not working, then check the source position! Chances are it can't find the source too far away from the phase centre
-        outfile = '{0}_{1}_{2}_{3}.cl'.format(tar_nm, ATCA_band, epoch, spw)
+        outfile='{0}_{1}_{2}_{3}.cl'.format(tar_nm, ATCA_band, epoch, spw)
         uvmodelfit(vis=tar_ms,
                    niter=10,
                    comptype='P',
@@ -920,31 +899,31 @@ if pipeline_options in ["Y", "y", "Yes", "yes"]:
                    sourcepar=sourcepar,
                    outfile=outfile)
         cl.open(outfile)
-        flux = cl.getfluxvalue(0)[0]
-        flx_err = cl.getfluxerror(0)[0]
+        flux=cl.getfluxvalue(0)[0]
+        flx_err=cl.getfluxerror(0)[0]
         int_flux_c.append(flux)
         err_int_flux_c.append(flx_err)
     if ATCA_band == 'C':
-        t = Table()
-        t['S_Cband'] = int_flux_c
-        t['err_S_Cband'] = err_int_flux_c
+        t=Table()
+        t['S_Cband']=int_flux_c
+        t['err_S_Cband']=err_int_flux_c
         votable.writeto(t,
                         '{0}_{1}_{2}.votable'.format(tar_nm, epoch, ATCA_band))
         print(int_flux_c)
     elif ATCA_band == 'X':
-        t = Table()
-        t['S_Xband'] = int_flux_c
-        t['err_S_Xband'] = err_int_flux_c
+        t=Table()
+        t['S_Xband']=int_flux_c
+        t['err_S_Xband']=err_int_flux_c
         votable.writeto(t,
                         '{0}_{1}_{2}.votable'.format(tar_nm, epoch, ATCA_band))
         print(int_flux_c)
 
     elif ATCA_band == 'L':
-        t = Table()
-        int_flux_l = int_flux_c[::-1]
-        err_int_flux_l = err_int_flux_c[::-1]
-        t['S_Lband'] = int_flux_l
-        t['err_S_Lband'] = err_int_flux_c
+        t=Table()
+        int_flux_l=int_flux_c[::-1]
+        err_int_flux_l=err_int_flux_c[::-1]
+        t['S_Lband']=int_flux_l
+        t['err_S_Lband']=err_int_flux_c
         votable.writeto(t,
                         '{0}_{1}_{2}.votable'.format(tar_nm, epoch, ATCA_band))
         print(int_flux_l)
