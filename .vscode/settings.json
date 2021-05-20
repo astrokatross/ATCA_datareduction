@@ -1,4 +1,11 @@
 {
     "python.linting.pylamaEnabled": true,
-    "python.linting.enabled": true
+    "python.linting.enabled": true,
+    "python.pythonPath": "/opt/casa-release-5.1.2-4.el7/lib/casa/bin/python",
+    "python.formatting.blackPath": "/home/katross/.local/bin",
+    "python.formatting.provider": "black",
+    "editor.formatOnSave": true,
+    "typescript.format.insertSpaceAfterTypeAssertion": true,
+    "editor.formatOnType": true,
+    // "python.formatting.blackArgs": ["--line-length", "100"]
 }

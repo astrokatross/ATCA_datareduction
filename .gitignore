@@ -1,5 +1,3 @@
 data/*
 *.code-workspace
 *.log
-*.json
-.vscode/settings.json
