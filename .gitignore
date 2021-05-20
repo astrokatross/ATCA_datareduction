@@ -1,2 +1,4 @@
 data/*
 *.code-workspace
+*.log
+*.json
