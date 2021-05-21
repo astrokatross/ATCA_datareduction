@@ -2,21 +2,24 @@
 # This is a script to execute the python/casa script that will do the processing
 # By K.Ross 
 
-PROJECT="/data/var_analysis/ATCA/Code/"
-SRC=""
-EPOCH=""
-BAND=""
-PRIMARY_CALIBRATOR=""
-SECONDARY_CALIBRATOR=""
-TARGET=""
-TARGET_NAME=""
+PROJECT=/data/var_analysis/ATCA/Code/
+EPOCH=epoch1
+BAND=C
+PRIMARY_CALIBRATOR=1934_cal_CX
+SECONDARY_CALIBRATOR=j2327-4510
+TARGET=001513
+TARGET_NAME=J001513
+LOG_FILE=$PROJECT/casa_logs/${EPOCH}_${BAND}_${TARGET_NAME}.log
 
-export PROJECT,SRC,EPOCH,BAND,PRIMARY_CALIBRATOR,SECONDARY_CALIBRATOR,TARGET,TARGET_NAME
+export PROJECT
+export SRC
+export EPOCH
+export BAND
+export PRIMARY_CALIBRATOR
+export SECONDARY_CALIBRATOR
+export TARGET
+export TARGET_NAME
 
 cd $PROJECT/processing/
 
-casapy -c $PROJECT/bin/run_process.py 
-
-# sourcepar = [
-#     0.1, 12.6, -0.9
-# ] 
+casa -c --logfile "$LOG_FILE" $PROJECT/bin/run_process.py 

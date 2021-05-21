@@ -1,9 +1,9 @@
 {
     "python.linting.pylamaEnabled": true,
     "python.linting.enabled": true,
-    "python.pythonPath": "/opt/casa-release-5.1.2-4.el7/lib/casa/bin/python",
+    "python.pythonPath": "/data/bin/casa-6.1.2-7-pipeline-2020.1.0.36/bin/python3",
     "python.formatting.blackPath": "/home/katross/.local/bin",
-    "python.formatting.provider": "yapf",
+    "python.formatting.provider": "black",
     "python.editor.formatOnSave": true,
     "python.typescript.format.insertSpaceAfterTypeAssertion": true,
     "python.editor.formatOnType": true,

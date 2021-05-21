@@ -2,13 +2,7 @@
 # This is a script with functions needed for the data reduction, use run_process.py to actually analyse 
 # Updated from B. Quici script By K.Ross 19/5/21
 
-# Importing relevant python packages
-from recipes.atcapolhelpers import qufromgain
-from astropy.io import fits, votable
-import os
-import pyfits
-
-def flag_ms(visname, epoch, ATCA_band, pri,sec,tar,tar_nm):
+def flag_ms(visname, epoch, ATCA_band, pri, sec, tar, tar_nm):
     flagmanager(vis=visname, mode="save", versionname="before_online_flagging")
     print("Flagging antennae affected by shadowing...")
     flagdata(vis=visname, mode="shadow", tolerance=0.0, flagbackup=False)
@@ -16,10 +10,10 @@ def flag_ms(visname, epoch, ATCA_band, pri,sec,tar,tar_nm):
     flagdata(vis=visname, mode="clip", clipzeros=True, flagbackup=False)
     print("Quacking visibilities ...")
     flagdata(vis=visname,
-                mode="quack",
-                quackinterval=5.0,
-                quackmode="beg",
-                flagbackup=False)
+             mode="quack",
+             quackinterval=5.0,
+             quackmode="beg",
+             flagbackup=False)
     flagmanager(vis=visname, mode="save", versionname="after_online_flagging")
     print(
         "Inspecting {0} amplitude as a function of channel to identify RFI...".
@@ -100,6 +94,7 @@ def flag_ms(visname, epoch, ATCA_band, pri,sec,tar,tar_nm):
             overwrite=True)
     return 
 
+
 def split_ms(visname, msname,  if_centre, epoch, ATCA_band, pri,sec,tar,tar_nm):
     os.system("rm -r {0}".format(msname))
     os.system("rm -r {0}.flagversions".format(msname))
@@ -111,9 +106,8 @@ def split_ms(visname, msname,  if_centre, epoch, ATCA_band, pri,sec,tar,tar_nm):
                 datacolumn="data",
                 mode="channel",
                 spw=str(if_centre),
-                field="{0},{1},{2}".format(pri, sec, tar)
-    listobs(vis=msname,
-            listfile="listobs_{0}_{1}_{2}.dat".format(epoch, ATCA_band, tar_nm), overwrite=True)
+                field="{0},{1},{2}".format(pri, sec, tar))
+    listobs(vis=msname, listfile="listobs_{0}_{1}_{2}.dat".format(epoch, ATCA_band, tar_nm), overwrite=True)
     flagmanager(vis=msname, mode="save", versionname="after_transform")
     plotms(vis=msname,
            field=pri,
@@ -138,6 +132,7 @@ def split_ms(visname, msname,  if_centre, epoch, ATCA_band, pri,sec,tar,tar_nm):
            showgui=False,
            overwrite=True)
     return
+
 
 def calibrate_ms(msname, epoch, ATCA_band, ref, pri,sec,tar,tar_nm):
     setjy(vis=msname,
@@ -225,6 +220,7 @@ def calibrate_ms(msname, epoch, ATCA_band, ref, pri,sec,tar,tar_nm):
     flagmanager(vis=msname, mode="save", versionname="before_applycal")
     return 
 
+
 def applycal_ms(msname, epoch, ATCA_band, pri,sec,tar):
     applycal(vis=msname,
              gaintable=[
@@ -249,6 +245,7 @@ def applycal_ms(msname, epoch, ATCA_band, pri,sec,tar):
              parang=True,
              flagbackup=False)
     return
+
 
 def inspectpostcal_ms(msname, epoch, ATCA_band, pri,sec,tar):
     plotms(vis=msname,
@@ -285,6 +282,7 @@ def inspectpostcal_ms(msname, epoch, ATCA_band, pri,sec,tar):
            showgui=False,
            overwrite=True)
     return 
+
 
 def flagcal_ms(msname, epoch, ATCA_band, pri,sec):
     flagmanager(vis=msname, mode="save", versionname="before_rflag")
@@ -355,6 +353,7 @@ def flagcal_ms(msname, epoch, ATCA_band, pri,sec):
            overwrite=True)
     return 
 
+
 def flagcaltar_ms(msname, epoch, ATCA_band, pri,sec,tar):
     plotms(vis=msname,
            field=tar,
@@ -424,6 +423,7 @@ def flagcaltar_ms(msname, epoch, ATCA_band, pri,sec,tar):
            showgui=False)
     return
 
+
 def imgmfs_ms(msname, targetms, epoch, ATCA_band, tar,tar_nm):
     mode="mfs"
     nterms=2
@@ -450,7 +450,7 @@ def imgmfs_ms(msname, targetms, epoch, ATCA_band, tar,tar_nm):
             datacolumn="corrected",
             mode="channel",
             nspw=n_spw,
-            field=tar
+            field=tar)
     listobs(vis=targetms,
             listfile="listobs_{0}_{1}_{2}_{3}.dat".format(
                 epoch, ATCA_band, tar_nm, "preimage"),
@@ -497,6 +497,7 @@ def imgmfs_ms(msname, targetms, epoch, ATCA_band, tar,tar_nm):
            calcres=False,
            calcpsf=False)
     return 
+
 
 def img_ms(targetms, epoch, ATCA_band, n_spw,tar):
     os.system("rm -r {0}_{1}_{2}_preself*".format(tar_nm, epoch, ATCA_band))
@@ -563,6 +564,7 @@ def img_ms(targetms, epoch, ATCA_band, n_spw,tar):
                 calcres=False,
                 calcpsf=False)
     return
+
 
 def slefcal_ms(targetms, epoch, ATCA_band, n_spw,tar):
     os.system("rm -r {0}_{1}_{2}_self1*".format(tar_nm, epoch, ATCA_band))
@@ -642,7 +644,8 @@ def slefcal_ms(targetms, epoch, ATCA_band, n_spw,tar):
                 calcpsf=False)
 
 
-    os.system("rm -r {0}_{1}_{2}_self2*".format(tar_nm, epoch, ATCA_band)
+    os.system("rm -r {0}_{1}_{2}_self2*".format(tar_nm, epoch, ATCA_band))
+
     threshold="5e-5Jy"
     rmtables("pcal2")
     gaincal(vis=targetms,
@@ -702,7 +705,7 @@ def slefcal_ms(targetms, epoch, ATCA_band, n_spw,tar):
                 calcres=False,
                 calcpsf=False)
 
-    os.system("rm -r {0}_{1}_{2}_self3*".format(tar_nm, epoch, ATCA_band)
+    os.system("rm -r {0}_{1}_{2}_self3*".format(tar_nm, epoch, ATCA_band))
     threshold="5e-6Jy"
     rmtables("pcal3")
     gaincal(vis=targetms,
@@ -763,6 +766,7 @@ def slefcal_ms(targetms, epoch, ATCA_band, n_spw,tar):
                 calcpsf=False)
     return 
 
+
 def pbcor_ms(targetms, epoch, ATCA_band, n_spw,tar):
     for i in range(0, n_spw):
         imagename="{0}_{1}_{2}_{3}".format(tar_nm, epoch, ATCA_band,str(i))
@@ -773,6 +777,7 @@ def pbcor_ms(targetms, epoch, ATCA_band, n_spw,tar):
                 cutoff=0.1,
                 overwrite=True)
     return 
+
 
 def measureflux_ms(targetms, tar_ms, epoch, ATCA_band, sourcepar,n_spw,tar, tar_nm):
     split(vis=targetms, datacolumn='corrected', outputvis=tar_ms)
@@ -817,10 +822,11 @@ def measureflux_ms(targetms, tar_ms, epoch, ATCA_band, sourcepar,n_spw,tar, tar_
         votable.writeto(t,
                         '{0}_{1}_{2}.votable'.format(tar_nm, epoch, ATCA_band))
         print(int_flux_l)
-    retun 
+    return 
+
 
 def general_cleanup(process_dir, img_dir, src_dir):
-        os.system("mv *.png {1}".format(process_dir))
-        os.system("mv *.fits {1}".format(img_dir))
-        os.system("mv *.votable {1}".format(src_dir))
-    return 
+    os.system("mv *.png {1}".format(process_dir))
+    os.system("mv *.fits {1}".format(img_dir))
+    os.system("mv *.votable {1}".format(src_dir))
+    return
