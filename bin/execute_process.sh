@@ -15,7 +15,7 @@ export PROJECT,SRC,EPOCH,BAND,PRIMARY_CALIBRATOR,SECONDARY_CALIBRATOR,TARGET,TAR
 
 cd $PROJECT/processing/
 
-casapy -c $PROJECT/bin/process.py 
+casapy -c $PROJECT/bin/run_process.py 
 
 # sourcepar = [
 #     0.1, 12.6, -0.9

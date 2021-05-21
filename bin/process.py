@@ -1,7 +1,5 @@
 #!/usr/bin/python
-# This is a script to analyse the ATCA data, it is the python script with the details of reduction
-# TODO: create an executable scriptfor terminal that pipes all the needed variables into this python script and executes in casa
-# TODO: Add an mstransform step before imaging and remove it before cal
+# This is a script with functions needed for the data reduction, use run_process.py to actually analyse 
 # Updated from B. Quici script By K.Ross 19/5/21
 
 # Importing relevant python packages
@@ -9,38 +7,6 @@ from recipes.atcapolhelpers import qufromgain
 from astropy.io import fits, votable
 import os
 import pyfits
-
-# Reading in variables from the bash script (TODO: setup actual bash script lol)
-data_dir = os.environ['PROJECT']
-src = os.environ['SRC']
-epoch = os.environ['EPOCH']
-ATCA_band = os.environ["BAND"]
-pri = os.environ['PRIMARY_CALIBRATOR']
-sec = os.environ['SECONDARY_CALIBRATOR']
-tar = os.environ['TARGET']
-tar_nm = os.environ['TARGET_NAME']
-sourcepar = [
-    0.1, 12.6, -0.9
-]  # I think the best way for this is to have a dictionary of source and their position which I call based on tar_nm. This will be time consuming but probs worth and I have all the values so I just gotta transfer
-
-# Defining constant variables for all sources
-src_dir = data_dir + src
-process_dir = data_dir + "processing/"
-img_dir = data_dir + src + "images/"
-visname = data_dir + "{0}_{1}.ms".format(epoch, ATCA_band)
-msname = data_dir + "{0}_{1}_{2}.ms".format(epoch, ATCA_band, tar_nm)
-targetms = data_dir + "{0}_{1}_{2}_img.ms".format(epoch, ATCA_band, tar_nm)
-tar_ms = data_dir + "{0}_{1}_{2}_selfcal.ms".format(epoch, ATCA_band, tar_nm)
-ref = "CA04"
-if ATCA_band == "L":
-    n_spw = 8
-    if_centre = 0
-elif ATCA_band == "C":
-    n_spw = 5
-    if_centre = 0
-elif ATCA_band == "X":
-    n_spw = 4
-    if_centre = 1
 
 def flag_ms(visname, epoch, ATCA_band, pri,sec,tar,tar_nm):
     flagmanager(vis=visname, mode="save", versionname="before_online_flagging")
