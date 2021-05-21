@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # This is a script to analyse the ATCA data, it is the python script with the details of reduction
 # TODO: create an executable scriptfor terminal that pipes all the needed variables into this python script and executes in casa
+# TODO: Add an mstransform step before imaging and remove it before cal
 # Updated from B. Quici script By K.Ross 19/5/21
 
 # Importing relevant python packages
@@ -68,12 +69,6 @@ def flag_ms(visname, epoch, ATCA_band, pri,sec,tar,tar_nm):
             showgui=False,
             overwrite=True
             )  # change all the plotms outputs to encode the IF band as well
-    print("+ + + + + + + + +")
-    print("+ RFI Flagging  +")
-    print("+ + + + + + + + +")
-    print(
-        "Using 'mode=tfcrop' to calculate flags based on time & frequency window."
-    )
     flagdata(vis=visname,
                 mode="tfcrop",
                 datacolumn="data",
@@ -107,9 +102,6 @@ def flag_ms(visname, epoch, ATCA_band, pri,sec,tar,tar_nm):
                 flagnearfreq=False,
                 combinescans=False,
                 ntime="scan")
-    print(
-        "Inspecting {0} amplitude as a function of channel to inspect RFI before_online_flagging..."
-        .format(pri))
     plotms(vis=visname,
             field=pri,
             xaxis="channel",
@@ -142,21 +134,17 @@ def flag_ms(visname, epoch, ATCA_band, pri,sec,tar,tar_nm):
             overwrite=True)
     return 
 
-pipeline_options = raw_input("Split the target to make its own ms? ")
-if pipeline_options in ["Y", "y", "Yes", "yes"]:
-    print("+ + + + + + + + + + + + + + + + +")
-    print("+ Transforming measurement set  +")
-    print("+ + + + + + + + + + + + + + + + +")
+def split_ms(visname, msname,  if_centre, epoch, ATCA_band, pri,sec,tar,tar_nm):
     os.system("rm -r {0}".format(msname))
     os.system("rm -r {0}.flagversions".format(msname))
     os.system("rm -r *.last")
+    # have removed n_spw for mstransform and included it in the split just before imaging 
     mstransform(vis=visname,
                 outputvis=msname,
                 regridms=True,
                 datacolumn="data",
                 mode="channel",
                 spw=str(if_centre),
-                nspw=n_spw,
                 field="{0},{1},{2}".format(pri, sec, tar)
     listobs(vis=msname,
             listfile="listobs_{0}_{1}_{2}.dat".format(epoch, ATCA_band, tar_nm), overwrite=True)
@@ -183,12 +171,9 @@ if pipeline_options in ["Y", "y", "Yes", "yes"]:
                epoch, ATCA_band, sec),
            showgui=False,
            overwrite=True)
+    return
 
-pipeline_options=raw_input("Begin calibration ? ")
-if pipeline_options in ["Y", "y", "Yes", "yes"]:
-    print("+ + + + + + + + + + + + + + + + + +")
-    print("+ Performing initial calibration  +")
-    print("+ + + + + + + + + + + + + + + + + +")
+def calibrate_ms(msname, epoch, ATCA_band, ref, pri,sec,tar,tar_nm):
     setjy(vis=msname,
           field=pri,
           scalebychan=True,
@@ -225,18 +210,10 @@ if pipeline_options in ["Y", "y", "Yes", "yes"]:
             parang=True,
             solint="60s",
             gaintable=["cal_{0}_{1}.B0".format(pri, ATCA_band)])
-    print("Solving for polarisation leakages.")
-    print("+ + + + + + + + + + + + + + + + +")
-    print("+ Final calibration & applying  +")
-    print("+ + + + + + + + + + + + + + + + +")
     # TODO: Check that this works for the string name of sec_cal
     qu=qufromgain("cal_{0}_{1}.G1".format(pri, ATCA_band),
                     fieldids=[sec])
     smodel=[1, qu[sec][0], qu[sec][1], 0]
-    print("smodel parameters = {0}".format(smodel))
-    print(
-        "Repeating entire calibration using best estimates for gains, leakages and secondary polarisation"
-    )
     bandpass(vis=msname,
              caltable="cal_{0}_{1}.B1".format(pri, ATCA_band),
              field=pri,
@@ -280,13 +257,9 @@ if pipeline_options in ["Y", "y", "Yes", "yes"]:
                                   pri, ATCA_band),
                               reference=pri)
     flagmanager(vis=msname, mode="save", versionname="before_applycal")
+    return 
 
-else:
-    print("Skipping...")
-
-pipeline_options=raw_input("Apply calibration?")
-if pipeline_options in ["Y", "y", "Yes", "yes"]:
-    print("Applying calibration tables to {0}".format(pri))
+def applycal_ms(msname, epoch, ATCA_band, pri,sec,tar):
     applycal(vis=msname,
              gaintable=[
                  "cal_{0}_{1}.B1".format(pri, ATCA_band),
@@ -295,7 +268,7 @@ if pipeline_options in ["Y", "y", "Yes", "yes"]:
              gainfield=[pri,
                         pri,
                         pri],
-             field="{0}".format(pri_cal_id),
+             field="{0}".format(pri),
              parang=True,
              flagbackup=False)
     applycal(vis=msname,
@@ -309,13 +282,9 @@ if pipeline_options in ["Y", "y", "Yes", "yes"]:
              field="{0},{1}".format(sec, tar),
              parang=True,
              flagbackup=False)
-    print("Applying calibration tables to {0}".format(sec))
-else:
-    print("Skipping...")
+    return
 
-pipeline_options=raw_input("Inspect calibrated {0} & {1} data ? ".format(
-    pri, sec))
-if pipeline_options in ["Y", "y", "Yes", "yes"]:
+def inspectpostcal_ms(msname, epoch, ATCA_band, pri,sec,tar):
     plotms(vis=msname,
            field=pri,
            xaxis="frequency",
@@ -349,15 +318,10 @@ if pipeline_options in ["Y", "y", "Yes", "yes"]:
                epoch, ATCA_band, pri),
            showgui=False,
            overwrite=True)
-else:
-    print("Skipping...")
+    return 
 
-pipeline_options=raw_input(
-    "Flag calibrated {0} & {1} data for RFI ? ".format(pri, sec))
-if pipeline_options in ["Y", "y", "Yes", "yes"]:
-    # add print statements here.
+def flagcal_ms(msname, epoch, ATCA_band, pri,sec):
     flagmanager(vis=msname, mode="save", versionname="before_rflag")
-    spw="0~{0}".format(str(n_spw - 1))
     flagdata(vis=msname,
              mode="rflag",
              field=pri,
@@ -389,7 +353,6 @@ if pipeline_options in ["Y", "y", "Yes", "yes"]:
     flagdata(vis=msname,
              mode="extend",
              field=pri + "," + sec,
-             spw="4:0~338",
              action="apply",
              display="report",
              flagbackup=False,
@@ -424,12 +387,9 @@ if pipeline_options in ["Y", "y", "Yes", "yes"]:
                epoch, ATCA_band, sec),
            showgui=False,
            overwrite=True)
-else:
-    print("Skipping...")
+    return 
 
-pipeline_options=raw_input("RFI flag and inspect {0} data ?".format(tar))
-if pipeline_options in ["Y", "y", "Yes", "yes"]:
-    print("Applying calibration tables to {0}".format(tar))
+def flagcaltar_ms(msname, epoch, ATCA_band, pri,sec,tar):
     plotms(vis=msname,
            field=tar,
            xaxis="frequency",
@@ -459,7 +419,7 @@ if pipeline_options in ["Y", "y", "Yes", "yes"]:
            ydatacolumn="corrected",
            coloraxis="spw",
            plotfile="{0}_{1}_{2}_ampvsfreq_post_cal.png".format(
-               epoch, ATCA_band, tar),
+               epoch, ATCA_band, tar_nm),
            showgui=False,
            overwrite=True)
     flagdata(vis=msname,
@@ -486,28 +446,19 @@ if pipeline_options in ["Y", "y", "Yes", "yes"]:
            ydatacolumn="corrected",
            coloraxis="spw",
            plotfile="{0}_{1}_ampvsfreq_post_RFIflag.png".format(
-               epoch, ATCA_band, tar),
+               epoch, ATCA_band, tar_nm),
            showgui=False,
            overwrite=True)
     plotms(vis=msname,
            field=tar,
            xaxis="u",
            yaxis="v",
-           plotfile="{0}_{1}_uv.png".format(epoch, tar),
+           plotfile="{0}_{1}_uv.png".format(epoch, tar_nm),
            overwrite=True,
            showgui=False)
-else:
-    print("Skipping...")
+    return
 
-pipeline_options=raw_input("Begin automated imaging of {0} ?".format(tar))
-if pipeline_options in ["Y", "y", "Yes", "yes"]:
-    print("+ + + + + +")
-    print("+ Imaging +")
-    print("+ + + + + +")
-    print(
-        "This round is just to get hte mask, its using the mfs so you have high S/N and then it doesnt need the rest, use the mask generated here for all future rounds"
-    )
-    # set up parameters for imaging.
+def imgmfs_ms(msname, targetms, epoch, ATCA_band, tar,tar_nm):
     mode="mfs"
     nterms=2
     niter=3000
@@ -526,14 +477,20 @@ if pipeline_options in ["Y", "y", "Yes", "yes"]:
     threshold="2e-2Jy"
 
     os.system('rm -r {0}*'.format(targetms))
-    split(vis=msname, datacolumn='corrected', field=tar, outputvis=targetms)
+    # split(vis=msname, datacolumn='corrected', field=tar, outputvis=targetms)
+    mstransform(vis=msname,
+            outputvis=targetms,
+            regridms=True,
+            datacolumn="corrected",
+            mode="channel",
+            nspw=n_spw,
+            field=tar
     listobs(vis=targetms,
             listfile="listobs_{0}_{1}_{2}_{3}.dat".format(
                 epoch, ATCA_band, tar_nm, "preimage"),
             overwrite=True)
     os.system("rm -r {0}_{1}_{2}_mfs*".format(tar_nm, epoch, ATCA_band))
     imagename="{0}_{1}_{2}_mfs".format(tar_nm, epoch, ATCA_band)
-    spw="0~{0}".format(str(n_spw - 1))
     flagmanager(vis=targetms, mode="save", versionname="before_selfcal")
     print("Initiating interactive cleaning on {0}".format(imagename))
 
@@ -542,7 +499,6 @@ if pipeline_options in ["Y", "y", "Yes", "yes"]:
            selectdata=True,
            deconvolver="mtmfs",
            gain=gain,
-           spw=spw,
            specmode=mode,
            nterms=nterms,
            niter=niter,
@@ -560,7 +516,6 @@ if pipeline_options in ["Y", "y", "Yes", "yes"]:
            selectdata=True,
            deconvolver="mtmfs",
            gain=gain,
-           spw=spw,
            specmode=mode,
            nterms=nterms,
            niter=0,
@@ -575,316 +530,285 @@ if pipeline_options in ["Y", "y", "Yes", "yes"]:
            pbcor=False,
            calcres=False,
            calcpsf=False)
+    return 
 
-    pipeline_options=raw_input(
-        "Begin first round of imaging for {0} ?".format(tar))
-    if pipeline_options in ["Y", "y", "Yes", "yes"]:
-        os.system(
-            "rm -r {0}_{1}_{2}_preself*".format(tar_nm, epoch, ATCA_band))
-        mode="mfs"
-        nterms=2
-        niter=2000
-        threshold="5e-3Jy"
-        cell="0.1arcsec"
-        stokes="I"
-        weighting="briggs"
-        robust=0.5
-        interactive=False
-        gain=0.01
-        flagmanager(vis=msname, mode="save", versionname="preself")
-
-        for i in range(0, n_spw):
-            spw=str(i)
-            print("Cleaning on band: " + str(spw))
-            imagename="{0}_{1}_{2}_{3}".format(tar_nm, epoch, ATCA_band,
-                                                 str(i))
-            tclean(vis=targetms,
-                   imagename=imagename + "_preself",
-                   selectdata=True,
-                   mask="{0}_{1}_{2}_mfs.mask".format(tar_nm, epoch,
-                                                      ATCA_band),
-                   spw=spw,
-                   deconvolver="mtmfs",
-                   gain=gain,
-                   specmode=mode,
-                   nterms=nterms,
-                   niter=niter,
-                   threshold=threshold,
-                   imsize=imsize,
-                   cell=cell,
-                   stokes=stokes,
-                   weighting=weighting,
-                   robust=robust,
-                   interactive=interactive,
-                   savemodel="modelcolumn",
-                   pbcor=False)
-            tclean(vis=targetms,
-                   imagename=imagename + "_preself",
-                   selectdata=True,
-                   mask="",
-                   spw=spw,
-                   deconvolver="mtmfs",
-                   gain=gain,
-                   specmode=mode,
-                   nterms=nterms,
-                   niter=0,
-                   threshold=threshold,
-                   imsize=imsize,
-                   cell=cell,
-                   stokes=stokes,
-                   weighting=weighting,
-                   robust=robust,
-                   interactive=interactive,
-                   pbcor=False,
-                   savemodel="modelcolumn",
-                   calcres=False,
-                   calcpsf=False)
-
-    pipeline_options=raw_input(
-        "Begin first round of selfcal for {0} ?".format(tar))
-    if pipeline_options in ["Y", "y", "Yes", "yes"]:
-        os.system("rm -r {0}_{1}_{2}_self1*".format(tar_nm, epoch, ATCA_band,
-                                                    str(i)))
-        mode="mfs"
-        nterms=2
-        niter=2000
-        threshold="5e-4Jy"
-        cell="0.1arcsec"
-        stokes="I"
-        weighting="briggs"
-        robust=0.5
-        interactive=False
-        gain=0.01
-
-        # for i in range(0,n_spw):
-        rmtables("pcal1")
-        gaincal(vis=targetms,
-                caltable="pcal1",
-                gaintype="G",
-                calmode="p",
-                solint="60s",
-                minsnr=3.0)
-        applycal(vis=targetms,
-                 gaintable="pcal1",
-                 parang=True,
-                 flagbackup=False)
-        flagmanager(vis=targetms, mode="save", versionname="post self1")
-
-        for i in range(0, n_spw):
-            spw=str(i)
-            print("Cleaning on band: " + str(spw))
-            tclean(vis=targetms,
-                   imagename=imagename + "_self1",
-                   selectdata=True,
-                   mask="{0}_{1}_{2}_mfs.mask".format(tar_nm, epoch,
-                                                      ATCA_band),
-                   spw=spw,
-                   deconvolver="mtmfs",
-                   gain=gain,
-                   specmode=mode,
-                   nterms=nterms,
-                   niter=niter,
-                   threshold=threshold,
-                   imsize=imsize,
-                   cell=cell,
-                   stokes=stokes,
-                   weighting=weighting,
-                   robust=robust,
-                   interactive=interactive,
-                   savemodel="modelcolumn",
-                   pbcor=False)
-            tclean(vis=targetms,
-                   imagename=imagename + "_self1",
-                   selectdata=True,
-                   mask="",
-                   spw=spw,
-                   deconvolver="mtmfs",
-                   gain=gain,
-                   specmode=mode,
-                   nterms=nterms,
-                   niter=0,
-                   threshold=threshold,
-                   imsize=imsize,
-                   cell=cell,
-                   stokes=stokes,
-                   weighting=weighting,
-                   robust=robust,
-                   interactive=interactive,
-                   pbcor=False,
-                   savemodel="modelcolumn",
-                   calcres=False,
-                   calcpsf=False)
-
-    pipeline_options=raw_input(
-        "Begin second round of selfcal for {0} ?".format(tar))
-    if pipeline_options in ["Y", "y", "Yes", "yes"]:
-        os.system("rm -r {0}_{1}_{2}_self2*".format(tar_nm, epoch, ATCA_band,
-                                                    str(i)))
-        mode="mfs"
-        nterms=2
-        niter=2000
-        threshold="5e-5Jy"
-        cell="0.1arcsec"
-        stokes="I"
-        weighting="briggs"
-        robust=0.5
-        interactive=False
-        gain=0.01
-        rmtables("pcal2")
-        gaincal(vis=targetms,
-                caltable="pcal2",
-                gaintable="pcal1",
-                gaintype="G",
-                calmode="p",
-                solint="60s",
-                minsnr=3.0)
-        applycal(vis=targetms,
-                 gaintable=["pcal1", "pcal2"],
-                 parang=True,
-                 flagbackup=False)
-        flagmanager(vis=targetms, mode="save", versionname="post self2")
-        for i in range(0, n_spw):
-            spw=str(i)
-            print("Cleaning on band: " + str(spw))
-            tclean(vis=targetms,
-                   imagename=imagename + "_self2",
-                   selectdata=True,
-                   mask="{0}_{1}_{2}_mfs.mask".format(tar_nm, epoch,
-                                                      ATCA_band),
-                   spw=spw,
-                   deconvolver="mtmfs",
-                   gain=gain,
-                   specmode=mode,
-                   nterms=nterms,
-                   niter=niter,
-                   threshold=threshold,
-                   imsize=imsize,
-                   cell=cell,
-                   stokes=stokes,
-                   weighting=weighting,
-                   robust=robust,
-                   interactive=interactive,
-                   savemodel="modelcolumn",
-                   pbcor=False)
-            tclean(vis=targetms,
-                   imagename=imagename + "_self2",
-                   selectdata=True,
-                   mask="",
-                   spw=spw,
-                   deconvolver="mtmfs",
-                   gain=gain,
-                   specmode=mode,
-                   nterms=nterms,
-                   niter=0,
-                   threshold=threshold,
-                   imsize=imsize,
-                   cell=cell,
-                   stokes=stokes,
-                   weighting=weighting,
-                   robust=robust,
-                   interactive=interactive,
-                   pbcor=False,
-                   savemodel="modelcolumn",
-                   calcres=False,
-                   calcpsf=False)
-
-    pipeline_options=raw_input(
-        "Begin third round of selfcal for {0} ?".format(tar))
-    if pipeline_options in ["Y", "y", "Yes", "yes"]:
-
-        os.system("rm -r {0}_{1}_{2}_self3*".format(tar_nm, epoch, ATCA_band,
-                                                    str(i)))
-        mode="mfs"
-        nterms=2
-        niter=2000
-        threshold="5e-6Jy"
-        cell="0.1arcsec"
-        stokes="I"
-        weighting="briggs"
-        robust=0.5
-        interactive=False
-        rmtables("pcal3")
-        gain=0.01
-        gaincal(vis=targetms,
-                caltable="pcal3",
-                gaintable=["pcal1", "pcal2"],
-                gaintype="G",
-                calmode="p",
-                solint="60s",
-                minsnr=3.0)
-        applycal(vis=targetms,
-                 gaintable=["pcal1", "pcal2", "pcal3"],
-                 parang=True,
-                 flagbackup=False)
-        flagmanager(vis=targetms, mode="save", versionname="post self3")
-        for i in range(0, n_spw):
-            spw=str(i)
-            print("Cleaning on band: " + str(spw))
-            tclean(vis=targetms,
-                   imagename=imagename + "_self3",
-                   selectdata=True,
-                   mask="{0}_{1}_{2}_mfs.mask".format(tar_nm, epoch,
-                                                      ATCA_band),
-                   spw=spw,
-                   deconvolver="mtmfs",
-                   gain=gain,
-                   specmode=mode,
-                   nterms=nterms,
-                   niter=niter,
-                   threshold=threshold,
-                   imsize=imsize,
-                   cell=cell,
-                   stokes=stokes,
-                   weighting=weighting,
-                   robust=robust,
-                   interactive=interactive,
-                   savemodel="modelcolumn",
-                   pbcor=False)
-            tclean(vis=targetms,
-                   imagename=imagename + "_self3",
-                   selectdata=True,
-                   mask="",
-                   spw=spw,
-                   deconvolver="mtmfs",
-                   gain=gain,
-                   specmode=mode,
-                   nterms=nterms,
-                   niter=0,
-                   threshold=threshold,
-                   imsize=imsize,
-                   cell=cell,
-                   stokes=stokes,
-                   weighting=weighting,
-                   robust=robust,
-                   interactive=interactive,
-                   pbcor=False,
-                   savemodel="modelcolumn",
-                   calcres=False,
-                   calcpsf=False)
-
-pipeline_options=raw_input("PBcorr of {0}?".format(tar))
-if pipeline_options in ["Y", "y", "Yes", "yes"]:
+def img_ms(targetms, epoch, ATCA_band, n_spw,tar):
+    os.system("rm -r {0}_{1}_{2}_preself*".format(tar_nm, epoch, ATCA_band))
     mode="mfs"
     nterms=2
-    niter=2000
-    threshold="5e-5Jy"
+    niter=3000
+    if ATCA_band == "L":
+        imsize=2240
+    if ATCA_band == "C":
+        imsize=1120
+    if ATCA_band == "X":
+        imsize == 940
     cell="0.1arcsec"
     stokes="I"
     weighting="briggs"
     robust=0.5
     interactive=False
     gain=0.01
+    threshold="5e-3Jy"
+    flagmanager(vis=targetms, mode="save", versionname="preself")
+
     for i in range(0, n_spw):
+        spw=str(i)
+        print("Cleaning on band: " + str(spw))
+        imagename="{0}_{1}_{2}_{3}".format(tar_nm, epoch, ATCA_band,str(i))
+        tclean(vis=targetms,
+                imagename=imagename + "_preself",
+                selectdata=True,
+                mask="{0}_{1}_{2}_mfs.mask".format(tar_nm, epoch,ATCA_band),
+                spw=spw,
+                deconvolver="mtmfs",
+                gain=gain,
+                specmode=mode,
+                nterms=nterms,
+                niter=niter,
+                threshold=threshold,
+                imsize=imsize,
+                cell=cell,
+                stokes=stokes,
+                weighting=weighting,
+                robust=robust,
+                interactive=interactive,
+                savemodel="modelcolumn",
+                pbcor=False)
+        tclean(vis=targetms,
+                imagename=imagename + "_preself",
+                selectdata=True,
+                mask="",
+                spw=spw,
+                deconvolver="mtmfs",
+                gain=gain,
+                specmode=mode,
+                nterms=nterms,
+                niter=0,
+                threshold=threshold,
+                imsize=imsize,
+                cell=cell,
+                stokes=stokes,
+                weighting=weighting,
+                robust=robust,
+                interactive=interactive,
+                pbcor=False,
+                savemodel="modelcolumn",
+                calcres=False,
+                calcpsf=False)
+    return
+
+def slefcal_ms(targetms, epoch, ATCA_band, n_spw,tar):
+    os.system("rm -r {0}_{1}_{2}_self1*".format(tar_nm, epoch, ATCA_band))
+    mode="mfs"
+    nterms=2
+    niter=3000
+    if ATCA_band == "L":
+        imsize=2240
+    if ATCA_band == "C":
+        imsize=1120
+    if ATCA_band == "X":
+        imsize == 940
+    cell="0.1arcsec"
+    stokes="I"
+    weighting="briggs"
+    robust=0.5
+    interactive=False
+    gain=0.01
+    threshold="5e-4Jy"
+
+    rmtables("pcal1")
+    gaincal(vis=targetms,
+            caltable="pcal1",
+            gaintype="G",
+            calmode="p",
+            solint="60s",
+            minsnr=3.0)
+    applycal(vis=targetms,
+                gaintable="pcal1",
+                parang=True,
+                flagbackup=False)
+    flagmanager(vis=targetms, mode="save", versionname="post self1")
+
+    for i in range(0, n_spw):
+        spw=str(i)
+        print("Cleaning on band: " + str(spw))
+        imagename="{0}_{1}_{2}_{3}".format(tar_nm, epoch, ATCA_band,str(i))
+        tclean(vis=targetms,
+                imagename=imagename + "_self1",
+                selectdata=True,
+                mask="{0}_{1}_{2}_mfs.mask".format(tar_nm, epoch,ATCA_band),
+                spw=spw,
+                deconvolver="mtmfs",
+                gain=gain,
+                specmode=mode,
+                nterms=nterms,
+                niter=niter,
+                threshold=threshold,
+                imsize=imsize,
+                cell=cell,
+                stokes=stokes,
+                weighting=weighting,
+                robust=robust,
+                interactive=interactive,
+                savemodel="modelcolumn",
+                pbcor=False)
+        tclean(vis=targetms,
+                imagename=imagename + "_self1",
+                selectdata=True,
+                mask="",
+                spw=spw,
+                deconvolver="mtmfs",
+                gain=gain,
+                specmode=mode,
+                nterms=nterms,
+                niter=0,
+                threshold=threshold,
+                imsize=imsize,
+                cell=cell,
+                stokes=stokes,
+                weighting=weighting,
+                robust=robust,
+                interactive=interactive,
+                pbcor=False,
+                savemodel="modelcolumn",
+                calcres=False,
+                calcpsf=False)
+
+
+    os.system("rm -r {0}_{1}_{2}_self2*".format(tar_nm, epoch, ATCA_band)
+    threshold="5e-5Jy"
+    rmtables("pcal2")
+    gaincal(vis=targetms,
+            caltable="pcal2",
+            gaintable="pcal1",
+            gaintype="G",
+            calmode="p",
+            solint="60s",
+            minsnr=3.0)
+    applycal(vis=targetms,
+                gaintable=["pcal1", "pcal2"],
+                parang=True,
+                flagbackup=False)
+    flagmanager(vis=targetms, mode="save", versionname="post self2")
+    for i in range(0, n_spw):
+        spw=str(i)
+        print("Cleaning on band: " + str(spw))
+        imagename="{0}_{1}_{2}_{3}".format(tar_nm, epoch, ATCA_band,str(i))
+        tclean(vis=targetms,
+                imagename=imagename + "_self2",
+                selectdata=True,
+                mask="{0}_{1}_{2}_mfs.mask".format(tar_nm, epoch,ATCA_band),
+                spw=spw,
+                deconvolver="mtmfs",
+                gain=gain,
+                specmode=mode,
+                nterms=nterms,
+                niter=niter,
+                threshold=threshold,
+                imsize=imsize,
+                cell=cell,
+                stokes=stokes,
+                weighting=weighting,
+                robust=robust,
+                interactive=interactive,
+                savemodel="modelcolumn",
+                pbcor=False)
+        tclean(vis=targetms,
+                imagename=imagename + "_self2",
+                selectdata=True,
+                mask="",
+                spw=spw,
+                deconvolver="mtmfs",
+                gain=gain,
+                specmode=mode,
+                nterms=nterms,
+                niter=0,
+                threshold=threshold,
+                imsize=imsize,
+                cell=cell,
+                stokes=stokes,
+                weighting=weighting,
+                robust=robust,
+                interactive=interactive,
+                pbcor=False,
+                savemodel="modelcolumn",
+                calcres=False,
+                calcpsf=False)
+
+    os.system("rm -r {0}_{1}_{2}_self3*".format(tar_nm, epoch, ATCA_band)
+    threshold="5e-6Jy"
+    rmtables("pcal3")
+    gaincal(vis=targetms,
+            caltable="pcal3",
+            gaintable=["pcal1", "pcal2"],
+            gaintype="G",
+            calmode="p",
+            solint="60s",
+            minsnr=3.0)
+    applycal(vis=targetms,
+                gaintable=["pcal1", "pcal2", "pcal3"],
+                parang=True,
+                flagbackup=False)
+    flagmanager(vis=targetms, mode="save", versionname="post self3")
+    for i in range(0, n_spw):
+        spw=str(i)
+        print("Cleaning on band: " + str(spw))
+        imagename="{0}_{1}_{2}_{3}".format(tar_nm, epoch, ATCA_band,str(i))
+        tclean(vis=targetms,
+                imagename=imagename + "_self3",
+                selectdata=True,
+                mask="{0}_{1}_{2}_mfs.mask".format(tar_nm, epoch,ATCA_band),
+                spw=spw,
+                deconvolver="mtmfs",
+                gain=gain,
+                specmode=mode,
+                nterms=nterms,
+                niter=niter,
+                threshold=threshold,
+                imsize=imsize,
+                cell=cell,
+                stokes=stokes,
+                weighting=weighting,
+                robust=robust,
+                interactive=interactive,
+                savemodel="modelcolumn",
+                pbcor=False)
+        tclean(vis=targetms,
+                imagename=imagename + "_self3",
+                selectdata=True,
+                mask="",
+                spw=spw,
+                deconvolver="mtmfs",
+                gain=gain,
+                specmode=mode,
+                nterms=nterms,
+                niter=0,
+                threshold=threshold,
+                imsize=imsize,
+                cell=cell,
+                stokes=stokes,
+                weighting=weighting,
+                robust=robust,
+                interactive=interactive,
+                pbcor=False,
+                savemodel="modelcolumn",
+                calcres=False,
+                calcpsf=False)
+    return 
+
+def pbcor_ms(targetms, epoch, ATCA_band, n_spw,tar):
+    for i in range(0, n_spw):
+        imagename="{0}_{1}_{2}_{3}".format(tar_nm, epoch, ATCA_band,str(i))
         os.system("rm -r " + imagename + "_pbcor")
         impbcor(imagename=imagename + "_self3.image.tt0",
                 pbimage=imagename + "_self3.pb.tt0",
                 outfile=imagename + "_self3_pbcor",
                 cutoff=0.1,
                 overwrite=True)
+    return 
 
-pipeline_options=raw_input(
-    "Measure flux from visibilities of {0}?".format(tar))
-if pipeline_options in ["Y", "y", "Yes", "yes"]:
+def measureflux_ms(targetms, tar_ms, epoch, ATCA_band, sourcepar,n_spw,tar, tar_nm):
     split(vis=targetms, datacolumn='corrected', outputvis=tar_ms)
     int_flux_c=[]
     err_int_flux_c=[]
@@ -927,7 +851,10 @@ if pipeline_options in ["Y", "y", "Yes", "yes"]:
         votable.writeto(t,
                         '{0}_{1}_{2}.votable'.format(tar_nm, epoch, ATCA_band))
         print(int_flux_l)
+    retun 
 
+def general_cleanup(process_dir, img_dir, src_dir):
         os.system("mv *.png {1}".format(process_dir))
         os.system("mv *.fits {1}".format(img_dir))
         os.system("mv *.votable {1}".format(src_dir))
+    return 
