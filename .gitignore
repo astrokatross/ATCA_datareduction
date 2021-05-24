@@ -1,3 +1,9 @@
 data/*
 *.code-workspace
 *.log
+*.pyc
+*.last
+*/*.last
+__pycache__
+J*
+processing/*

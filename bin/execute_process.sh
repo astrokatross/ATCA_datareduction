@@ -22,4 +22,6 @@ export TARGET_NAME
 
 cd $PROJECT/processing/
 
-casa -c --logfile "$LOG_FILE" $PROJECT/bin/run_process.py 
+/data/bin/casa-6.1.2-7-pipeline-2020.1.0.36/bin/python3 $PROJECT/bin/run_process.py 
+
+# casaplotms(vis=visname,field=pri,xaxis="channel",yaxis="amp",correlation="xy,yx",ydatacolumn="data",plotfile=f"{img_dir}{epoch}_{ATCA_band}_{pri}_ampvschan_pre_RFIflag_.png",showgui=False,overwrite=True)

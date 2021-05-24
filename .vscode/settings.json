@@ -1,11 +1,10 @@
 {
     "python.linting.pylamaEnabled": true,
     "python.linting.enabled": true,
-    "python.pythonPath": "/data/bin/casa-6.1.2-7-pipeline-2020.1.0.36/bin/python3",
-    "python.formatting.blackPath": "/home/katross/.local/bin",
     "python.formatting.provider": "black",
     "python.editor.formatOnSave": true,
     "python.typescript.format.insertSpaceAfterTypeAssertion": true,
     "python.editor.formatOnType": true,
+    "python.pythonPath": "/usr/bin/python3",
     // "python.formatting.blackArgs": ["--line-length", "100"]
 }
