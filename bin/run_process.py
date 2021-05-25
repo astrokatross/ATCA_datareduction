@@ -7,9 +7,6 @@
 # Importing relevant python packages
 import os
 import process
-import casaplotms
-# from astropy.io import votable
-# from astropy.table import Table
 
 data_dir = str(os.environ["PROJECT"])
 epoch = str(os.environ["EPOCH"])
@@ -18,7 +15,7 @@ pri = str(os.environ["PRIMARY_CALIBRATOR"])
 sec = str(os.environ["SECONDARY_CALIBRATOR"])
 tar = str(os.environ["TARGET"])
 tar_nm = str(os.environ["TARGET_NAME"])
-
+print(tar_nm)
 # Setting sourcepar dictionary to measrue flux
 sourcepar_dict = {
     "J001513": [0.1, 12.6, -0.9],
@@ -39,13 +36,13 @@ sourcepar_dict = {
 }
 
 # Defining constant variables for all sources
-src_dir = data_dir + tar_nm
-process_dir = data_dir + "processing/"
-img_dir = data_dir + tar_nm + "/images/"
-visname = f"{data_dir}/data/{epoch}_{ATCA_band}.ms"
-msname = data_dir + f"data/{epoch}_{ATCA_band}_{tar_nm}.ms"
-targetms = data_dir + f"data/{epoch}_{ATCA_band}_{tar_nm}_img.ms"
-tar_ms = data_dir + f"data/{epoch}_{ATCA_band}_{tar_nm}_selfcal.ms"
+src_dir = f"{data_dir}{tar_nm}"
+process_dir = f"{data_dir}processing/"
+img_dir = f"{data_dir}{tar_nm}/images/"
+visname = f"{data_dir}data/{epoch}_{ATCA_band}.ms"
+msname = f"{data_dir}data/{epoch}_{ATCA_band}_{tar_nm}.ms"
+targetms = f"{data_dir}data/{epoch}_{ATCA_band}_{tar_nm}_img.ms"
+tar_ms = f"{data_dir}data/{epoch}_{ATCA_band}_{tar_nm}_selfcal.ms"
 ref = "CA04"
 sourcepar = sourcepar_dict[tar_nm]
 
@@ -76,5 +73,4 @@ process.flag_ms(img_dir, visname, epoch, ATCA_band, pri, sec, tar, tar_nm)
 # process.measureflux_ms(targetms, tar_ms, epoch, ATCA_band, sourcepar, n_spw, tar,
 #                tar_nm)
 # process.general_cleanup(process_dir, img_dir, src_dir)
-# casaplotms.plotms(vis=visname,field=pri,xaxis="channel",yaxis="amp",correlation="xy,yx",ydatacolumn="data",plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{pri}_ampvschan_pre_RFIflag_.png",showgui=True,overwrite=True)
 

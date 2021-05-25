@@ -1,6 +1,7 @@
 #!/data/bin/casa-6.1.2-7-pipeline-2020.1.0.36/bin/python3
 # This is a script with functions needed for the data reduction, use run_process.py to actually analyse
 # Updated from B. Quici script By K.Ross 19/5/21
+# TODO: Figure out issue with astropy
 import os
 from casatasks import (
     flagmanager,
@@ -18,16 +19,11 @@ from casatasks import (
     split,
     uvmodelfit,
 )
-
-# from casatools import *
-
-
-import casaplotms
-
+from casaplotms import plotms
 
 def flag_ms(image_dir, visname, epoch, ATCA_band, pri, sec, tar, tar_nm):
     print(f"visname here is {visname}")
-    print(type(visname))
+    # print(type(visname))
     # flagmanager(vis=visname, mode="save", versionname="before_online_flagging")
     # print("Flagging antennae affected by shadowing...")
     # flagdata(vis=visname, mode="shadow", tolerance=0.0, flagbackup=False)
@@ -80,7 +76,7 @@ def flag_ms(image_dir, visname, epoch, ATCA_band, pri, sec, tar, tar_nm):
     #     combinescans=False,
     #     ntime="scan",
     # )
-    casaplotms.plotms(
+    plotms(
         vis=visname,
         field=pri,
         xaxis="channel",
@@ -91,30 +87,28 @@ def flag_ms(image_dir, visname, epoch, ATCA_band, pri, sec, tar, tar_nm):
         showgui=True,
         overwrite=True,
     )
-    # plotms(
-    #     vis=visname,
-    #     field=sec,
-    #     xaxis="channel",
-    #     yaxis="amp",
-    #     correlation="xy,yx",
-    #     ydatacolumn="data",
-    #     plotfile="{0}_{1}_{2}_ampvschan_postRFI_flag.png".format(epoch, ATCA_band, sec),
-    #     showgui=True,
-    #     overwrite=True,
-    # )
-    # plotms(
-    #     vis=visname,
-    #     field=tar,
-    #     xaxis="channel",
-    #     yaxis="amp",
-    #     correlation="xy,yx",
-    #     ydatacolumn="data",
-    #     plotfile="{0}_{1}_{2}_ampvschan_postRFI_flag.png".format(
-    #         epoch, ATCA_band, tar_nm
-    #     ),
-    #     showgui=False,
-    #     overwrite=True,
-    # )
+    plotms(
+        vis=visname,
+        field=sec,
+        xaxis="channel",
+        yaxis="amp",
+        correlation="xy,yx",
+        ydatacolumn="data",
+        plotfile=f"{image_dir}/{epoch}_{ATCA_band}_{sec}_ampvschan_postRFI_flag.png",
+        showgui=True,
+        overwrite=True,
+    )
+    plotms(
+        vis=visname,
+        field="001513",
+        xaxis="channel",
+        yaxis="amp",
+        correlation="xy,yx",
+        ydatacolumn="data",
+        plotfile=f"{image_dir}/{epoch}_{ATCA_band}_{tar_nm}_ampvschan_postRFI_flag.png",
+        showgui=False,
+        overwrite=True,
+    )
     return
 
 
@@ -138,30 +132,30 @@ def split_ms(visname, msname, if_centre, epoch, ATCA_band, pri, sec, tar, tar_nm
         overwrite=True,
     )
     flagmanager(vis=msname, mode="save", versionname="after_transform")
-    # plotms(
-    #     vis=msname,
-    #     field=pri,
-    #     xaxis="frequency",
-    #     yaxis="amp",
-    #     correlation="xx,yy",
-    #     ydatacolumn="data",
-    #     coloraxis="spw",
-    #     plotfile="{0}_{1}_{2}_ampvsfreq_pre_cal.png".format(epoch, ATCA_band, pri),
-    #     showgui=False,
-    #     overwrite=True,
-    # )
-    # plotms(
-    #     vis=msname,
-    #     field=sec,
-    #     xaxis="frequency",
-    #     yaxis="amp",
-    #     correlation="xx,yy",
-    #     ydatacolumn="data",
-    #     coloraxis="spw",
-    #     plotfile="{0}_{1}_{2}_ampvsfreq_pre_cal.png".format(epoch, ATCA_band, sec),
-    #     showgui=False,
-    #     overwrite=True,
-    # )
+    plotms(
+        vis=msname,
+        field=pri,
+        xaxis="frequency",
+        yaxis="amp",
+        correlation="xx,yy",
+        ydatacolumn="data",
+        coloraxis="spw",
+        plotfile="{0}_{1}_{2}_ampvsfreq_pre_cal.png".format(epoch, ATCA_band, pri),
+        showgui=False,
+        overwrite=True,
+    )
+    plotms(
+        vis=msname,
+        field=sec,
+        xaxis="frequency",
+        yaxis="amp",
+        correlation="xx,yy",
+        ydatacolumn="data",
+        coloraxis="spw",
+        plotfile="{0}_{1}_{2}_ampvsfreq_pre_cal.png".format(epoch, ATCA_band, sec),
+        showgui=False,
+        overwrite=True,
+    )
     return
 
 
