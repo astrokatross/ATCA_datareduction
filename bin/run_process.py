@@ -1,6 +1,5 @@
-#!/data/bin/casa-6.1.2-7-pipeline-2020.1.0.36/bin/python3
+#!/usr/bin/python
 # This script calls process.py with all functions to analyse ATCA data and executes them in order, only changes needed to script should just be what stepyou need/commenting out whatever you don't need
-# TODO: Change all the plotms commands in process.py to be separate commands here using casaplotms.plotms
 
 # By K.Ross 19/5/21
 
@@ -15,7 +14,8 @@ pri = str(os.environ["PRIMARY_CALIBRATOR"])
 sec = str(os.environ["SECONDARY_CALIBRATOR"])
 tar = str(os.environ["TARGET"])
 tar_nm = str(os.environ["TARGET_NAME"])
-print(tar_nm)
+print(f"Target: {tar_nm},\nEpoch: {epoch}\nATCA band: {ATCA_band}")
+
 # Setting sourcepar dictionary to measrue flux
 sourcepar_dict = {
     "J001513": [0.1, 12.6, -0.9],
@@ -59,18 +59,26 @@ elif ATCA_band == "X":
 
 print("Here we go! Time to analyse some ATCA data!")
 # Uncomment whichever step you don't need to do
+# Initial flagging and creating targetms
 process.flag_ms(img_dir, visname, epoch, ATCA_band, pri, sec, tar, tar_nm)
-# process.split_ms(visname, msname, if_centre, epoch, ATCA_band, pri, sec, tar, tar_nm)
-# process.calibrate_ms(msname, epoch, ATCA_band, ref, pri, sec, tar, tar_nm)
-# process.applycal_ms(msname, epoch, ATCA_band, pri, sec, tar)
-# process.inspectpostcal_ms(msname, epoch, ATCA_band, pri, sec, tar)
-# process.flagcal_ms(msname, epoch, ATCA_band, pri, sec)
-# process.flagcaltar_ms(msname, epoch, ATCA_band, pri, sec, tar, tar_nm)
-# process.imgmfs_ms(msname, targetms, epoch, ATCA_band, n_spw, tar, tar_nm)
-# process.img_ms(targetms, epoch, ATCA_band, n_spw, tar, tar_nm)
-# process.slefcal_ms(targetms, epoch, ATCA_band, n_spw, tar, tar_nm)
-# process.pbcor_ms(targetms, epoch, ATCA_band, n_spw, tar, tar_nm)
-# process.measureflux_ms(targetms, tar_ms, epoch, ATCA_band, sourcepar, n_spw, tar,
-#                tar_nm)
-# process.general_cleanup(process_dir, img_dir, src_dir)
+process.split_ms(src_dir, img_dir, visname, msname, if_centre, epoch, ATCA_band, pri, sec, tar, tar_nm)
 
+# Calibrate, and apply cal ms using primary and secondary
+process.calibrate_ms(msname, epoch, ATCA_band, ref, pri, sec, tar, tar_nm)
+process.applycal_ms(msname, epoch, ATCA_band, pri, sec, tar)
+
+# Post cal inspection and flagging
+process.inspectpostcal_ms(img_dir, msname, epoch, ATCA_band, pri, sec, tar)
+process.flagcal_ms(img_dir, msname, epoch, ATCA_band, pri, sec)
+process.flagcaltar_ms(img_dir, msname, epoch, ATCA_band, pri, sec, tar, tar_nm)
+
+# Imaging of target
+process.imgmfs_ms(src_dir, msname, targetms, epoch, ATCA_band, n_spw, tar, tar_nm)
+process.img_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar, tar_nm)
+process.slefcal_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar, tar_nm)
+
+# Post image analysis: pbcor, measure flux
+process.pbcor_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar, tar_nm)
+process.measureflux_ms(
+    src_dir, targetms, tar_ms, epoch, ATCA_band, sourcepar, n_spw, tar, tar_nm
+)
