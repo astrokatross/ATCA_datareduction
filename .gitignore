@@ -11,3 +11,5 @@ run_plotseds.py
 readfluxes.py
 sedfunction.py 
 gpscssmodels.py 
+processing/plotms.last
+processing/setjy.last
