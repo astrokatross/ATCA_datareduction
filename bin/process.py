@@ -126,7 +126,7 @@ def split_ms(
     tar,
     tar_nm,
 ):
-    os.system("rm -r {0}".format(msname))
+    os.system(f"rm -r {msname}")
     os.system("rm -r {0}.flagversions".format(msname))
     os.system("rm -r *.last")
     # have removed n_spw for mstransform and included it in the split just before imaging
@@ -172,7 +172,8 @@ def split_ms(
     return
 
 
-def calibrate_ms(msname, epoch, ATCA_band, ref, pri, sec, tar, tar_nm):
+def calibrate_ms(src_dir, msname, epoch, ATCA_band, ref, pri, sec, tar, tar_nm):
+    os.system(f"rm -r {src_dir}/cal_tables/cal_{pri}_{epoch}_{ATCA_band}.F0")
     setjy(
         vis=msname,
         field=pri,
@@ -183,7 +184,7 @@ def calibrate_ms(msname, epoch, ATCA_band, ref, pri, sec, tar, tar_nm):
     print(f"Performing gain calibration on {pri}")
     gaincal(
         vis=msname,
-        caltable=f"cal_{pri}_{ATCA_band}.G0",
+        caltable=f"{src_dir}/cal_tables/cal_{pri}_{epoch}_{ATCA_band}.G0",
         field=pri,
         refant=ref,
         gaintype="G",
@@ -194,20 +195,20 @@ def calibrate_ms(msname, epoch, ATCA_band, ref, pri, sec, tar, tar_nm):
     print(f"Performing bandpass calibration on {pri}")
     bandpass(
         vis=msname,
-        caltable=f"cal_{pri}_{ATCA_band}.B0",
+        caltable=f"{src_dir}/cal_tables/cal_{pri}_{epoch}_{ATCA_band}.B0",
         field=pri,
         spw="",
         refant=ref,
         solnorm=True,
         solint="inf",
         bandtype="B",
-        gaintable=[f"cal_{pri}_{ATCA_band}.G0"],
+        gaintable=[f"{src_dir}/cal_tables/cal_{pri}_{epoch}_{ATCA_band}.G0"],
         parang=True,
     )
     print(f"Determining gains on {sec}")
     gaincal(
         vis=msname,
-        caltable=f"cal_{pri}_{ATCA_band}.G1",
+        caltable=f"{src_dir}/cal_tables/cal_{pri}_{epoch}_{ATCA_band}.G1",
         field=pri + "," + sec,
         refant=ref,
         spw="*",
@@ -215,24 +216,24 @@ def calibrate_ms(msname, epoch, ATCA_band, ref, pri, sec, tar, tar_nm):
         calmode="ap",
         parang=True,
         solint="60s",
-        gaintable=[f"cal_{pri}_{ATCA_band}.B0"],
+        gaintable=[f"{src_dir}/cal_tables/cal_{pri}_{epoch}_{ATCA_band}.B0"],
     )
     bandpass(
         vis=msname,
-        caltable=f"cal_{pri}_{ATCA_band}.B1",
+        caltable=f"{src_dir}/cal_tables/cal_{pri}_{epoch}_{ATCA_band}.B1",
         field=pri,
         spw="",
         refant=ref,
         solnorm=True,
         solint="inf",
         bandtype="B",
-        gaintable=[f"cal_{pri}_{ATCA_band}.G1"],
+        gaintable=[f"{src_dir}/cal_tables/cal_{pri}_{epoch}_{ATCA_band}.G1"],
         parang=True,
     )
     print(f"Deriving gain calibration using {pri}")
     gaincal(
         vis=msname,
-        caltable=f"cal_{pri}_{ATCA_band}.G2",
+        caltable=f"{src_dir}/cal_tables/cal_{pri}_{epoch}_{ATCA_band}.G2",
         field=pri,
         refant=ref,
         spw="*",
@@ -240,12 +241,12 @@ def calibrate_ms(msname, epoch, ATCA_band, ref, pri, sec, tar, tar_nm):
         calmode="ap",
         parang=True,
         solint="60s",
-        gaintable=[f"cal_{pri}_{ATCA_band}.B1"],
+        gaintable=[f"{src_dir}/cal_tables/cal_{pri}_{epoch}_{ATCA_band}.B1"],
     )
     print(f"Deriving gain calibration using {sec}")
     gaincal(
         vis=msname,
-        caltable=f"cal_{pri}_{ATCA_band}.G2",
+        caltable=f"{src_dir}/cal_tables/cal_{pri}_{epoch}_{ATCA_band}.G2",
         field=sec,
         refant=ref,
         spw="*",
@@ -253,7 +254,7 @@ def calibrate_ms(msname, epoch, ATCA_band, ref, pri, sec, tar, tar_nm):
         calmode="ap",
         parang=True,
         solint="60s",
-        gaintable=[f"cal_{pri}_{ATCA_band}.B1"],
+        gaintable=[f"{src_dir}/cal_tables/cal_{pri}_{epoch}_{ATCA_band}.B1"],
         append=True,
     )
     print(
@@ -261,20 +262,20 @@ def calibrate_ms(msname, epoch, ATCA_band, ref, pri, sec, tar, tar_nm):
     )
     fluxscale(
         vis=msname,
-        caltable=f"cal_{pri}_{ATCA_band}.G2",
-        fluxtable=f"cal_{pri}_{ATCA_band}.F0",
+        caltable=f"{src_dir}/cal_tables/cal_{pri}_{epoch}_{ATCA_band}.G2",
+        fluxtable=f"{src_dir}/cal_tables/cal_{pri}_{epoch}_{ATCA_band}.F0",
         reference=pri,
     )
     flagmanager(vis=msname, mode="save", versionname="before_applycal")
     return
 
 
-def applycal_ms(msname, epoch, ATCA_band, pri, sec, tar):
+def applycal_ms(src_dir, msname, epoch, ATCA_band, pri, sec, tar):
     applycal(
         vis=msname,
         gaintable=[
-            f"cal_{pri}_{ATCA_band}.B1",
-            f"cal_{pri}_{ATCA_band}.F0",
+            f"{src_dir}/cal_tables/cal_{pri}_{epoch}_{ATCA_band}.B1",
+            f"{src_dir}/cal_tables/cal_{pri}_{epoch}_{ATCA_band}.F0",
         ],
         gainfield=[pri, pri, pri],
         field=f"{pri}",
@@ -284,8 +285,8 @@ def applycal_ms(msname, epoch, ATCA_band, pri, sec, tar):
     applycal(
         vis=msname,
         gaintable=[
-            f"cal_{pri}_{ATCA_band}.B1",
-            f"cal_{pri}_{ATCA_band}.F0",
+            f"{src_dir}/cal_tables/cal_{pri}_{epoch}_{ATCA_band}.B1",
+            f"{src_dir}/cal_tables/cal_{pri}_{epoch}_{ATCA_band}.F0",
         ],
         gainfield=[pri, pri, sec],
         field=f"{sec},{tar}",
@@ -413,7 +414,7 @@ def flagcal_ms(img_dir, msname, epoch, ATCA_band, pri, sec):
     return
 
 
-def flagcaltar_ms(img_dir, msname, epoch, ATCA_band, pri, sec, tar, tar_nm):
+def flagcaltar_ms(src_dir, img_dir, msname, epoch, ATCA_band, pri, sec, tar, tar_nm):
     plotms(
         vis=msname,
         field=tar,
@@ -429,8 +430,8 @@ def flagcaltar_ms(img_dir, msname, epoch, ATCA_band, pri, sec, tar, tar_nm):
     applycal(
         vis=msname,
         gaintable=[
-            f"cal_{pri}_{ATCA_band}.B1",
-            f"cal_{pri}_{ATCA_band}.F0",
+            f"{src_dir}/cal_tables/cal_{pri}_{epoch}_{ATCA_band}.B1",
+            f"{src_dir}/cal_tables/cal_{pri}_{epoch}_{ATCA_band}.F0",
         ],
         gainfield=[pri, pri, sec],
         field=tar,
@@ -511,7 +512,7 @@ def imgmfs_ms(src_dir, msname, targetms, epoch, ATCA_band, n_spw, tar, tar_nm):
     gain = 0.01
     threshold = "2e-2Jy"
 
-    os.system("rm -r {0}*".format(targetms))
+    os.system(f"rm -r {targetms}*")
     # split(vis=msname, datacolumn='corrected', field=tar, outputvis=targetms)
     mstransform(
         vis=msname,
@@ -576,7 +577,6 @@ def imgmfs_ms(src_dir, msname, targetms, epoch, ATCA_band, n_spw, tar, tar_nm):
 
 
 def img_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar, tar_nm):
-    os.system(f"rm -r {src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_preself*")
     mode = "mfs"
     nterms = 2
     niter = 3000
@@ -594,10 +594,10 @@ def img_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar, tar_nm):
     gain = 0.01
     threshold = "5e-3Jy"
     flagmanager(vis=targetms, mode="save", versionname="preself")
-
     for i in range(0, n_spw):
         spw = str(i)
         print("Cleaning on band: " + str(spw))
+        os.system(f"rm -r {src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_{spw}_preself*")
         imagename = f"{src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_{spw}"
         tclean(
             vis=targetms,
@@ -647,7 +647,6 @@ def img_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar, tar_nm):
 
 
 def slefcal_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar, tar_nm):
-    os.system(f"rm -r {src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_self1*")
     mode = "mfs"
     nterms = 2
     niter = 3000
@@ -679,6 +678,7 @@ def slefcal_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar, tar_nm):
 
     for i in range(0, n_spw):
         spw = str(i)
+        os.system(f"rm -r {src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_{spw}_self1*")
         print("Cleaning on band: " + str(spw))
         imagename = f"{src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_{spw}"
         tclean(
@@ -725,8 +725,6 @@ def slefcal_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar, tar_nm):
             calcres=False,
             calcpsf=False,
         )
-
-    os.system(f"rm -r {src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_self2*")
 
     threshold = "5e-5Jy"
     rmtables("pcal2")
@@ -743,6 +741,7 @@ def slefcal_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar, tar_nm):
     flagmanager(vis=targetms, mode="save", versionname="post self2")
     for i in range(0, n_spw):
         spw = str(i)
+        os.system(f"rm -r {src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_{spw}_self2*")
         print("Cleaning on band: " + str(spw))
         imagename = f"{src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_{spw}"
         tclean(
@@ -790,7 +789,6 @@ def slefcal_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar, tar_nm):
             calcpsf=False,
         )
 
-    os.system(f"rm -r {src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_self3*")
     threshold = "5e-6Jy"
     rmtables("pcal3")
     gaincal(
@@ -811,6 +809,7 @@ def slefcal_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar, tar_nm):
     flagmanager(vis=targetms, mode="save", versionname="post self3")
     for i in range(0, n_spw):
         spw = str(i)
+        os.system(f"rm -r {src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_{spw}_self3*")
         print("Cleaning on band: " + str(spw))
         imagename = f"{src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_{spw}"
         tclean(
@@ -863,12 +862,12 @@ def slefcal_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar, tar_nm):
 def pbcor_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar, tar_nm):
     for i in range(0, n_spw):
         spw = str(i)
-        imagename = f"{src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}+{spw}"
+        imagename = f"{src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_{spw}"
         os.system("rm -r " + imagename + "_pbcor")
         impbcor(
-            imagename=imagename + "_self3.image.tt0",
-            pbimage=imagename + "_self3.pb.tt0",
-            outfile=imagename + "_self3_pbcor",
+            imagename=f"{imagename}_self3.image.tt0",
+            pbimage=f"{imagename}_self3.pb.tt0",
+            outfile=f"{imagename}_self3_pbcor",
             cutoff=0.1,
             overwrite=True,
         )
