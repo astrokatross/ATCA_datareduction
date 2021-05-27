@@ -118,7 +118,6 @@ def split_ms(
     img_dir,
     visname,
     msname,
-    if_centre,
     epoch,
     ATCA_band,
     pri,
@@ -136,7 +135,6 @@ def split_ms(
         regridms=True,
         datacolumn="data",
         mode="channel",
-        spw=str(if_centre),
         field=f"{pri},{sec},{tar}",
     )
     listobs(
@@ -503,7 +501,7 @@ def imgmfs_ms(src_dir, msname, targetms, epoch, ATCA_band, n_spw, tar, tar_nm):
     if ATCA_band == "C":
         imsize = 1120
     if ATCA_band == "X":
-        imsize == 940
+        imsize = 940
     cell = "0.1arcsec"
     stokes = "I"
     weighting = "briggs"
@@ -585,7 +583,7 @@ def img_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar, tar_nm):
     if ATCA_band == "C":
         imsize = 1120
     if ATCA_band == "X":
-        imsize == 940
+        imsize = 940
     cell = "0.1arcsec"
     stokes = "I"
     weighting = "briggs"
@@ -597,7 +595,9 @@ def img_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar, tar_nm):
     for i in range(0, n_spw):
         spw = str(i)
         print("Cleaning on band: " + str(spw))
-        os.system(f"rm -r {src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_{spw}_preself*")
+        os.system(
+            f"rm -r {src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_{spw}_preself*"
+        )
         imagename = f"{src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_{spw}"
         tclean(
             vis=targetms,
@@ -655,7 +655,7 @@ def slefcal_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar, tar_nm):
     if ATCA_band == "C":
         imsize = 1120
     if ATCA_band == "X":
-        imsize == 940
+        imsize = 940
     cell = "0.1arcsec"
     stokes = "I"
     weighting = "briggs"
@@ -668,17 +668,26 @@ def slefcal_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar, tar_nm):
     gaincal(
         vis=targetms,
         caltable="pcal1",
+        combine="spw",
         gaintype="G",
         calmode="p",
         solint="60s",
         minsnr=3.0,
     )
-    applycal(vis=targetms, gaintable="pcal1", parang=True, flagbackup=False)
+    applycal(
+        vis=targetms,
+        gaintable="pcal1",
+        spwmap=[0] * n_spw,
+        parang=True,
+        flagbackup=False,
+    )
     flagmanager(vis=targetms, mode="save", versionname="post self1")
 
     for i in range(0, n_spw):
         spw = str(i)
-        os.system(f"rm -r {src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_{spw}_self1*")
+        os.system(
+            f"rm -r {src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_{spw}_self1*"
+        )
         print("Cleaning on band: " + str(spw))
         imagename = f"{src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_{spw}"
         tclean(
@@ -732,16 +741,25 @@ def slefcal_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar, tar_nm):
         vis=targetms,
         caltable="pcal2",
         gaintable="pcal1",
+        combine="spw",
         gaintype="G",
         calmode="p",
         solint="60s",
         minsnr=3.0,
     )
-    applycal(vis=targetms, gaintable=["pcal1", "pcal2"], parang=True, flagbackup=False)
+    applycal(
+        vis=targetms,
+        gaintable=["pcal1", "pcal2"],
+        spwmap=[0] * n_spw,
+        parang=True,
+        flagbackup=False,
+    )
     flagmanager(vis=targetms, mode="save", versionname="post self2")
     for i in range(0, n_spw):
         spw = str(i)
-        os.system(f"rm -r {src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_{spw}_self2*")
+        os.system(
+            f"rm -r {src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_{spw}_self2*"
+        )
         print("Cleaning on band: " + str(spw))
         imagename = f"{src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_{spw}"
         tclean(
@@ -795,6 +813,7 @@ def slefcal_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar, tar_nm):
         vis=targetms,
         caltable="pcal3",
         gaintable=["pcal1", "pcal2"],
+        combine="spw",
         gaintype="G",
         calmode="p",
         solint="60s",
@@ -803,13 +822,16 @@ def slefcal_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar, tar_nm):
     applycal(
         vis=targetms,
         gaintable=["pcal1", "pcal2", "pcal3"],
+        spwmap=[0] * n_spw,
         parang=True,
         flagbackup=False,
     )
     flagmanager(vis=targetms, mode="save", versionname="post self3")
     for i in range(0, n_spw):
         spw = str(i)
-        os.system(f"rm -r {src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_{spw}_self3*")
+        os.system(
+            f"rm -r {src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_{spw}_self3*"
+        )
         print("Cleaning on band: " + str(spw))
         imagename = f"{src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_{spw}"
         tclean(
@@ -896,29 +918,40 @@ def measureflux_ms(
         int_flux_c.append(flux)
         print(flux)
     if ATCA_band == "C":
+        freqs = ["S_4680", "S_5090", "S_5500", "S_5910", "S_6320"]
         np.savetxt(
             f"{src_dir}/{tar_nm}_{epoch}_{ATCA_band}.csv",
-            int_flux_c,
+            zip(freqs, int_flux_c),
             delimiter=",",
             header="S_Cband",
         )
         print(int_flux_c)
     elif ATCA_band == "X":
+        freqs = ["S_8732", "S_9245", "S_9758", "S_10269"]
         np.savetxt(
             f"{src_dir}/{tar_nm}_{epoch}_{ATCA_band}.csv",
-            int_flux_c,
+            zip(freqs, int_flux_c),
             delimiter=",",
             header="S_Xband",
         )
         print(int_flux_c)
-
     elif ATCA_band == "L":
         int_flux_l = int_flux_c[::-1]
+        freqs = [
+            "S_1200",
+            "S_1454",
+            "S_1711",
+            "S_1968",
+            "S_2225",
+            "S_2482",
+            "S_2739",
+            "S_2996",
+        ]
         np.savetxt(
             f"{src_dir}/{tar_nm}_{epoch}_{ATCA_band}.csv",
-            int_flux_l,
+            zip(freqs, int_flux_l),
             delimiter=",",
-            header="S_Lband,err_S_Lband",
+            header="S_Lband",
         )
         print(int_flux_l)
     return

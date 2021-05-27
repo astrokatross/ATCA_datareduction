@@ -53,32 +53,28 @@ if epoch == "epoch1":
 elif epoch == "epoch2":
     sec = source_dict[tar][1]
 elif epoch == "epoch3" or epoch == "epoch4":
-    sec = source_dict[tar][3]
+    sec = source_dict[tar][2]
 
 
 if ATCA_band == "L":
-    n_spw = 6
-    if_centre = 0
+    n_spw = 8
     pri = "1934_cal_l"
 elif ATCA_band == "C":
     n_spw = 5
-    if_centre = 0
     pri = "1934_cal_CX"
 elif ATCA_band == "X":
     n_spw = 4
-    if_centre = 1
     pri = "1934_cal_CX"
 
 print("Here we go! Time to analyse some ATCA data!")
 # Uncomment whichever step you don't need to do
 # Initial flagging and creating targetms
-process.flag_ms(img_dir, visname, epoch, ATCA_band, pri, sec, tar, tar)
+# process.flag_ms(img_dir, visname, epoch, ATCA_band, pri, sec, tar, tar)
 process.split_ms(
     src_dir,
     img_dir,
     visname,
     msname,
-    if_centre,
     epoch,
     ATCA_band,
     pri,
