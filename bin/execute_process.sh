@@ -3,9 +3,9 @@
 # By K.Ross 
 
 PROJECT=/data/var_analysis/ATCA/Code/
-EPOCH=epoch1
-BAND=L
-TARGET=J001513
+EPOCH=epoch2
+BAND=X
+TARGET=J032213
 
 export PROJECT
 export EPOCH

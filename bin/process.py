@@ -24,6 +24,7 @@ from casaplotms import plotms
 import numpy as np
 
 
+
 def flag_ms(img_dir, visname, epoch, ATCA_band, pri, sec, tar, tar_nm):
     flagmanager(vis=visname, mode="save", versionname="before_online_flagging")
     print("Flagging antennae affected by shadowing...")
@@ -485,7 +486,7 @@ def flagcaltar_ms(src_dir, img_dir, msname, epoch, ATCA_band, pri, sec, tar, tar
         field=tar,
         xaxis="u",
         yaxis="v",
-        plotfile=f"{img_dir}/{epoch}_{pri}_uv.png".format(epoch, tar_nm),
+        plotfile=f"{img_dir}/{epoch}_{tar}_uv.png",
         overwrite=True,
         showgui=False,
     )
@@ -501,7 +502,7 @@ def imgmfs_ms(src_dir, msname, targetms, epoch, ATCA_band, n_spw, tar, tar_nm):
     if ATCA_band == "C":
         imsize = 1120
     if ATCA_band == "X":
-        imsize = 940
+        imsize = 960
     cell = "0.1arcsec"
     stokes = "I"
     weighting = "briggs"
@@ -583,7 +584,7 @@ def img_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar, tar_nm):
     if ATCA_band == "C":
         imsize = 1120
     if ATCA_band == "X":
-        imsize = 940
+        imsize = 960
     cell = "0.1arcsec"
     stokes = "I"
     weighting = "briggs"
@@ -646,7 +647,7 @@ def img_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar, tar_nm):
     return
 
 
-def slefcal_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar, tar_nm):
+def slefcal_ms(src_dir, process_dir, targetms, epoch, ATCA_band, n_spw, tar, tar_nm):
     mode = "mfs"
     nterms = 2
     niter = 3000
@@ -655,7 +656,7 @@ def slefcal_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar, tar_nm):
     if ATCA_band == "C":
         imsize = 1120
     if ATCA_band == "X":
-        imsize = 940
+        imsize = 960
     cell = "0.1arcsec"
     stokes = "I"
     weighting = "briggs"
@@ -664,10 +665,10 @@ def slefcal_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar, tar_nm):
     gain = 0.01
     threshold = "5e-4Jy"
 
-    rmtables("pcal1")
+    rmtables(f"{process_dir}/pcal1")
     gaincal(
         vis=targetms,
-        caltable="pcal1",
+        caltable=f"{process_dir}/pcal1",
         combine="spw",
         gaintype="G",
         calmode="p",
@@ -676,7 +677,7 @@ def slefcal_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar, tar_nm):
     )
     applycal(
         vis=targetms,
-        gaintable="pcal1",
+        gaintable=f"{process_dir}/pcal1",
         spwmap=[0] * n_spw,
         parang=True,
         flagbackup=False,
@@ -736,11 +737,11 @@ def slefcal_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar, tar_nm):
         )
 
     threshold = "5e-5Jy"
-    rmtables("pcal2")
+    rmtables(f"{process_dir}/pcal2")
     gaincal(
         vis=targetms,
-        caltable="pcal2",
-        gaintable="pcal1",
+        caltable=f"{process_dir}/pcal2",
+        gaintable=f"{process_dir}/pcal1",
         combine="spw",
         gaintype="G",
         calmode="p",
@@ -749,7 +750,7 @@ def slefcal_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar, tar_nm):
     )
     applycal(
         vis=targetms,
-        gaintable=["pcal1", "pcal2"],
+        gaintable=[f"{process_dir}/pcal1", f"{process_dir}/pcal2"],
         spwmap=[0] * n_spw,
         parang=True,
         flagbackup=False,
@@ -808,11 +809,11 @@ def slefcal_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar, tar_nm):
         )
 
     threshold = "5e-6Jy"
-    rmtables("pcal3")
+    rmtables(f"{process_dir}/pcal3")
     gaincal(
         vis=targetms,
-        caltable="pcal3",
-        gaintable=["pcal1", "pcal2"],
+        caltable=f"{process_dir}/pcal3",
+        gaintable=[f"{process_dir}/pcal1", f"{process_dir}/pcal2"],
         combine="spw",
         gaintype="G",
         calmode="p",
@@ -821,7 +822,7 @@ def slefcal_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar, tar_nm):
     )
     applycal(
         vis=targetms,
-        gaintable=["pcal1", "pcal2", "pcal3"],
+        gaintable=[f"{process_dir}/pcal1", f"{process_dir}/pcal2", f"{process_dir}/pcal3"],
         spwmap=[0] * n_spw,
         parang=True,
         flagbackup=False,
@@ -921,7 +922,7 @@ def measureflux_ms(
         freqs = ["S_4680", "S_5090", "S_5500", "S_5910", "S_6320"]
         np.savetxt(
             f"{src_dir}/{tar_nm}_{epoch}_{ATCA_band}.csv",
-            zip(freqs, int_flux_c),
+            int_flux_c,
             delimiter=",",
             header="S_Cband",
         )
@@ -930,28 +931,18 @@ def measureflux_ms(
         freqs = ["S_8732", "S_9245", "S_9758", "S_10269"]
         np.savetxt(
             f"{src_dir}/{tar_nm}_{epoch}_{ATCA_band}.csv",
-            zip(freqs, int_flux_c),
+            int_flux_c,
             delimiter=",",
             header="S_Xband",
         )
         print(int_flux_c)
     elif ATCA_band == "L":
-        int_flux_l = int_flux_c[::-1]
-        freqs = [
-            "S_1200",
-            "S_1454",
-            "S_1711",
-            "S_1968",
-            "S_2225",
-            "S_2482",
-            "S_2739",
-            "S_2996",
-        ]
+        int_flux_l = np.array(int_flux_c[::-1])
         np.savetxt(
             f"{src_dir}/{tar_nm}_{epoch}_{ATCA_band}.csv",
-            zip(freqs, int_flux_l),
-            delimiter=",",
+            int_flux_l,
             header="S_Lband",
+            delimiter=",",
         )
         print(int_flux_l)
     return

@@ -92,12 +92,12 @@ process.inspectpostcal_ms(img_dir, msname, epoch, ATCA_band, pri, sec, tar)
 process.flagcal_ms(img_dir, msname, epoch, ATCA_band, pri, sec)
 process.flagcaltar_ms(src_dir, img_dir, msname, epoch, ATCA_band, pri, sec, tar, tar)
 
-# Imaging of target
+# # Imaging of target
 process.imgmfs_ms(src_dir, msname, targetms, epoch, ATCA_band, n_spw, tar, tar)
 process.img_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar, tar)
-process.slefcal_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar, tar)
+process.slefcal_ms(src_dir, src_dir, targetms, epoch, ATCA_band, n_spw, tar, tar)
 
-# Post image analysis: pbcor, measure flux
+# # Post image analysis: pbcor, measure flux
 process.pbcor_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar, tar)
 process.measureflux_ms(
     src_dir, targetms, tar_ms, epoch, ATCA_band, sourcepar, n_spw, tar, tar
