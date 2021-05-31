@@ -24,7 +24,6 @@ from casaplotms import plotms
 import numpy as np
 
 
-
 def flag_ms(img_dir, visname, epoch, ATCA_band, pri, sec, tar, tar_nm):
     flagmanager(vis=visname, mode="save", versionname="before_online_flagging")
     print("Flagging antennae affected by shadowing...")
@@ -653,10 +652,13 @@ def slefcal_ms(src_dir, process_dir, targetms, epoch, ATCA_band, n_spw, tar, tar
     niter = 3000
     if ATCA_band == "L":
         imsize = 2240
+        solint = "240s"
     if ATCA_band == "C":
         imsize = 1120
+        solint = "60s"
     if ATCA_band == "X":
         imsize = 960
+        solint = "60s"
     cell = "0.1arcsec"
     stokes = "I"
     weighting = "briggs"
@@ -672,7 +674,7 @@ def slefcal_ms(src_dir, process_dir, targetms, epoch, ATCA_band, n_spw, tar, tar
         combine="spw",
         gaintype="G",
         calmode="p",
-        solint="60s",
+        solint=solint,
         minsnr=3.0,
     )
     applycal(
@@ -745,7 +747,7 @@ def slefcal_ms(src_dir, process_dir, targetms, epoch, ATCA_band, n_spw, tar, tar
         combine="spw",
         gaintype="G",
         calmode="p",
-        solint="60s",
+        solint=solint,
         minsnr=3.0,
     )
     applycal(
@@ -817,12 +819,16 @@ def slefcal_ms(src_dir, process_dir, targetms, epoch, ATCA_band, n_spw, tar, tar
         combine="spw",
         gaintype="G",
         calmode="p",
-        solint="60s",
+        solint=solint,
         minsnr=3.0,
     )
     applycal(
         vis=targetms,
-        gaintable=[f"{process_dir}/pcal1", f"{process_dir}/pcal2", f"{process_dir}/pcal3"],
+        gaintable=[
+            f"{process_dir}/pcal1",
+            f"{process_dir}/pcal2",
+            f"{process_dir}/pcal3",
+        ],
         spwmap=[0] * n_spw,
         parang=True,
         flagbackup=False,
