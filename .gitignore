@@ -9,3 +9,5 @@ J*
 processing/*
 processing/plotms.last
 processing/setjy.last
+.vscode/settings.json
+get-pip.py
