@@ -672,6 +672,7 @@ def slefcal_ms(src_dir, process_dir, targetms, epoch, ATCA_band, n_spw, tar, tar
         vis=targetms,
         caltable=f"{process_dir}/pcal1",
         combine="spw",
+        spwmap=[0] * n_spw,
         gaintype="G",
         calmode="p",
         solint=solint,
@@ -688,6 +689,9 @@ def slefcal_ms(src_dir, process_dir, targetms, epoch, ATCA_band, n_spw, tar, tar
 
     for i in range(0, n_spw):
         spw = str(i)
+        os.system(
+            f"mv {src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_{spw}_preself.psf.tt0 {src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_{spw}_self1.psf.tt0 "
+        )
         os.system(
             f"rm -r {src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_{spw}_self1*"
         )
@@ -713,6 +717,7 @@ def slefcal_ms(src_dir, process_dir, targetms, epoch, ATCA_band, n_spw, tar, tar
             interactive=interactive,
             savemodel="modelcolumn",
             pbcor=False,
+            calcpsf=False,
         )
         tclean(
             vis=targetms,
@@ -745,6 +750,7 @@ def slefcal_ms(src_dir, process_dir, targetms, epoch, ATCA_band, n_spw, tar, tar
         caltable=f"{process_dir}/pcal2",
         gaintable=f"{process_dir}/pcal1",
         combine="spw",
+        spwmap=[0] * n_spw,
         gaintype="G",
         calmode="p",
         solint=solint,
@@ -760,6 +766,9 @@ def slefcal_ms(src_dir, process_dir, targetms, epoch, ATCA_band, n_spw, tar, tar
     flagmanager(vis=targetms, mode="save", versionname="post self2")
     for i in range(0, n_spw):
         spw = str(i)
+        os.system(
+            f"mv {src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_{spw}_self1.psf.tt0 {src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_{spw}_self2.psf.tt0 "
+        )
         os.system(
             f"rm -r {src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_{spw}_self2*"
         )
@@ -785,6 +794,7 @@ def slefcal_ms(src_dir, process_dir, targetms, epoch, ATCA_band, n_spw, tar, tar
             interactive=interactive,
             savemodel="modelcolumn",
             pbcor=False,
+            calcpsf=False,
         )
         tclean(
             vis=targetms,
@@ -817,6 +827,7 @@ def slefcal_ms(src_dir, process_dir, targetms, epoch, ATCA_band, n_spw, tar, tar
         caltable=f"{process_dir}/pcal3",
         gaintable=[f"{process_dir}/pcal1", f"{process_dir}/pcal2"],
         combine="spw",
+        spwmap=[0] * n_spw,
         gaintype="G",
         calmode="p",
         solint=solint,
@@ -838,6 +849,9 @@ def slefcal_ms(src_dir, process_dir, targetms, epoch, ATCA_band, n_spw, tar, tar
         spw = str(i)
         os.system(
             f"rm -r {src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_{spw}_self3*"
+        )
+        os.system(
+            f"mv {src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_{spw}_self2.psf.tt0 {src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_{spw}_self3.psf.tt0 "
         )
         print("Cleaning on band: " + str(spw))
         imagename = f"{src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_{spw}"
@@ -861,6 +875,7 @@ def slefcal_ms(src_dir, process_dir, targetms, epoch, ATCA_band, n_spw, tar, tar
             interactive=interactive,
             savemodel="modelcolumn",
             pbcor=False,
+            calcpsf=False,
         )
         tclean(
             vis=targetms,
@@ -906,15 +921,17 @@ def pbcor_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar, tar_nm):
 def measureflux_ms(
     src_dir, targetms, tar_ms, epoch, ATCA_band, sourcepar, n_spw, tar, tar_nm
 ):
+    os.system(f"rm -r {tar_ms}")
     split(vis=targetms, datacolumn="corrected", outputvis=tar_ms)
     int_flux_c = []
     for i in range(n_spw):
         spw = str(i)
         # If things look like theyre not working, then check the source position! Chances are it can't find the source too far away from the phase centre
         outfile = f"{src_dir}/casa_files/{tar_nm}_{ATCA_band}_{epoch}_{spw}.cl"
+        os.system(f"rm -r {outfile}")
         uvmodelfit(
             vis=tar_ms,
-            niter=10,
+            niter=15,
             comptype="P",
             spw=spw,
             sourcepar=sourcepar,
