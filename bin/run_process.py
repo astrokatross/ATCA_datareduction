@@ -1,11 +1,11 @@
 #!/usr/bin/python
 # This script calls process.py with all functions to analyse ATCA data and executes them in order, only changes needed to script should just be what stepyou need/commenting out whatever you don't need
-# TODO: Compelte dictionaries so it has pri cal,sec cal for each epoch and maybe target name? That would be nice
 # By K.Ross 19/5/21
 
 # Importing relevant python packages
-import os
 import process
+import os
+
 
 data_dir = str(os.environ["PROJECT"])
 epoch = str(os.environ["EPOCH"])
@@ -16,7 +16,12 @@ print(f"Target: {tar}\nEpoch: {epoch}\nATCA band: {ATCA_band}")
 # Setting sourcepar dictionary to measrue flux
 # Order of entries: secondary cal, (e1L, e1CX/e2L, e3L/e3CX/e4L/e4CX)
 source_dict = {
-    "J001513": ["j2327-4510", "j2327-4510", "2327-459", (0.1, 12.6, -0.9)],
+    "J001513": [
+        "j2327-4510",
+        "j2327-4510",
+        "2327-459",
+        (0.1, 13, 0),
+    ],
     "J015445": ["1bac0237-233", "back0237", "0237-233", (0.15, 14.1, -2.7)],
     "J020507": ["1hed0238-084", "head0238", "0238-084", (0.3, 2.6, 0.7)],
     "J021246": ["1bac0237-233", "back0237", "0237-233", (0.15, 12.9, -5.2)],
@@ -30,7 +35,7 @@ source_dict = {
     "J044737": ["1n0445-221", "Xneck0445", "0445-221", (0.25, 3.4, -2.2)],
     "J052824": ["2bc0528-250", "2breast0528", "0528-250", (0.2, 8, -3.9)],
     "J223933": ["j2327-4510", "j2327-4510", "2327-459", (0.2, 10, -3.1)],
-    "J224408": ["2243-123", "2243-123", "2240-260", (0.25, 8.3, -5.2)],
+    "J224408": ["2243-123", "2240-260", "2240-260", (0.25, 8.3, -5.2)],
 }
 
 
@@ -62,6 +67,8 @@ if ATCA_band == "L":
 elif ATCA_band == "C":
     n_spw = 5
     pri = "1934_cal_CX"
+    if epoch == "epoch1":
+        pri = "1934_cal_C"
 elif ATCA_band == "X":
     n_spw = 4
     pri = "1934_cal_CX"
@@ -92,12 +99,12 @@ process.inspectpostcal_ms(img_dir, msname, epoch, ATCA_band, pri, sec, tar)
 process.flagcal_ms(img_dir, msname, epoch, ATCA_band, pri, sec)
 process.flagcaltar_ms(src_dir, img_dir, msname, epoch, ATCA_band, pri, sec, tar, tar)
 
-# # Imaging of target
+# Imaging of target
 process.imgmfs_ms(src_dir, msname, targetms, epoch, ATCA_band, n_spw, tar, tar)
 process.img_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar, tar)
 process.slefcal_ms(src_dir, src_dir, targetms, epoch, ATCA_band, n_spw, tar, tar)
 
-# # Post image analysis: pbcor, measure flux
+# Post image analysis: pbcor, measure flux
 process.pbcor_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar, tar)
 process.measureflux_ms(
     src_dir, targetms, tar_ms, epoch, ATCA_band, sourcepar, n_spw, tar, tar

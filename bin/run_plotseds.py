@@ -5,13 +5,14 @@
 
 # Importing relevant packages
 import matplotlib.pyplot as plt
+# from numpy.core.numeric import False_
 import plotfuncts
 
 plt.rcParams["font.family"] = "serif"
 plt.rcParams["axes.grid"] = False
 
 # constants:
-tarname = "J032213"
+tarname = "J001513"
 directory = "/data/var_analysis/ATCA/Code/"
 
-plotfuncts.plt_sed(directory, tarname,  models=True, extra_surveys=True)
+plotfuncts.plt_sed(directory, tarname, models=True, extra_surveys=True)
