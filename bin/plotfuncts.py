@@ -51,7 +51,7 @@ freq_mwa = [
     0.220,
     0.227,
 ]
-freq_mwa_e3 = [0.158, 0.150,0.143]
+freq_mwa_e3 = [0.158, 0.150, 0.143]
 freq_xtra = [
     0.076,
     0.084,
@@ -278,9 +278,9 @@ def plt_sed(
         atca_Cband_e1_pd = pd.read_csv(f"{directory}/{tar}/{tar}_epoch1_C.csv")
         atca_Cband_e1 = np.array(atca_Cband_e1_pd["# S_Cband"])
         err_atca_Cband_e1 = 0.03 * (atca_Cband_e1)
-        atca_Xband_e1_pd = pd.read_csv(f"{directory}/{tar}/{tar}_epoch1_X.csv")
-        atca_Xband_e1 = np.array(atca_Xband_e1_pd["# S_Xband"])
-        err_atca_Xband_e1 = 0.03 * (atca_Xband_e1)
+        # atca_Xband_e1_pd = pd.read_csv(f"{directory}/{tar}/{tar}_epoch1_X.csv")
+        # atca_Xband_e1 = np.array(atca_Xband_e1_pd["# S_Xband"])
+        # err_atca_Xband_e1 = 0.03 * (atca_Xband_e1)
         f.plot_spectrum(
             freq_lband,
             atca_Lband_e1,
@@ -296,13 +296,13 @@ def plt_sed(
             marker="o",
             marker_color="red",
         )
-        f.plot_spectrum(
-            freq_xband,
-            atca_Xband_e1,
-            err_atca_Xband_e1,
-            marker="o",
-            marker_color="red",
-        )
+        # f.plot_spectrum(
+        #     freq_xband,
+        #     atca_Xband_e1,
+        #     err_atca_Xband_e1,
+        #     marker="o",
+        #     marker_color="red",
+        # )
         # atca_e1_pd = pd.read_csv(f"{directory}/{tar}/{tar}_epoch1.csv")
         # atca_e1 = np.array(atca_e1_pd["col1"])
         # err_atca_e1 = 0.03 * (atca_e1)
@@ -379,23 +379,23 @@ def plt_sed(
             marker_color="C9",
         )
     if epoch4 is True:
-        atca_Lband_e4_pd = pd.read_csv(f"{directory}/{tar}/{tar}_epoch4_L.csv")
-        atca_Lband_e4 = np.array(atca_Lband_e4_pd["# S_Lband"])
-        err_atca_Lband_e4 = 0.03 * (atca_Lband_e4)
+        # atca_Lband_e4_pd = pd.read_csv(f"{directory}/{tar}/{tar}_epoch4_L.csv")
+        # atca_Lband_e4 = np.array(atca_Lband_e4_pd["# S_Lband"])
+        # err_atca_Lband_e4 = 0.03 * (atca_Lband_e4)
         atca_Cband_e4_pd = pd.read_csv(f"{directory}/{tar}/{tar}_epoch4_C.csv")
         atca_Cband_e4 = np.array(atca_Cband_e4_pd["# S_Cband"])
         err_atca_Cband_e4 = 0.03 * (atca_Cband_e4)
         atca_Xband_e4_pd = pd.read_csv(f"{directory}/{tar}/{tar}_epoch4_X.csv")
         atca_Xband_e4 = np.array(atca_Xband_e4_pd["# S_Xband"])
         err_atca_Xband_e4 = 0.03 * (atca_Xband_e4)
-        f.plot_spectrum(
-            freq_lband,
-            atca_Lband_e4,
-            err_atca_Lband_e4,
-            marker="o",
-            label="Epoch4",
-            marker_color="C4",
-        )
+        # f.plot_spectrum(
+        #     freq_lband,
+        #     atca_Lband_e4,
+        #     err_atca_Lband_e4,
+        #     marker="o",
+        #     label="Epoch4",
+        #     marker_color="C4",
+        # )
         f.plot_spectrum(
             freq_cband,
             atca_Cband_e4,
@@ -428,7 +428,7 @@ def plt_sed(
             ** 2
             + (0.01 * fluxes_extra[0:4]) ** 2
         )
-        print(gleam_err)
+
         f.plot_spectrum(
             freq_xtra[0:4],
             fluxes_extra[0:4],

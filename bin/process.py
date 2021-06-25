@@ -1,4 +1,4 @@
-#!/data/bin/casa-6.1.2-7-pipeline-2020.1.0.36/bin/python3
+#!/usr/bin/python
 # This is a script with functions needed for the data reduction, use run_process.py to actually analyse
 # Updated from B. Quici script By K.Ross 19/5/21
 
@@ -22,7 +22,6 @@ from casatasks import (
     split,
     uvmodelfit,
 )
-from casaplotms import plotms
 import numpy as np
 
 
@@ -79,39 +78,39 @@ def flag_ms(img_dir, visname, epoch, ATCA_band, pri, sec, tar, tar_nm):
         combinescans=False,
         ntime="scan",
     )
-    plotms(
-        vis=visname,
-        field=pri,
-        xaxis="channel",
-        yaxis="amp",
-        correlation="xy,yx",
-        ydatacolumn="data",
-        plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{pri}_ampvschan_postRFI_flag.png",
-        showgui=True,
-        overwrite=True,
-    )
-    plotms(
-        vis=visname,
-        field=sec,
-        xaxis="channel",
-        yaxis="amp",
-        correlation="xy,yx",
-        ydatacolumn="data",
-        plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{sec}_ampvschan_postRFI_flag.png",
-        showgui=True,
-        overwrite=True,
-    )
-    plotms(
-        vis=visname,
-        field="J001513",
-        xaxis="channel",
-        yaxis="amp",
-        correlation="xy,yx",
-        ydatacolumn="data",
-        plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{tar_nm}_ampvschan_postRFI_flag.png",
-        showgui=False,
-        overwrite=True,
-    )
+    # plotms(
+    #     vis={visname},
+    #     field={pri},
+    #     xaxis="{channel}",
+    #     yaxis="amp",
+    #     correlation="xy,yx",
+    #     ydatacolumn="data",
+    #     plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{pri}_ampvschan_postRFI_flag.png",
+    #     showgui=True,
+    #     overwrite=True,
+    # )
+    # plotms(
+    #     vis=visname,
+    #     field=sec,
+    #     xaxis="channel",
+    #     yaxis="amp",
+    #     correlation="xy,yx",
+    #     ydatacolumn="data",
+    #     plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{sec}_ampvschan_postRFI_flag.png",
+    #     showgui=True,
+    #     overwrite=True,
+    # )
+    # plotms(
+    #     vis=visname,
+    #     field="J001513",
+    #     xaxis="channel",
+    #     yaxis="amp",
+    #     correlation="xy,yx",
+    #     ydatacolumn="data",
+    #     plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{tar_nm}_ampvschan_postRFI_flag.png",
+    #     showgui=False,
+    #     overwrite=True,
+    # )
     return
 
 
@@ -128,7 +127,7 @@ def split_ms(
     tar_nm,
 ):
     os.system(f"rm -r {msname}")
-    os.system("rm -r {0}.flagversions".format(msname))
+    os.system(f"rm -r {msname}.flagversions")
     os.system("rm -r *.last")
     # have removed n_spw for mstransform and included it in the split just before imaging
     mstransform(
@@ -145,30 +144,30 @@ def split_ms(
         overwrite=True,
     )
     flagmanager(vis=msname, mode="save", versionname="after_transform")
-    plotms(
-        vis=msname,
-        field=pri,
-        xaxis="frequency",
-        yaxis="amp",
-        correlation="xx,yy",
-        ydatacolumn="data",
-        coloraxis="spw",
-        plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{pri}_ampvsfreq_pre_cal.png",
-        showgui=False,
-        overwrite=True,
-    )
-    plotms(
-        vis=msname,
-        field=sec,
-        xaxis="frequency",
-        yaxis="amp",
-        correlation="xx,yy",
-        ydatacolumn="data",
-        coloraxis="spw",
-        plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{sec}_ampvsfreq_pre_cal.png",
-        showgui=False,
-        overwrite=True,
-    )
+    # plotms(
+    #     vis=msname,
+    #     field=pri,
+    #     xaxis="frequency",
+    #     yaxis="amp",
+    #     correlation="xx,yy",
+    #     ydatacolumn="data",
+    #     coloraxis="spw",
+    #     plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{pri}_ampvsfreq_pre_cal.png",
+    #     showgui=False,
+    #     overwrite=True,
+    # )
+    # plotms(
+    #     vis=msname,
+    #     field=sec,
+    #     xaxis="frequency",
+    #     yaxis="amp",
+    #     correlation="xx,yy",
+    #     ydatacolumn="data",
+    #     coloraxis="spw",
+    #     plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{sec}_ampvsfreq_pre_cal.png",
+    #     showgui=False,
+    #     overwrite=True,
+    # )
     return
 
 
@@ -300,42 +299,42 @@ def applycal_ms(src_dir, msname, epoch, ATCA_band, pri, sec, tar):
 
 
 def inspectpostcal_ms(img_dir, msname, epoch, ATCA_band, pri, sec, tar):
-    plotms(
-        vis=msname,
-        field=pri,
-        xaxis="frequency",
-        yaxis="amp",
-        correlation="xx,yy",
-        ydatacolumn="corrected",
-        coloraxis="spw",
-        plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{pri}_ampvsfreq_post_cal.png",
-        showgui=False,
-        overwrite=True,
-    )
-    plotms(
-        vis=msname,
-        field=sec,
-        xaxis="frequency",
-        yaxis="amp",
-        correlation="xx,yy",
-        ydatacolumn="corrected",
-        coloraxis="spw",
-        plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{sec}_ampvsfreq_post_cal.png",
-        showgui=False,
-        overwrite=True,
-    )
-    plotms(
-        vis=msname,
-        field=pri,
-        xaxis="frequency",
-        yaxis="amp",
-        correlation="xx,yy",
-        ydatacolumn="corrected",
-        coloraxis="baseline",
-        plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{pri}_ampvsfreqbaseline_post_cal.png",
-        showgui=False,
-        overwrite=True,
-    )
+    # plotms(
+    #     vis=msname,
+    #     field=pri,
+    #     xaxis="frequency",
+    #     yaxis="amp",
+    #     correlation="xx,yy",
+    #     ydatacolumn="corrected",
+    #     coloraxis="spw",
+    #     plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{pri}_ampvsfreq_post_cal.png",
+    #     showgui=False,
+    #     overwrite=True,
+    # )
+    # plotms(
+    #     vis=msname,
+    #     field=sec,
+    #     xaxis="frequency",
+    #     yaxis="amp",
+    #     correlation="xx,yy",
+    #     ydatacolumn="corrected",
+    #     coloraxis="spw",
+    #     plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{sec}_ampvsfreq_post_cal.png",
+    #     showgui=False,
+    #     overwrite=True,
+    # )
+    # plotms(
+    #     vis=msname,
+    #     field=pri,
+    #     xaxis="frequency",
+    #     yaxis="amp",
+    #     correlation="xx,yy",
+    #     ydatacolumn="corrected",
+    #     coloraxis="baseline",
+    #     plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{pri}_ampvsfreqbaseline_post_cal.png",
+    #     showgui=False,
+    #     overwrite=True,
+    # )
     return
 
 
@@ -390,46 +389,46 @@ def flagcal_ms(img_dir, msname, epoch, ATCA_band, pri, sec):
         combinescans=True,
         ntime="9999999min",
     )
-    plotms(
-        vis=msname,
-        field=pri,
-        xaxis="frequency",
-        yaxis="amp",
-        correlation="xx,yy",
-        ydatacolumn="corrected",
-        coloraxis="spw",
-        plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{pri}_ampvsfreq_post_RFIflag.png",
-        showgui=False,
-        overwrite=True,
-    )
-    plotms(
-        vis=msname,
-        field=sec,
-        xaxis="frequency",
-        yaxis="amp",
-        correlation="xx,yy",
-        ydatacolumn="corrected",
-        coloraxis="spw",
-        plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{sec}_ampvsfreq_post_RFIflag.png",
-        showgui=False,
-        overwrite=True,
-    )
+    # plotms(
+    #     vis=msname,
+    #     field=pri,
+    #     xaxis="frequency",
+    #     yaxis="amp",
+    #     correlation="xx,yy",
+    #     ydatacolumn="corrected",
+    #     coloraxis="spw",
+    #     plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{pri}_ampvsfreq_post_RFIflag.png",
+    #     showgui=False,
+    #     overwrite=True,
+    # )
+    # plotms(
+    #     vis=msname,
+    #     field=sec,
+    #     xaxis="frequency",
+    #     yaxis="amp",
+    #     correlation="xx,yy",
+    #     ydatacolumn="corrected",
+    #     coloraxis="spw",
+    #     plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{sec}_ampvsfreq_post_RFIflag.png",
+    #     showgui=False,
+    #     overwrite=True,
+    # )
     return
 
 
 def flagcaltar_ms(src_dir, img_dir, msname, epoch, ATCA_band, pri, sec, tar, tar_nm):
-    plotms(
-        vis=msname,
-        field=tar,
-        xaxis="frequency",
-        yaxis="amp",
-        correlation="xx,yy",
-        ydatacolumn="data",
-        coloraxis="spw",
-        plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{tar}_ampvsfreq_pre_cal.png",
-        showgui=False,
-        overwrite=True,
-    )
+    # plotms(
+    #     vis=msname,
+    #     field=tar,
+    #     xaxis="frequency",
+    #     yaxis="amp",
+    #     correlation="xx,yy",
+    #     ydatacolumn="data",
+    #     coloraxis="spw",
+    #     plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{tar}_ampvsfreq_pre_cal.png",
+    #     showgui=False,
+    #     overwrite=True,
+    # )
     applycal(
         vis=msname,
         gaintable=[
@@ -442,20 +441,20 @@ def flagcaltar_ms(src_dir, img_dir, msname, epoch, ATCA_band, pri, sec, tar, tar
         flagbackup=False,
     )
     print(f"Inspecting {tar} amp vs freq Before RFI flagging")
-    plotms(
-        vis=msname,
-        field=tar,
-        xaxis="frequency",
-        yaxis="amp",
-        correlation="xx,yy",
-        ydatacolumn="corrected",
-        coloraxis="spw",
-        plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{tar_nm}_ampvsfreq_post_cal.png".format(
-            epoch, ATCA_band, tar_nm
-        ),
-        showgui=False,
-        overwrite=True,
-    )
+    # plotms(
+    #     vis=msname,
+    #     field=tar,
+    #     xaxis="frequency",
+    #     yaxis="amp",
+    #     correlation="xx,yy",
+    #     ydatacolumn="corrected",
+    #     coloraxis="spw",
+    #     plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{tar_nm}_ampvsfreq_post_cal.png".format(
+    #         epoch, ATCA_band, tar_nm
+    #     ),
+    #     showgui=False,
+    #     overwrite=True,
+    # )
     flagdata(
         vis=msname,
         mode="rflag",
@@ -473,27 +472,27 @@ def flagcaltar_ms(src_dir, img_dir, msname, epoch, ATCA_band, pri, sec, tar, tar
         flagbackup=False,
     )
     print(f"Inspecting {tar} amp vs freq AFTER RFI flagging")
-    plotms(
-        vis=msname,
-        field=tar,
-        xaxis="frequency",
-        yaxis="amp",
-        correlation="xx,yy",
-        ydatacolumn="corrected",
-        coloraxis="spw",
-        plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{tar_nm}_ampvsfreq_post_RFIflag.png",
-        showgui=False,
-        overwrite=True,
-    )
-    plotms(
-        vis=msname,
-        field=tar,
-        xaxis="u",
-        yaxis="v",
-        plotfile=f"{img_dir}/{epoch}_{tar}_uv.png",
-        overwrite=True,
-        showgui=False,
-    )
+    # plotms(
+    #     vis=msname,
+    #     field=tar,
+    #     xaxis="frequency",
+    #     yaxis="amp",
+    #     correlation="xx,yy",
+    #     ydatacolumn="corrected",
+    #     coloraxis="spw",
+    #     plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{tar_nm}_ampvsfreq_post_RFIflag.png",
+    #     showgui=False,
+    #     overwrite=True,
+    # )
+    # plotms(
+    #     vis=msname,
+    #     field=tar,
+    #     xaxis="u",
+    #     yaxis="v",
+    #     plotfile=f"{img_dir}/{epoch}_{tar}_uv.png",
+    #     overwrite=True,
+    #     showgui=False,
+    # )
     return
 
 

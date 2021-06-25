@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # This script calls process.py with all functions to analyse ATCA data and executes them in order, only changes needed to script should just be what stepyou need/commenting out whatever you don't need
 # By K.Ross 19/5/21
 
@@ -95,7 +95,7 @@ process.calibrate_ms(src_dir, msname, epoch, ATCA_band, ref, pri, sec, tar, tar)
 process.applycal_ms(src_dir, msname, epoch, ATCA_band, pri, sec, tar)
 
 # Post cal inspection and flagging
-process.inspectpostcal_ms(img_dir, msname, epoch, ATCA_band, pri, sec, tar)
+# process.inspectpostcal_ms(img_dir, msname, epoch, ATCA_band, pri, sec, tar)
 process.flagcal_ms(img_dir, msname, epoch, ATCA_band, pri, sec)
 process.flagcaltar_ms(src_dir, img_dir, msname, epoch, ATCA_band, pri, sec, tar, tar)
 
