@@ -7,5 +7,28 @@
     "python.pythonPath": "/usr/bin/python3",
     "python.linting.pylintEnabled": false,
     "python.linting.pylamaEnabled": true,
+    "python.linting.pylintArgs": [
+        "--extension-pkg-whitelist=astropy.units",
+        "--max-line-length=200"
+    ],
     "python.linting.pylintUseMinimalCheckers": false,
+    "terminal.integrated.defaultProfile.linux": "bash",
+    "terminal.integrated.shellArgs.linux": ["--login"],
+    // "compilerOptions" : {
+    //     "allowSyntheticDefaultImports" : true,
+    //     "paths" : {
+    //         "ProcessDir" : "/data/ATCA/Code/bin",
+    //         "SEDFigDir" : ["/data/bin/AstroFig/*"],
+    //         "pythonpacks" : ["/usr/lib/python3/dist-packages/*"]
+    //     }
+    // },
+    "files.watcherExclude" : {
+        "/data/ATCA/J**/**" : true,
+        "/data/ATCA/data/**" : true,
+        "/data/ATCA/processing/**" : true
+    },
+    "terminal.integrated.inheritEnv": true,
+    "python.autoComplete.extraPaths": [
+        "/usr/lib/python3/dist-packages/"
+        ]
 }

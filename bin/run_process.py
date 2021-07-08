@@ -11,17 +11,14 @@ data_dir = str(os.environ["PROJECT"])
 epoch = str(os.environ["EPOCH"])
 ATCA_band = str(os.environ["BAND"])
 tar = str(os.environ["TARGET"])
+
+
 print(f"Target: {tar}\nEpoch: {epoch}\nATCA band: {ATCA_band}")
 
 # Setting sourcepar dictionary to measrue flux
 # Order of entries: secondary cal, (e1L, e1CX/e2L, e3L/e3CX/e4L/e4CX)
 source_dict = {
-    "J001513": [
-        "j2327-4510",
-        "j2327-4510",
-        "2327-459",
-        (0.1, 13, 0),
-    ],
+    "J001513": ["j2327-4510", "j2327-4510", "2327-459", (0.1, 13, 0)],
     "J015445": ["1bac0237-233", "back0237", "0237-233", (0.15, 14.1, -2.7)],
     "J020507": ["1hed0238-084", "head0238", "0238-084", (0.3, 2.6, 0.7)],
     "J021246": ["1bac0237-233", "back0237", "0237-233", (0.15, 12.9, -5.2)],
@@ -49,6 +46,7 @@ targetms = f"{data_dir}data/{epoch}_{ATCA_band}_{tar}_img.ms"
 tar_ms = f"{data_dir}data/{epoch}_{ATCA_band}_{tar}_selfcal.ms"
 ref = "CA04"
 sourcepar = source_dict[tar][3]
+export_pngs ="True"
 
 if epoch == "epoch1":
     if ATCA_band == "L":
@@ -77,35 +75,57 @@ print("Here we go! Time to analyse some ATCA data!")
 # Uncomment whichever step you don't need to do
 # Initial flagging and creating targetms
 # process.flag_ms(img_dir, visname, epoch, ATCA_band, pri, sec, tar, tar)
-process.split_ms(
-    src_dir,
-    img_dir,
-    visname,
-    msname,
-    epoch,
-    ATCA_band,
-    pri,
-    sec,
-    tar,
-    tar,
-)
-
+# process.split_ms(
+#     src_dir,
+#     img_dir,
+#     visname,
+#     msname,
+#     epoch,
+#     ATCA_band,
+#     pri,
+#     sec,
+#     tar,
+# )
+# 
 # Calibrate, and apply cal ms using primary and secondary
-process.calibrate_ms(src_dir, msname, epoch, ATCA_band, ref, pri, sec, tar, tar)
-process.applycal_ms(src_dir, msname, epoch, ATCA_band, pri, sec, tar)
+# process.calibrate_ms(src_dir, msname, epoch, ATCA_band, ref, pri, sec, tar)
+# process.applycal_ms(src_dir, msname, epoch, ATCA_band, pri, sec, tar)
 
-# Post cal inspection and flagging
-# process.inspectpostcal_ms(img_dir, msname, epoch, ATCA_band, pri, sec, tar)
-process.flagcal_ms(img_dir, msname, epoch, ATCA_band, pri, sec)
-process.flagcaltar_ms(src_dir, img_dir, msname, epoch, ATCA_band, pri, sec, tar, tar)
+# # Post cal inspection and flagging
+# process.flagcal_ms(img_dir, msname, epoch, ATCA_band, pri, sec)
+# process.flagcaltar_ms(src_dir, img_dir, msname, epoch, ATCA_band, pri, sec, tar)
 
-# Imaging of target
-process.imgmfs_ms(src_dir, msname, targetms, epoch, ATCA_band, n_spw, tar, tar)
-process.img_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar, tar)
-process.slefcal_ms(src_dir, src_dir, targetms, epoch, ATCA_band, n_spw, tar, tar)
+# # # Imaging of target
+# process.imgmfs_ms(src_dir, msname, targetms, epoch, ATCA_band, n_spw, tar)
+# process.img_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar)
+# process.slefcal_ms(src_dir, src_dir, targetms, epoch, ATCA_band, n_spw, tar)
 
-# Post image analysis: pbcor, measure flux
-process.pbcor_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar, tar)
-process.measureflux_ms(
-    src_dir, targetms, tar_ms, epoch, ATCA_band, sourcepar, n_spw, tar, tar
-)
+# # Post image analysis: pbcor, measure flux
+# process.pbcor_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar)
+# process.measureflux_ms(
+#     src_dir, targetms, tar_ms, epoch, ATCA_band, sourcepar, n_spw, tar
+# )
+
+# # Post analysis
+# process.export_fitspng(src_dir, n_spw, epoch, ATCA_band, tar)
+# process.inspection_plots(src_dir, img_dir, visname, msname, epoch, ATCA_band, pri, sec, tar)
+process.export_fitspng(src_dir, n_spw, epoch, ATCA_band, tar)
+# if export_pngs == "True":
+#     for i in range(0,n_spw):
+#         spw=str(i)
+#         # SETUP PROPERLY! put in plot functs so you can run via python not casapy
+#         print("Exporint png files")
+#         imagename = f"{src_dir}/images/{tar}_{epoch}_{ATCA_band}_{spw}"
+#         os.system(
+#             f'fits2bitmap -o {imagename}_preself.png -e 1  --stretch "log" {imagename}_preself.fits'
+#         )
+#         os.system(
+#             f'fits2bitmap -o {imagename}_self1.png -e 1 --stretch "log" {imagename}_self1.fits'
+#         )
+#         os.system(
+#             f'fits2bitmap -o {imagename}_self2.png -e 1 --stretch "log" {imagename}_self2.fits'
+#         )
+#         os.system(
+#             f'fits2bitmap -o {imagename}_self3.png -e 1 --stretch "log" {imagename}_self3.fits'
+#         )
+

@@ -1,19 +1,18 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # This script is to plot and analyse the ATCA data reduction
 # By K.Ross 20/1/21
 
-
+import pandas as pd
 import matplotlib.pyplot as plt
 import CFigTools.CustomFigure as CF
 import numpy as np
-import pandas as pd
 import gpscssmodels
+import os 
 
 plt.rcParams["axes.grid"] = False
 plt.rcParams["font.family"] = "serif"
 
-
-# Setting the frequencies (delete individual atca bands when you've processed everything )
+# Setting the frequencies (delete individual atca bands when processed)
 freq_atca = [
     1.200,
     1.454,
@@ -278,9 +277,9 @@ def plt_sed(
         atca_Cband_e1_pd = pd.read_csv(f"{directory}/{tar}/{tar}_epoch1_C.csv")
         atca_Cband_e1 = np.array(atca_Cband_e1_pd["# S_Cband"])
         err_atca_Cband_e1 = 0.03 * (atca_Cband_e1)
-        # atca_Xband_e1_pd = pd.read_csv(f"{directory}/{tar}/{tar}_epoch1_X.csv")
-        # atca_Xband_e1 = np.array(atca_Xband_e1_pd["# S_Xband"])
-        # err_atca_Xband_e1 = 0.03 * (atca_Xband_e1)
+        atca_Xband_e1_pd = pd.read_csv(f"{directory}/{tar}/{tar}_epoch1_X.csv")
+        atca_Xband_e1 = np.array(atca_Xband_e1_pd["# S_Xband"])
+        err_atca_Xband_e1 = 0.03 * (atca_Xband_e1)
         f.plot_spectrum(
             freq_lband,
             atca_Lband_e1,
@@ -296,13 +295,13 @@ def plt_sed(
             marker="o",
             marker_color="red",
         )
-        # f.plot_spectrum(
-        #     freq_xband,
-        #     atca_Xband_e1,
-        #     err_atca_Xband_e1,
-        #     marker="o",
-        #     marker_color="red",
-        # )
+        f.plot_spectrum(
+            freq_xband,
+            atca_Xband_e1,
+            err_atca_Xband_e1,
+            marker="o",
+            marker_color="red",
+        )
         # atca_e1_pd = pd.read_csv(f"{directory}/{tar}/{tar}_epoch1.csv")
         # atca_e1 = np.array(atca_e1_pd["col1"])
         # err_atca_e1 = 0.03 * (atca_e1)
@@ -353,9 +352,9 @@ def plt_sed(
         atca_Cband_e3_pd = pd.read_csv(f"{directory}/{tar}/{tar}_epoch3_C.csv")
         atca_Cband_e3 = np.array(atca_Cband_e3_pd["# S_Cband"])
         err_atca_Cband_e3 = 0.03 * (atca_Cband_e3)
-        atca_Xband_e3_pd = pd.read_csv(f"{directory}/{tar}/{tar}_epoch3_X.csv")
-        atca_Xband_e3 = np.array(atca_Xband_e3_pd["# S_Xband"])
-        err_atca_Xband_e3 = 0.03 * (atca_Xband_e3)
+        # atca_Xband_e3_pd = pd.read_csv(f"{directory}/{tar}/{tar}_epoch3_X.csv")
+        # atca_Xband_e3 = np.array(atca_Xband_e3_pd["# S_Xband"])
+        # err_atca_Xband_e3 = 0.03 * (atca_Xband_e3)
         f.plot_spectrum(
             freq_lband,
             atca_Lband_e3,
@@ -371,31 +370,31 @@ def plt_sed(
             marker="o",
             marker_color="C9",
         )
-        f.plot_spectrum(
-            freq_xband,
-            atca_Xband_e3,
-            err_atca_Xband_e3,
-            marker="o",
-            marker_color="C9",
-        )
+        # f.plot_spectrum(
+        #     freq_xband,
+        #     atca_Xband_e3,
+        #     err_atca_Xband_e3,
+        #     marker="o",
+        #     marker_color="C9",
+        # )
     if epoch4 is True:
-        # atca_Lband_e4_pd = pd.read_csv(f"{directory}/{tar}/{tar}_epoch4_L.csv")
-        # atca_Lband_e4 = np.array(atca_Lband_e4_pd["# S_Lband"])
-        # err_atca_Lband_e4 = 0.03 * (atca_Lband_e4)
+        atca_Lband_e4_pd = pd.read_csv(f"{directory}/{tar}/{tar}_epoch4_L.csv")
+        atca_Lband_e4 = np.array(atca_Lband_e4_pd["# S_Lband"])
+        err_atca_Lband_e4 = 0.03 * (atca_Lband_e4)
         atca_Cband_e4_pd = pd.read_csv(f"{directory}/{tar}/{tar}_epoch4_C.csv")
         atca_Cband_e4 = np.array(atca_Cband_e4_pd["# S_Cband"])
         err_atca_Cband_e4 = 0.03 * (atca_Cband_e4)
         atca_Xband_e4_pd = pd.read_csv(f"{directory}/{tar}/{tar}_epoch4_X.csv")
         atca_Xband_e4 = np.array(atca_Xband_e4_pd["# S_Xband"])
         err_atca_Xband_e4 = 0.03 * (atca_Xband_e4)
-        # f.plot_spectrum(
-        #     freq_lband,
-        #     atca_Lband_e4,
-        #     err_atca_Lband_e4,
-        #     marker="o",
-        #     label="Epoch4",
-        #     marker_color="C4",
-        # )
+        f.plot_spectrum(
+            freq_lband,
+            atca_Lband_e4,
+            err_atca_Lband_e4,
+            marker="o",
+            label="Epoch4",
+            marker_color="C4",
+        )
         f.plot_spectrum(
             freq_cband,
             atca_Cband_e4,
@@ -525,46 +524,13 @@ def plt_sed(
             model_max=None,
             alpha_patch=0.2,
         )
-    f.format()
-    f.legend(loc="lower center")
+
+    vip = np.array(master_pop_pd.query(f"Name=='{name}'")["VIP"])
+    moss = np.array(master_pop_pd.query(f"Name=='{name}'")["MOSS"])
+    f.legend(vip, moss, loc="lower center")
     f.title(name)
     f.format(xunit="GHz")
-    f.save(f"{directory}/SEDs/{tar}_sed", ext="png")
-    return
 
-
-def plt_sn(directory, sn, self_cal_round):
-    fig = plt.figure(1, figsize=(15, 10))
-    gs = plt.GridSpec(1, 1)
-    ax = fig.subplot(gs[0])
-
-    ax.scatter(self_cal_round, sn, color="k")
-    plt.xlabel("Self Cal Round", fontsize=20)
-    plt.ylabel("local_rms", fontsize=20)
-    for axis in ["top", "bottom", "left", "right"]:
-        ax.spines[axis].set_linewidth(2)
-
-    ax.tick_params(
-        axis="both", which="both", direction="in", labelsize=20, top="on", right="on"
-    )
-    ax.tick_params(
-        axis="both",
-        which="major",
-        direction="in",
-        length=8,
-        width=1.5,
-        top="on",
-        right="on",
-    )
-    ax.tick_params(
-        axis="both",
-        which="minor",
-        direction="in",
-        length=5,
-        width=1.5,
-        top="on",
-        right="on",
-    )
-    plt.savefig(directory, bbox_inches="tight")
-    plt.clf()
+    if save_fig is True:
+        f.save(f"{directory}/SEDs/{tar}_sed", ext="png")
     return

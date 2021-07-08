@@ -3,9 +3,9 @@
 # By K.Ross 
 
 PROJECT=/data/ATCA/Code/
-EPOCH=epoch2
-BAND=L
-TARGET=J042502
+EPOCH=epoch1
+BAND=C
+TARGET=J223933
 
 export PROJECT
 export EPOCH
@@ -14,4 +14,7 @@ export TARGET
 
 cd $PROJECT/processing/
 
-python3 $PROJECT/bin/run_process.py 
+
+/data/bin/casa-6.2.0-124/bin/python3 ${PROJECT}bin/run_process.py 
+
+

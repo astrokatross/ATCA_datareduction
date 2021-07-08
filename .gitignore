@@ -12,3 +12,4 @@ processing/setjy.last
 .vscode/settings.json
 get-pip.py
 setup.cfg
+bin/.vscode/settings.json

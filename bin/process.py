@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # This is a script with functions needed for the data reduction, use run_process.py to actually analyse
 # Updated from B. Quici script By K.Ross 19/5/21
 
@@ -21,11 +21,38 @@ from casatasks import (
     impbcor,
     split,
     uvmodelfit,
+    exportfits,
 )
 import numpy as np
+from casaplotms import plotms
+from astropy.io import fits 
+import matplotlib.pyplot as plt
+from casatools import image as IA
+from astropy.wcs import WCS
+import matplotlib.pyplot as plt
+
+ia = IA()
+plt.rcParams["font.family"] = "serif"
+
+def buildImage(imname='',chan=0):
+    ia.open(imname)
+    pix = ia.getchunk()[:,:,0,chan]
+    csys = ia.coordsys()
+    ia.close()
+
+    rad_to_deg =  180/np.pi
+    w = WCS(naxis=2)
+    w.wcs.crpix = csys.referencepixel()['numeric'][0:2]
+    w.wcs.cdelt = csys.increment()['numeric'][0:2]*rad_to_deg
+    w.wcs.crval = csys.referencevalue()['numeric'][0:2]*rad_to_deg
+    w.wcs.ctype = ['RA---SIN', 'DEC--SIN']
+
+    return pix, w
 
 
-def flag_ms(img_dir, visname, epoch, ATCA_band, pri, sec, tar, tar_nm):
+
+
+def flag_ms(img_dir, visname, epoch, ATCA_band, pri, sec, tar):
     flagmanager(vis=visname, mode="save", versionname="before_online_flagging")
     print("Flagging antennae affected by shadowing...")
     flagdata(vis=visname, mode="shadow", tolerance=0.0, flagbackup=False)
@@ -78,39 +105,6 @@ def flag_ms(img_dir, visname, epoch, ATCA_band, pri, sec, tar, tar_nm):
         combinescans=False,
         ntime="scan",
     )
-    # plotms(
-    #     vis={visname},
-    #     field={pri},
-    #     xaxis="{channel}",
-    #     yaxis="amp",
-    #     correlation="xy,yx",
-    #     ydatacolumn="data",
-    #     plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{pri}_ampvschan_postRFI_flag.png",
-    #     showgui=True,
-    #     overwrite=True,
-    # )
-    # plotms(
-    #     vis=visname,
-    #     field=sec,
-    #     xaxis="channel",
-    #     yaxis="amp",
-    #     correlation="xy,yx",
-    #     ydatacolumn="data",
-    #     plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{sec}_ampvschan_postRFI_flag.png",
-    #     showgui=True,
-    #     overwrite=True,
-    # )
-    # plotms(
-    #     vis=visname,
-    #     field="J001513",
-    #     xaxis="channel",
-    #     yaxis="amp",
-    #     correlation="xy,yx",
-    #     ydatacolumn="data",
-    #     plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{tar_nm}_ampvschan_postRFI_flag.png",
-    #     showgui=False,
-    #     overwrite=True,
-    # )
     return
 
 
@@ -124,7 +118,6 @@ def split_ms(
     pri,
     sec,
     tar,
-    tar_nm,
 ):
     os.system(f"rm -r {msname}")
     os.system(f"rm -r {msname}.flagversions")
@@ -140,38 +133,14 @@ def split_ms(
     )
     listobs(
         vis=msname,
-        listfile=f"{src_dir}/listobs_{epoch}_{ATCA_band}_{tar_nm}.dat",
+        listfile=f"{src_dir}/listobs_{epoch}_{ATCA_band}_{tar}.dat",
         overwrite=True,
     )
     flagmanager(vis=msname, mode="save", versionname="after_transform")
-    # plotms(
-    #     vis=msname,
-    #     field=pri,
-    #     xaxis="frequency",
-    #     yaxis="amp",
-    #     correlation="xx,yy",
-    #     ydatacolumn="data",
-    #     coloraxis="spw",
-    #     plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{pri}_ampvsfreq_pre_cal.png",
-    #     showgui=False,
-    #     overwrite=True,
-    # )
-    # plotms(
-    #     vis=msname,
-    #     field=sec,
-    #     xaxis="frequency",
-    #     yaxis="amp",
-    #     correlation="xx,yy",
-    #     ydatacolumn="data",
-    #     coloraxis="spw",
-    #     plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{sec}_ampvsfreq_pre_cal.png",
-    #     showgui=False,
-    #     overwrite=True,
-    # )
     return
 
 
-def calibrate_ms(src_dir, msname, epoch, ATCA_band, ref, pri, sec, tar, tar_nm):
+def calibrate_ms(src_dir, msname, epoch, ATCA_band, ref, pri, sec, tar):
     os.system(f"rm -r {src_dir}/cal_tables/cal_{pri}_{epoch}_{ATCA_band}.F0")
     setjy(
         vis=msname,
@@ -298,46 +267,6 @@ def applycal_ms(src_dir, msname, epoch, ATCA_band, pri, sec, tar):
     return
 
 
-def inspectpostcal_ms(img_dir, msname, epoch, ATCA_band, pri, sec, tar):
-    # plotms(
-    #     vis=msname,
-    #     field=pri,
-    #     xaxis="frequency",
-    #     yaxis="amp",
-    #     correlation="xx,yy",
-    #     ydatacolumn="corrected",
-    #     coloraxis="spw",
-    #     plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{pri}_ampvsfreq_post_cal.png",
-    #     showgui=False,
-    #     overwrite=True,
-    # )
-    # plotms(
-    #     vis=msname,
-    #     field=sec,
-    #     xaxis="frequency",
-    #     yaxis="amp",
-    #     correlation="xx,yy",
-    #     ydatacolumn="corrected",
-    #     coloraxis="spw",
-    #     plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{sec}_ampvsfreq_post_cal.png",
-    #     showgui=False,
-    #     overwrite=True,
-    # )
-    # plotms(
-    #     vis=msname,
-    #     field=pri,
-    #     xaxis="frequency",
-    #     yaxis="amp",
-    #     correlation="xx,yy",
-    #     ydatacolumn="corrected",
-    #     coloraxis="baseline",
-    #     plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{pri}_ampvsfreqbaseline_post_cal.png",
-    #     showgui=False,
-    #     overwrite=True,
-    # )
-    return
-
-
 def flagcal_ms(img_dir, msname, epoch, ATCA_band, pri, sec):
     flagmanager(vis=msname, mode="save", versionname="before_rflag")
     flagdata(
@@ -389,46 +318,11 @@ def flagcal_ms(img_dir, msname, epoch, ATCA_band, pri, sec):
         combinescans=True,
         ntime="9999999min",
     )
-    # plotms(
-    #     vis=msname,
-    #     field=pri,
-    #     xaxis="frequency",
-    #     yaxis="amp",
-    #     correlation="xx,yy",
-    #     ydatacolumn="corrected",
-    #     coloraxis="spw",
-    #     plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{pri}_ampvsfreq_post_RFIflag.png",
-    #     showgui=False,
-    #     overwrite=True,
-    # )
-    # plotms(
-    #     vis=msname,
-    #     field=sec,
-    #     xaxis="frequency",
-    #     yaxis="amp",
-    #     correlation="xx,yy",
-    #     ydatacolumn="corrected",
-    #     coloraxis="spw",
-    #     plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{sec}_ampvsfreq_post_RFIflag.png",
-    #     showgui=False,
-    #     overwrite=True,
-    # )
+
     return
 
 
-def flagcaltar_ms(src_dir, img_dir, msname, epoch, ATCA_band, pri, sec, tar, tar_nm):
-    # plotms(
-    #     vis=msname,
-    #     field=tar,
-    #     xaxis="frequency",
-    #     yaxis="amp",
-    #     correlation="xx,yy",
-    #     ydatacolumn="data",
-    #     coloraxis="spw",
-    #     plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{tar}_ampvsfreq_pre_cal.png",
-    #     showgui=False,
-    #     overwrite=True,
-    # )
+def flagcaltar_ms(src_dir, img_dir, msname, epoch, ATCA_band, pri, sec, tar):
     applycal(
         vis=msname,
         gaintable=[
@@ -440,21 +334,6 @@ def flagcaltar_ms(src_dir, img_dir, msname, epoch, ATCA_band, pri, sec, tar, tar
         parang=True,
         flagbackup=False,
     )
-    print(f"Inspecting {tar} amp vs freq Before RFI flagging")
-    # plotms(
-    #     vis=msname,
-    #     field=tar,
-    #     xaxis="frequency",
-    #     yaxis="amp",
-    #     correlation="xx,yy",
-    #     ydatacolumn="corrected",
-    #     coloraxis="spw",
-    #     plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{tar_nm}_ampvsfreq_post_cal.png".format(
-    #         epoch, ATCA_band, tar_nm
-    #     ),
-    #     showgui=False,
-    #     overwrite=True,
-    # )
     flagdata(
         vis=msname,
         mode="rflag",
@@ -471,42 +350,22 @@ def flagcaltar_ms(src_dir, img_dir, msname, epoch, ATCA_band, pri, sec, tar, tar
         extendflags=False,
         flagbackup=False,
     )
-    print(f"Inspecting {tar} amp vs freq AFTER RFI flagging")
-    # plotms(
-    #     vis=msname,
-    #     field=tar,
-    #     xaxis="frequency",
-    #     yaxis="amp",
-    #     correlation="xx,yy",
-    #     ydatacolumn="corrected",
-    #     coloraxis="spw",
-    #     plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{tar_nm}_ampvsfreq_post_RFIflag.png",
-    #     showgui=False,
-    #     overwrite=True,
-    # )
-    # plotms(
-    #     vis=msname,
-    #     field=tar,
-    #     xaxis="u",
-    #     yaxis="v",
-    #     plotfile=f"{img_dir}/{epoch}_{tar}_uv.png",
-    #     overwrite=True,
-    #     showgui=False,
-    # )
     return
 
 
-def imgmfs_ms(src_dir, msname, targetms, epoch, ATCA_band, n_spw, tar, tar_nm):
+def imgmfs_ms(src_dir, msname, targetms, epoch, ATCA_band, n_spw, tar):
     mode = "mfs"
     nterms = 2
     niter = 3000
     if ATCA_band == "L":
-        imsize = 2240
+        imsize = 2250
+        cell = "1arcsec"
     if ATCA_band == "C":
         imsize = 1120
+        cell = "0.1arcsec"
     if ATCA_band == "X":
         imsize = 960
-    cell = "0.1arcsec"
+        cell = "0.1arcsec"
     stokes = "I"
     weighting = "briggs"
     robust = 0.5
@@ -527,11 +386,11 @@ def imgmfs_ms(src_dir, msname, targetms, epoch, ATCA_band, n_spw, tar, tar_nm):
     )
     listobs(
         vis=targetms,
-        listfile=f"{src_dir}/listobs_{epoch}_{ATCA_band}_{tar_nm}_preimage.dat",
+        listfile=f"{src_dir}/listobs_{epoch}_{ATCA_band}_{tar}_preimage.dat",
         overwrite=True,
     )
-    os.system(f"rm -r {src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_mfs*")
-    imagename = f"{src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_mfs"
+    os.system(f"rm -r {src_dir}/casa_files/{tar}_{epoch}_{ATCA_band}_mfs*")
+    imagename = f"{src_dir}/casa_files/{tar}_{epoch}_{ATCA_band}_mfs"
     flagmanager(vis=targetms, mode="save", versionname="before_selfcal")
     print("Initiating interactive cleaning on {0}".format(imagename))
 
@@ -578,7 +437,7 @@ def imgmfs_ms(src_dir, msname, targetms, epoch, ATCA_band, n_spw, tar, tar_nm):
     return
 
 
-def img_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar, tar_nm):
+def img_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar):
     print(
         "+ + + + + + + + + + + + + + + + +\n+  Preself Imaging  +\n+ + + + + + + + + + + + + + + + +"
     )
@@ -586,11 +445,14 @@ def img_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar, tar_nm):
     nterms = 2
     niter = 3000
     if ATCA_band == "L":
-        imsize = 2240
+        imsize = 2250
+        cell = "1arcsec"
     if ATCA_band == "C":
         imsize = 1120
+        cell = "0.1arcsec"
     if ATCA_band == "X":
         imsize = 960
+        cell = "0.1arcsec"
     cell = "0.1arcsec"
     stokes = "I"
     weighting = "briggs"
@@ -603,14 +465,14 @@ def img_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar, tar_nm):
         spw = str(i)
         print("Cleaning on band: " + str(spw))
         os.system(
-            f"rm -r {src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_{spw}_preself*"
+            f"rm -r {src_dir}/casa_files/{tar}_{epoch}_{ATCA_band}_{spw}_preself*"
         )
-        imagename = f"{src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_{spw}"
+        imagename = f"{src_dir}/casa_files/{tar}_{epoch}_{ATCA_band}_{spw}"
         tclean(
             vis=targetms,
             imagename=imagename + "_preself",
             selectdata=True,
-            mask=f"{src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_mfs.mask",
+            mask=f"{src_dir}/casa_files/{tar}_{epoch}_{ATCA_band}_mfs.mask",
             spw=spw,
             deconvolver="mtmfs",
             gain=gain,
@@ -653,7 +515,7 @@ def img_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar, tar_nm):
     return
 
 
-def slefcal_ms(src_dir, process_dir, targetms, epoch, ATCA_band, n_spw, tar, tar_nm):
+def slefcal_ms(src_dir, process_dir, targetms, epoch, ATCA_band, n_spw, tar):
     print(
         "+ + + + + + + + + + + + + + + + +\n+  Self Cal Round 1  +\n+ + + + + + + + + + + + + + + + +"
     )
@@ -661,8 +523,8 @@ def slefcal_ms(src_dir, process_dir, targetms, epoch, ATCA_band, n_spw, tar, tar
     nterms = 2
     niter = 3000
     if ATCA_band == "L":
-        imsize = 2240
-        solint = "240s"
+        imsize = 2250
+        solint = "60s"
         minsnr = 3.0
         minblperant = 3
     if ATCA_band == "C":
@@ -707,25 +569,14 @@ def slefcal_ms(src_dir, process_dir, targetms, epoch, ATCA_band, n_spw, tar, tar
 
     for i in range(0, n_spw):
         spw = str(i)
-        # os.system(
-        #     f"mv {src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_{spw}_preself.psf.tt0 {src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_{spw}_self1.psf.tt0 "
-        # )
-        # os.system(
-        #     f"mv {src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_{spw}_preself.psf.tt1 {src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_{spw}_self1.psf.tt1 "
-        # )
-        # os.system(
-        #     f"mv {src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_{spw}_preself.psf.tt2 {src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_{spw}_self1.psf.tt2 "
-        # )
-        os.system(
-            f"rm -r {src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_{spw}_self1*"
-        )
+        os.system(f"rm -r {src_dir}/casa_files/{tar}_{epoch}_{ATCA_band}_{spw}_self1*")
         print("Cleaning on band: " + str(spw))
-        imagename = f"{src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_{spw}"
+        imagename = f"{src_dir}/casa_files/{tar}_{epoch}_{ATCA_band}_{spw}"
         tclean(
             vis=targetms,
             imagename=imagename + "_self1",
             selectdata=True,
-            mask=f"{src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_mfs.mask",
+            mask=f"{src_dir}/casa_files/{tar}_{epoch}_{ATCA_band}_mfs.mask",
             spw=spw,
             deconvolver="mtmfs",
             gain=gain,
@@ -795,25 +646,14 @@ def slefcal_ms(src_dir, process_dir, targetms, epoch, ATCA_band, n_spw, tar, tar
     flagmanager(vis=targetms, mode="save", versionname="post self2")
     for i in range(0, n_spw):
         spw = str(i)
-        # os.system(
-        #     f"mv {src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_{spw}_self1.psf.tt0 {src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_{spw}_self2.psf.tt0 "
-        # )
-        # os.system(
-        #     f"mv {src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_{spw}_self1.psf.tt1 {src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_{spw}_self2.psf.tt1 "
-        # )
-        # os.system(
-        #     f"mv {src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_{spw}_self1.psf.tt2 {src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_{spw}_self2.psf.tt2 "
-        # )
-        os.system(
-            f"rm -r {src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_{spw}_self2*"
-        )
+        os.system(f"rm -r {src_dir}/casa_files/{tar}_{epoch}_{ATCA_band}_{spw}_self2*")
         print("Cleaning on band: " + str(spw))
-        imagename = f"{src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_{spw}"
+        imagename = f"{src_dir}/casa_files/{tar}_{epoch}_{ATCA_band}_{spw}"
         tclean(
             vis=targetms,
             imagename=imagename + "_self2",
             selectdata=True,
-            mask=f"{src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_mfs.mask",
+            mask=f"{src_dir}/casa_files/{tar}_{epoch}_{ATCA_band}_mfs.mask",
             spw=spw,
             deconvolver="mtmfs",
             gain=gain,
@@ -887,25 +727,14 @@ def slefcal_ms(src_dir, process_dir, targetms, epoch, ATCA_band, n_spw, tar, tar
     flagmanager(vis=targetms, mode="save", versionname="post self3")
     for i in range(0, n_spw):
         spw = str(i)
-        os.system(
-            f"rm -r {src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_{spw}_self3*"
-        )
-        # os.system(
-        #     f"mv {src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_{spw}_self2.psf.tt0 {src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_{spw}_self3.psf.tt0 "
-        # )
-        # os.system(
-        #     f"mv {src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_{spw}_self2.psf.tt1 {src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_{spw}_self3.psf.tt1 "
-        # )
-        # os.system(
-        #     f"mv {src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_{spw}_self2.psf.tt2 {src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_{spw}_self3.psf.tt2 "
-        # )
+        os.system(f"rm -r {src_dir}/casa_files/{tar}_{epoch}_{ATCA_band}_{spw}_self3*")
         print("Cleaning on band: " + str(spw))
-        imagename = f"{src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_{spw}"
+        imagename = f"{src_dir}/casa_files/{tar}_{epoch}_{ATCA_band}_{spw}"
         tclean(
             vis=targetms,
             imagename=imagename + "_self3",
             selectdata=True,
-            mask=f"{src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_mfs.mask",
+            mask=f"{src_dir}/casa_files/{tar}_{epoch}_{ATCA_band}_mfs.mask",
             spw=spw,
             deconvolver="mtmfs",
             gain=gain,
@@ -948,10 +777,10 @@ def slefcal_ms(src_dir, process_dir, targetms, epoch, ATCA_band, n_spw, tar, tar
     return
 
 
-def pbcor_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar, tar_nm):
+def pbcor_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar):
     for i in range(0, n_spw):
         spw = str(i)
-        imagename = f"{src_dir}/casa_files/{tar_nm}_{epoch}_{ATCA_band}_{spw}"
+        imagename = f"{src_dir}/casa_files/{tar}_{epoch}_{ATCA_band}_{spw}"
         os.system("rm -r " + imagename + "_pbcor")
         impbcor(
             imagename=f"{imagename}_self3.image.tt0",
@@ -963,16 +792,14 @@ def pbcor_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar, tar_nm):
     return
 
 
-def measureflux_ms(
-    src_dir, targetms, tar_ms, epoch, ATCA_band, sourcepar, n_spw, tar, tar_nm
-):
+def measureflux_ms(src_dir, targetms, tar_ms, epoch, ATCA_band, sourcepar, n_spw, tar):
     os.system(f"rm -r {tar_ms}")
     split(vis=targetms, datacolumn="corrected", outputvis=tar_ms)
     int_flux_c = []
     for i in range(n_spw):
         spw = str(i)
         # If things look like theyre not working, then check the source position! Chances are it can't find the source too far away from the phase centre
-        outfile = f"{src_dir}/casa_files/{tar_nm}_{ATCA_band}_{epoch}_{spw}.cl"
+        outfile = f"{src_dir}/casa_files/{tar}_{ATCA_band}_{epoch}_{spw}.cl"
         os.system(f"rm -r {outfile}")
         uvmodelfit(
             vis=tar_ms,
@@ -989,7 +816,7 @@ def measureflux_ms(
         print(flux)
     if ATCA_band == "C":
         np.savetxt(
-            f"{src_dir}/{tar_nm}_{epoch}_{ATCA_band}.csv",
+            f"{src_dir}/{tar}_{epoch}_{ATCA_band}.csv",
             int_flux_c,
             delimiter=",",
             header="S_Cband",
@@ -997,7 +824,7 @@ def measureflux_ms(
         print(int_flux_c)
     elif ATCA_band == "X":
         np.savetxt(
-            f"{src_dir}/{tar_nm}_{epoch}_{ATCA_band}.csv",
+            f"{src_dir}/{tar}_{epoch}_{ATCA_band}.csv",
             int_flux_c,
             delimiter=",",
             header="S_Xband",
@@ -1006,10 +833,240 @@ def measureflux_ms(
     elif ATCA_band == "L":
         int_flux_l = np.array(int_flux_c[::-1])
         np.savetxt(
-            f"{src_dir}/{tar_nm}_{epoch}_{ATCA_band}.csv",
+            f"{src_dir}/{tar}_{epoch}_{ATCA_band}.csv",
             int_flux_l,
             header="S_Lband",
             delimiter=",",
         )
         print(int_flux_l)
+    return
+
+
+def inspection_plots(src_dir, img_dir, visname, msname, epoch, ATCA_band, pri, sec, tar):
+    plotms(
+        vis=visname,
+        field=pri,
+        xaxis="channel",
+        yaxis="amp",
+        correlation="xy,yx",
+        ydatacolumn="data",
+        plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{pri}_ampvschan_postRFI_flag.png",
+        showgui=False,
+        overwrite=True,
+    )
+    plotms(
+        vis=visname,
+        field=sec,
+        xaxis="channel",
+        yaxis="amp",
+        correlation="xy,yx",
+        ydatacolumn="data",
+        plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{sec}_ampvschan_postRFI_flag.png",
+        showgui=False,
+        overwrite=True,
+    )
+    plotms(
+        vis=visname,
+        field=tar,
+        xaxis="channel",
+        yaxis="amp",
+        correlation="xy,yx",
+        ydatacolumn="data",
+        plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{tar}_ampvschan_postRFI_flag.png",
+        showgui=False,
+        overwrite=True,
+    )
+    plotms(
+        vis=msname,
+        field=pri,
+        xaxis="frequency",
+        yaxis="amp",
+        correlation="xx,yy",
+        ydatacolumn="data",
+        coloraxis="spw",
+        plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{pri}_ampvsfreq_pre_cal.png",
+        showgui=False,
+        overwrite=True,
+    )
+    plotms(
+        vis=msname,
+        field=sec,
+        xaxis="frequency",
+        yaxis="amp",
+        correlation="xx,yy",
+        ydatacolumn="data",
+        coloraxis="spw",
+        plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{sec}_ampvsfreq_pre_cal.png",
+        showgui=False,
+        overwrite=True,
+    )
+    plotms(
+        vis=msname,
+        field=pri,
+        xaxis="frequency",
+        yaxis="amp",
+        correlation="xx,yy",
+        ydatacolumn="corrected",
+        coloraxis="spw",
+        plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{pri}_ampvsfreq_post_cal.png",
+        showgui=False,
+        overwrite=True,
+    )
+    plotms(
+        vis=msname,
+        field=sec,
+        xaxis="frequency",
+        yaxis="amp",
+        correlation="xx,yy",
+        ydatacolumn="corrected",
+        coloraxis="spw",
+        plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{sec}_ampvsfreq_post_cal.png",
+        showgui=False,
+        overwrite=True,
+    )
+    plotms(
+        vis=msname,
+        field=pri,
+        xaxis="frequency",
+        yaxis="amp",
+        correlation="xx,yy",
+        ydatacolumn="corrected",
+        coloraxis="baseline",
+        plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{pri}_ampvsfreqbaseline_post_cal.png",
+        showgui=False,
+        overwrite=True,
+    )
+    plotms(
+        vis=msname,
+        field=pri,
+        xaxis="frequency",
+        yaxis="amp",
+        correlation="xx,yy",
+        ydatacolumn="corrected",
+        coloraxis="spw",
+        plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{pri}_ampvsfreq_post_RFIflag.png",
+        showgui=False,
+        overwrite=True,
+    )
+    plotms(
+        vis=msname,
+        field=sec,
+        xaxis="frequency",
+        yaxis="amp",
+        correlation="xx,yy",
+        ydatacolumn="corrected",
+        coloraxis="spw",
+        plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{sec}_ampvsfreq_post_RFIflag.png",
+        showgui=False,
+        overwrite=True,
+    )
+    plotms(
+        vis=msname,
+        field=tar,
+        xaxis="frequency",
+        yaxis="amp",
+        correlation="xx,yy",
+        ydatacolumn="corrected",
+        coloraxis="spw",
+        plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{tar}_ampvsfreq_post_cal.png",
+        showgui=False,
+        overwrite=True,
+    )
+    plotms(
+        vis=msname,
+        field=tar,
+        xaxis="frequency",
+        yaxis="amp",
+        correlation="xx,yy",
+        ydatacolumn="data",
+        coloraxis="spw",
+        plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{tar}_ampvsfreq_pre_cal.png",
+        showgui=False,
+        overwrite=True,
+    )
+    plotms(
+        vis=msname,
+        field=tar,
+        xaxis="frequency",
+        yaxis="amp",
+        correlation="xx,yy",
+        ydatacolumn="corrected",
+        coloraxis="spw",
+        plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{tar}_ampvsfreq_post_RFIflag.png",
+        showgui=False,
+        overwrite=True,
+    )
+    plotms(
+        vis=msname,
+        field=tar,
+        xaxis="u",
+        yaxis="v",
+        plotfile=f"{img_dir}/{epoch}_{tar}_uv.png",
+        overwrite=True,
+        showgui=False,
+    )
+    plotms(
+        vis=f"{src_dir}/pcal1",
+        field=tar,
+        plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{tar}_pcal1.png",
+        overwrite=True,
+        showgui=False,
+    )
+    plotms(
+        vis=f"{src_dir}/pcal2",
+        field=tar,
+        plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{tar}_pcal2.png",
+        overwrite=True,
+        showgui=False,
+    )
+    plotms(
+        vis=f"{src_dir}/pcal3",
+        field=tar,
+        plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{tar}_pcal3.png",
+        overwrite=True,
+        showgui=False,
+    )
+    return
+
+
+def export_fitspng(src_dir, n_spw, epoch, ATCA_band, tar):
+    for i in range(0, n_spw):
+        spw = str(i)
+        imagename = f"{tar}_{epoch}_{ATCA_band}_{spw}"
+        exportfits(
+            imagename=f"{src_dir}/casa_files/{imagename}_preself.image.tt0",
+            fitsimage=f"{src_dir}/images/{imagename}_preself.fits",
+            overwrite=True,
+        )
+        exportfits(
+            imagename=f"{src_dir}/casa_files/{imagename}_self1.image.tt0",
+            fitsimage=f"{src_dir}/images/{imagename}_self1.fits",
+            overwrite=True,
+        )
+        exportfits(
+            imagename=f"{src_dir}/casa_files/{imagename}_self2.image.tt0",
+            fitsimage=f"{src_dir}/images/{imagename}_self2.fits",
+            overwrite=True,
+        )
+        exportfits(
+            imagename=f"{src_dir}/casa_files/{imagename}_self3.image.tt0",
+            fitsimage=f"{src_dir}/images/{imagename}_self3.fits",
+            overwrite=True,
+        )
+        extensions = ["preself", "self1","self2", "self3"]
+        for ext in extensions:
+            imname = f"{src_dir}/casa_files/{imagename}_{ext}.image.tt0"
+            plt.subplots(1,1, figsize=(18,12))
+            pix, w = buildImage(imname)
+            ax = plt.subplot(1, 1, 1, projection=w)
+            p1 = int(pix.shape[0]*0.25)
+            p2 = int(pix.shape[0]*0.75)
+
+            im = ax.imshow(pix[p1:p2,p1:p2].transpose(), origin='lower',  cmap=plt.cm.plasma)
+            plt.colorbar(im, ax=ax)
+            ax.set_xlabel('Right Ascension', fontsize=30)
+            ax.set_ylabel('Declination',fontsize=30)
+            plt.title(f"{imagename}_{ext}", fontsize=30)
+            plt.savefig(f"{src_dir}/images/{imagename}_{ext}.png")
+            plt.close()
     return
