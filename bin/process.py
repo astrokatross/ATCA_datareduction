@@ -30,6 +30,7 @@ import matplotlib.pyplot as plt
 from casatools import image as IA
 from astropy.wcs import WCS
 import matplotlib.pyplot as plt
+from astropy.visualization import simple_norm
 
 ia = IA()
 plt.rcParams["font.family"] = "serif"
@@ -156,6 +157,7 @@ def calibrate_ms(src_dir, msname, epoch, ATCA_band, ref, pri, sec, tar):
         field=pri,
         refant=ref,
         gaintype="G",
+        combine="spw,scan",
         calmode="p",
         parang=True,
         minblperant=3,
@@ -355,23 +357,26 @@ def flagcaltar_ms(src_dir, img_dir, msname, epoch, ATCA_band, pri, sec, tar):
 
 def imgmfs_ms(src_dir, msname, targetms, epoch, ATCA_band, n_spw, tar):
     mode = "mfs"
-    nterms = 2
+    nterms = 1
     niter = 3000
     if ATCA_band == "L":
         imsize = 2250
         cell = "1arcsec"
+        threshold = "2e-2Jy"
     if ATCA_band == "C":
-        imsize = 1120
-        cell = "0.1arcsec"
+        imsize = 2250
+        cell = "0.5arcsec"
+        threshold = "2e-2Jy"
     if ATCA_band == "X":
-        imsize = 960
-        cell = "0.1arcsec"
+        imsize = 1152
+        cell = "0.5arcsec"
+        threshold = "2e-2Jy"
     stokes = "I"
     weighting = "briggs"
     robust = 0.5
     interactive = True
     gain = 0.01
-    threshold = "2e-2Jy"
+    
 
     os.system(f"rm -r {targetms}*")
     # split(vis=msname, datacolumn='corrected', field=tar, outputvis=targetms)
@@ -397,8 +402,6 @@ def imgmfs_ms(src_dir, msname, targetms, epoch, ATCA_band, n_spw, tar):
     tclean(
         vis=targetms,
         imagename=imagename,
-        selectdata=True,
-        deconvolver="mtmfs",
         gain=gain,
         specmode=mode,
         nterms=nterms,
@@ -416,8 +419,6 @@ def imgmfs_ms(src_dir, msname, targetms, epoch, ATCA_band, n_spw, tar):
     tclean(
         vis=targetms,
         imagename=imagename,
-        selectdata=True,
-        deconvolver="mtmfs",
         gain=gain,
         specmode=mode,
         nterms=nterms,
@@ -442,18 +443,17 @@ def img_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar):
         "+ + + + + + + + + + + + + + + + +\n+  Preself Imaging  +\n+ + + + + + + + + + + + + + + + +"
     )
     mode = "mfs"
-    nterms = 2
+    nterms = 1
     niter = 3000
     if ATCA_band == "L":
         imsize = 2250
         cell = "1arcsec"
     if ATCA_band == "C":
-        imsize = 1120
-        cell = "0.1arcsec"
+        imsize = 2250
+        cell = "0.5arcsec"
     if ATCA_band == "X":
-        imsize = 960
-        cell = "0.1arcsec"
-    cell = "0.1arcsec"
+        imsize = 1152
+        cell = "0.5arcsec"
     stokes = "I"
     weighting = "briggs"
     robust = 0.5
@@ -474,7 +474,6 @@ def img_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar):
             selectdata=True,
             mask=f"{src_dir}/casa_files/{tar}_{epoch}_{ATCA_band}_mfs.mask",
             spw=spw,
-            deconvolver="mtmfs",
             gain=gain,
             specmode=mode,
             nterms=nterms,
@@ -495,7 +494,6 @@ def img_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar):
             selectdata=True,
             mask="",
             spw=spw,
-            deconvolver="mtmfs",
             gain=gain,
             specmode=mode,
             nterms=nterms,
@@ -512,6 +510,20 @@ def img_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar):
             calcres=False,
             calcpsf=False,
         )
+        model_im=f"{src_dir}/casa_files/{tar}_{epoch}_{ATCA_band}_{spw}_preself.model"
+        plt.subplots(1,1, figsize=(18,12))
+        pix, w = buildImage(model_im)
+        ax = plt.subplot(1, 1, 1, projection=w)
+        p1 = int(pix.shape[0]*0.25)
+        p2 = int(pix.shape[0]*0.75)
+
+        im = ax.imshow(pix[p1:p2,p1:p2].transpose(), origin='lower',  cmap=plt.cm.plasma)
+        plt.colorbar(im, ax=ax)
+        ax.set_xlabel('Right Ascension', fontsize=30)
+        ax.set_ylabel('Declination',fontsize=30)
+        plt.title(f"{tar} {epoch} {ATCA_band} mask", fontsize=30)
+        plt.savefig(f"{src_dir}/casa_files/{tar}_{epoch}_{ATCA_band}_{spw}_preself_model.png")
+        plt.close()
     return
 
 
@@ -526,18 +538,21 @@ def slefcal_ms(src_dir, process_dir, targetms, epoch, ATCA_band, n_spw, tar):
         imsize = 2250
         solint = "60s"
         minsnr = 3.0
+        cell = "1arcsec"
         minblperant = 3
     if ATCA_band == "C":
-        imsize = 1120
+        imsize = 2250
         solint = "60s"
         minsnr = 3.0
         minblperant = 3
+        cell = "0.5arcsec"
     if ATCA_band == "X":
-        imsize = 960
+        imsize = 1152
         solint = "60s"
         minsnr = 3.0
         minblperant = 3
-    cell = "0.1arcsec"
+        cell = "0.5arcsec"
+
     stokes = "I"
     weighting = "briggs"
     robust = 0.5
@@ -551,7 +566,7 @@ def slefcal_ms(src_dir, process_dir, targetms, epoch, ATCA_band, n_spw, tar):
         caltable=f"{process_dir}/pcal1",
         combine="scan,spw",
         spwmap=[0] * n_spw,
-        gaintype="GSPLINE",
+        gaintype="G",
         calmode="p",
         solint=solint,
         minsnr=minsnr,
@@ -578,7 +593,7 @@ def slefcal_ms(src_dir, process_dir, targetms, epoch, ATCA_band, n_spw, tar):
             selectdata=True,
             mask=f"{src_dir}/casa_files/{tar}_{epoch}_{ATCA_band}_mfs.mask",
             spw=spw,
-            deconvolver="mtmfs",
+            startmodel=f"{src_dir}/casa_files/{tar}_{epoch}_{ATCA_band}_{spw}_preself.model",
             gain=gain,
             specmode=mode,
             nterms=nterms,
@@ -599,7 +614,6 @@ def slefcal_ms(src_dir, process_dir, targetms, epoch, ATCA_band, n_spw, tar):
             selectdata=True,
             mask="",
             spw=spw,
-            deconvolver="mtmfs",
             gain=gain,
             specmode=mode,
             nterms=nterms,
@@ -629,7 +643,7 @@ def slefcal_ms(src_dir, process_dir, targetms, epoch, ATCA_band, n_spw, tar):
         gaintable=f"{process_dir}/pcal1",
         combine="scan,spw",
         spwmap=[0] * n_spw,
-        gaintype="GSPLINE",
+        gaintype="G",
         calmode="p",
         solint=solint,
         minsnr=minsnr,
@@ -638,7 +652,7 @@ def slefcal_ms(src_dir, process_dir, targetms, epoch, ATCA_band, n_spw, tar):
     applycal(
         vis=targetms,
         gaintable=[f"{process_dir}/pcal1", f"{process_dir}/pcal2"],
-        spwmap=[0] * n_spw,
+        spwmap=[[0]*n_spw,[0]*n_spw],
         parang=True,
         applymode="calonly",
         flagbackup=False,
@@ -655,7 +669,7 @@ def slefcal_ms(src_dir, process_dir, targetms, epoch, ATCA_band, n_spw, tar):
             selectdata=True,
             mask=f"{src_dir}/casa_files/{tar}_{epoch}_{ATCA_band}_mfs.mask",
             spw=spw,
-            deconvolver="mtmfs",
+            startmodel=f"{src_dir}/casa_files/{tar}_{epoch}_{ATCA_band}_{spw}_self1.model",
             gain=gain,
             specmode=mode,
             nterms=nterms,
@@ -676,7 +690,6 @@ def slefcal_ms(src_dir, process_dir, targetms, epoch, ATCA_band, n_spw, tar):
             selectdata=True,
             mask="",
             spw=spw,
-            deconvolver="mtmfs",
             gain=gain,
             specmode=mode,
             nterms=nterms,
@@ -705,8 +718,8 @@ def slefcal_ms(src_dir, process_dir, targetms, epoch, ATCA_band, n_spw, tar):
         caltable=f"{process_dir}/pcal3",
         gaintable=[f"{process_dir}/pcal1", f"{process_dir}/pcal2"],
         combine="scan,spw",
-        spwmap=[0] * n_spw,
-        gaintype="GSPLINE",
+        spwmap=[[0] * n_spw,[0] * n_spw],
+        gaintype="G",
         calmode="p",
         solint=solint,
         minsnr=minsnr,
@@ -719,7 +732,7 @@ def slefcal_ms(src_dir, process_dir, targetms, epoch, ATCA_band, n_spw, tar):
             f"{process_dir}/pcal2",
             f"{process_dir}/pcal3",
         ],
-        spwmap=[0] * n_spw,
+        spwmap=[[0] * n_spw,[0] * n_spw,[0] * n_spw],
         parang=True,
         applymode="calonly",
         flagbackup=False,
@@ -735,8 +748,8 @@ def slefcal_ms(src_dir, process_dir, targetms, epoch, ATCA_band, n_spw, tar):
             imagename=imagename + "_self3",
             selectdata=True,
             mask=f"{src_dir}/casa_files/{tar}_{epoch}_{ATCA_band}_mfs.mask",
+            startmodel=f"{src_dir}/casa_files/{tar}_{epoch}_{ATCA_band}_{spw}_self1.model",
             spw=spw,
-            deconvolver="mtmfs",
             gain=gain,
             specmode=mode,
             nterms=nterms,
@@ -757,7 +770,6 @@ def slefcal_ms(src_dir, process_dir, targetms, epoch, ATCA_band, n_spw, tar):
             selectdata=True,
             mask="",
             spw=spw,
-            deconvolver="mtmfs",
             gain=gain,
             specmode=mode,
             nterms=nterms,
@@ -781,10 +793,10 @@ def pbcor_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar):
     for i in range(0, n_spw):
         spw = str(i)
         imagename = f"{src_dir}/casa_files/{tar}_{epoch}_{ATCA_band}_{spw}"
-        os.system("rm -r " + imagename + "_pbcor")
+        os.system("rm -r " + imagename + "_self3_pbcor")
         impbcor(
-            imagename=f"{imagename}_self3.image.tt0",
-            pbimage=f"{imagename}_self3.pb.tt0",
+            imagename=f"{imagename}_self3.image",
+            pbimage=f"{imagename}_self3.pb",
             outfile=f"{imagename}_self3_pbcor",
             cutoff=0.1,
             overwrite=True,
@@ -803,10 +815,9 @@ def measureflux_ms(src_dir, targetms, tar_ms, epoch, ATCA_band, sourcepar, n_spw
         os.system(f"rm -r {outfile}")
         uvmodelfit(
             vis=tar_ms,
-            niter=15,
+            niter=25,
             comptype="P",
             spw=spw,
-            sourcepar=sourcepar,
             outfile=outfile,
             field="0",
         )
@@ -1034,39 +1045,59 @@ def export_fitspng(src_dir, n_spw, epoch, ATCA_band, tar):
         spw = str(i)
         imagename = f"{tar}_{epoch}_{ATCA_band}_{spw}"
         exportfits(
-            imagename=f"{src_dir}/casa_files/{imagename}_preself.image.tt0",
+            imagename=f"{src_dir}/casa_files/{imagename}_preself.image",
             fitsimage=f"{src_dir}/images/{imagename}_preself.fits",
             overwrite=True,
         )
         exportfits(
-            imagename=f"{src_dir}/casa_files/{imagename}_self1.image.tt0",
+            imagename=f"{src_dir}/casa_files/{imagename}_self1.image",
             fitsimage=f"{src_dir}/images/{imagename}_self1.fits",
             overwrite=True,
         )
         exportfits(
-            imagename=f"{src_dir}/casa_files/{imagename}_self2.image.tt0",
+            imagename=f"{src_dir}/casa_files/{imagename}_self2.image",
             fitsimage=f"{src_dir}/images/{imagename}_self2.fits",
             overwrite=True,
         )
         exportfits(
-            imagename=f"{src_dir}/casa_files/{imagename}_self3.image.tt0",
+            imagename=f"{src_dir}/casa_files/{imagename}_self3.image",
             fitsimage=f"{src_dir}/images/{imagename}_self3.fits",
             overwrite=True,
         )
-        extensions = ["preself", "self1","self2", "self3"]
+        exportfits(
+            imagename=f"{src_dir}/casa_files/{imagename}_self3_pbcor",
+            fitsimage=f"{src_dir}/images/{imagename}_self3_pbcor.fits",
+            overwrite=True,
+        )
+        extensions = ["preself", "self1","self2", "self3"]    
         for ext in extensions:
-            imname = f"{src_dir}/casa_files/{imagename}_{ext}.image.tt0"
+            imname = f"{src_dir}/casa_files/{imagename}_{ext}.image"
             plt.subplots(1,1, figsize=(18,12))
             pix, w = buildImage(imname)
             ax = plt.subplot(1, 1, 1, projection=w)
             p1 = int(pix.shape[0]*0.25)
             p2 = int(pix.shape[0]*0.75)
 
-            im = ax.imshow(pix[p1:p2,p1:p2].transpose(), origin='lower',  cmap=plt.cm.plasma)
+            norm = simple_norm(pix[p1:p2,p1:p2].transpose(), 'sqrt')
+            im = ax.imshow(pix[p1:p2,p1:p2].transpose(), origin='lower',  cmap=plt.cm.plasma,norm=norm)
             plt.colorbar(im, ax=ax)
             ax.set_xlabel('Right Ascension', fontsize=30)
             ax.set_ylabel('Declination',fontsize=30)
-            plt.title(f"{imagename}_{ext}", fontsize=30)
+            plt.title(f"{imagename} {ext}", fontsize=30)
             plt.savefig(f"{src_dir}/images/{imagename}_{ext}.png")
             plt.close()
+    mask_im=f"{src_dir}/casa_files/{tar}_{epoch}_{ATCA_band}_mfs.mask"
+    plt.subplots(1,1, figsize=(18,12))
+    pix, w = buildImage(mask_im)
+    ax = plt.subplot(1, 1, 1, projection=w)
+    p1 = int(pix.shape[0]*0.25)
+    p2 = int(pix.shape[0]*0.75)
+
+    im = ax.imshow(pix[p1:p2,p1:p2].transpose(), origin='lower',  cmap=plt.cm.plasma)
+    plt.colorbar(im, ax=ax)
+    ax.set_xlabel('Right Ascension', fontsize=30)
+    ax.set_ylabel('Declination',fontsize=30)
+    plt.title(f"{tar} {epoch} {ATCA_band} mask", fontsize=30)
+    plt.savefig(f"{src_dir}/images/{tar}_{epoch}_{ATCA_band}_mask.png")
+    plt.close()
     return

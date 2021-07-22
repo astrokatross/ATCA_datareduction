@@ -13,7 +13,7 @@ plt.rcParams["font.family"] = "serif"
 plt.rcParams["axes.grid"] = False
 
 # constants:
-tarname = "J223933"
+tarname = "J032213"
 directory = "/data/ATCA/Code"
 
 plotfuncts.plt_sed(directory, tarname, models=True, extra_surveys=True)
