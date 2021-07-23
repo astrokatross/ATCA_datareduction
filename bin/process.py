@@ -25,35 +25,32 @@ from casatasks import (
 )
 import numpy as np
 from casaplotms import plotms
-from astropy.io import fits 
 import matplotlib.pyplot as plt
 from casatools import image as IA
 from astropy.wcs import WCS
-import matplotlib.pyplot as plt
 from astropy.visualization import simple_norm
 
 ia = IA()
 plt.rcParams["font.family"] = "serif"
 
-def buildImage(imname='',chan=0):
+
+def buildImage(imname="", chan=0):
     ia.open(imname)
-    pix = ia.getchunk()[:,:,0,chan]
+    pix = ia.getchunk()[:, :, 0, chan]
     csys = ia.coordsys()
     ia.close()
 
-    rad_to_deg =  180/np.pi
+    rad_to_deg = 180 / np.pi
     w = WCS(naxis=2)
-    w.wcs.crpix = csys.referencepixel()['numeric'][0:2]
-    w.wcs.cdelt = csys.increment()['numeric'][0:2]*rad_to_deg
-    w.wcs.crval = csys.referencevalue()['numeric'][0:2]*rad_to_deg
-    w.wcs.ctype = ['RA---SIN', 'DEC--SIN']
+    w.wcs.crpix = csys.referencepixel()["numeric"][0:2]
+    w.wcs.cdelt = csys.increment()["numeric"][0:2] * rad_to_deg
+    w.wcs.crval = csys.referencevalue()["numeric"][0:2] * rad_to_deg
+    w.wcs.ctype = ["RA---SIN", "DEC--SIN"]
 
     return pix, w
 
 
-
-
-def flag_ms(img_dir, visname, epoch, ATCA_band, pri, sec, tar):
+def flag_ms(visname):
     flagmanager(vis=visname, mode="save", versionname="before_online_flagging")
     print("Flagging antennae affected by shadowing...")
     flagdata(vis=visname, mode="shadow", tolerance=0.0, flagbackup=False)
@@ -64,11 +61,6 @@ def flag_ms(img_dir, visname, epoch, ATCA_band, pri, sec, tar):
         vis=visname, mode="quack", quackinterval=5.0, quackmode="beg", flagbackup=False
     )
     flagmanager(vis=visname, mode="save", versionname="after_online_flagging")
-    print(
-        "Inspecting {0} amplitude as a function of channel to identify RFI...".format(
-            pri
-        )
-    )
     flagdata(
         vis=visname,
         mode="tfcrop",
@@ -127,9 +119,7 @@ def split_ms(
     mstransform(
         vis=visname,
         outputvis=msname,
-        regridms=True,
         datacolumn="data",
-        mode="channel",
         field=f"{pri},{sec},{tar}",
     )
     listobs(
@@ -376,7 +366,6 @@ def imgmfs_ms(src_dir, msname, targetms, epoch, ATCA_band, n_spw, tar):
     robust = 0.5
     interactive = True
     gain = 0.01
-    
 
     os.system(f"rm -r {targetms}*")
     # split(vis=msname, datacolumn='corrected', field=tar, outputvis=targetms)
@@ -510,24 +499,28 @@ def img_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar):
             calcres=False,
             calcpsf=False,
         )
-        model_im=f"{src_dir}/casa_files/{tar}_{epoch}_{ATCA_band}_{spw}_preself.model"
-        plt.subplots(1,1, figsize=(18,12))
+        model_im = f"{src_dir}/casa_files/{tar}_{epoch}_{ATCA_band}_{spw}_preself.model"
+        plt.subplots(1, 1, figsize=(18, 12))
         pix, w = buildImage(model_im)
         ax = plt.subplot(1, 1, 1, projection=w)
-        p1 = int(pix.shape[0]*0.25)
-        p2 = int(pix.shape[0]*0.75)
+        p1 = int(pix.shape[0] * 0.25)
+        p2 = int(pix.shape[0] * 0.75)
 
-        im = ax.imshow(pix[p1:p2,p1:p2].transpose(), origin='lower',  cmap=plt.cm.plasma)
+        im = ax.imshow(
+            pix[p1:p2, p1:p2].transpose(), origin="lower", cmap=plt.cm.plasma
+        )
         plt.colorbar(im, ax=ax)
-        ax.set_xlabel('Right Ascension', fontsize=30)
-        ax.set_ylabel('Declination',fontsize=30)
+        ax.set_xlabel("Right Ascension", fontsize=30)
+        ax.set_ylabel("Declination", fontsize=30)
         plt.title(f"{tar} {epoch} {ATCA_band} mask", fontsize=30)
-        plt.savefig(f"{src_dir}/casa_files/{tar}_{epoch}_{ATCA_band}_{spw}_preself_model.png")
+        plt.savefig(
+            f"{src_dir}/casa_files/{tar}_{epoch}_{ATCA_band}_{spw}_preself_model.png"
+        )
         plt.close()
     return
 
 
-def slefcal_ms(src_dir, process_dir, targetms, epoch, ATCA_band, n_spw, tar):
+def slefcal_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar):
     print(
         "+ + + + + + + + + + + + + + + + +\n+  Self Cal Round 1  +\n+ + + + + + + + + + + + + + + + +"
     )
@@ -560,10 +553,10 @@ def slefcal_ms(src_dir, process_dir, targetms, epoch, ATCA_band, n_spw, tar):
     gain = 0.01
     threshold = "5e-4Jy"
 
-    rmtables(f"{process_dir}/pcal1")
+    rmtables(f"{src_dir}/cal_tables/pcal1_{tar}_{epoch}_{ATCA_band}")
     gaincal(
         vis=targetms,
-        caltable=f"{process_dir}/pcal1",
+        caltable=f"{src_dir}/cal_tables/pcal1_{tar}_{epoch}_{ATCA_band}",
         combine="scan,spw",
         spwmap=[0] * n_spw,
         gaintype="G",
@@ -574,7 +567,7 @@ def slefcal_ms(src_dir, process_dir, targetms, epoch, ATCA_band, n_spw, tar):
     )
     applycal(
         vis=targetms,
-        gaintable=f"{process_dir}/pcal1",
+        gaintable=f"{src_dir}/cal_tables/pcal1_{tar}_{epoch}_{ATCA_band}",
         spwmap=[0] * n_spw,
         parang=True,
         applymode="calonly",
@@ -632,15 +625,15 @@ def slefcal_ms(src_dir, process_dir, targetms, epoch, ATCA_band, n_spw, tar):
         )
 
     threshold = "5e-5Jy"
-    rmtables(f"{process_dir}/pcal2")
+    rmtables(f"{src_dir}/cal_tables/pcal2_{tar}_{epoch}_{ATCA_band}")
     print(
         "+ + + + + + + + + + + + + + + + +\n+  Self Cal Round 2  +\n+ + + + + + + + + + + + + + + + +"
     )
 
     gaincal(
         vis=targetms,
-        caltable=f"{process_dir}/pcal2",
-        gaintable=f"{process_dir}/pcal1",
+        caltable=f"{src_dir}/cal_tables/pcal2_{tar}_{epoch}_{ATCA_band}",
+        gaintable=f"{src_dir}/cal_tables/pcal1_{tar}_{epoch}_{ATCA_band}",
         combine="scan,spw",
         spwmap=[0] * n_spw,
         gaintype="G",
@@ -651,8 +644,11 @@ def slefcal_ms(src_dir, process_dir, targetms, epoch, ATCA_band, n_spw, tar):
     )
     applycal(
         vis=targetms,
-        gaintable=[f"{process_dir}/pcal1", f"{process_dir}/pcal2"],
-        spwmap=[[0]*n_spw,[0]*n_spw],
+        gaintable=[
+            f"{src_dir}/cal_tables/pcal1_{tar}_{epoch}_{ATCA_band}",
+            f"{src_dir}/cal_tables/pcal2_{tar}_{epoch}_{ATCA_band}",
+        ],
+        spwmap=[[0] * n_spw, [0] * n_spw],
         parang=True,
         applymode="calonly",
         flagbackup=False,
@@ -712,13 +708,16 @@ def slefcal_ms(src_dir, process_dir, targetms, epoch, ATCA_band, n_spw, tar):
         "+ + + + + + + + + + + + + + + + +\n+  Self Cal Round 3  +\n+ + + + + + + + + + + + + + + + +"
     )
 
-    rmtables(f"{process_dir}/pcal3")
+    rmtables(f"{src_dir}/cal_tables/pcal3_{tar}_{epoch}_{ATCA_band}")
     gaincal(
         vis=targetms,
-        caltable=f"{process_dir}/pcal3",
-        gaintable=[f"{process_dir}/pcal1", f"{process_dir}/pcal2"],
+        caltable=f"{src_dir}/cal_tables/pcal3_{tar}_{epoch}_{ATCA_band}",
+        gaintable=[
+            f"{src_dir}/cal_tables/pcal1_{tar}_{epoch}_{ATCA_band}",
+            f"{src_dir}/cal_tables/pcal2_{tar}_{epoch}_{ATCA_band}",
+        ],
         combine="scan,spw",
-        spwmap=[[0] * n_spw,[0] * n_spw],
+        spwmap=[[0] * n_spw, [0] * n_spw],
         gaintype="G",
         calmode="p",
         solint=solint,
@@ -728,11 +727,11 @@ def slefcal_ms(src_dir, process_dir, targetms, epoch, ATCA_band, n_spw, tar):
     applycal(
         vis=targetms,
         gaintable=[
-            f"{process_dir}/pcal1",
-            f"{process_dir}/pcal2",
-            f"{process_dir}/pcal3",
+            f"{src_dir}/cal_tables/pcal1_{tar}_{epoch}_{ATCA_band}",
+            f"{src_dir}/cal_tables/pcal2_{tar}_{epoch}_{ATCA_band}",
+            f"{src_dir}/cal_tables/pcal3_{tar}_{epoch}_{ATCA_band}",
         ],
-        spwmap=[[0] * n_spw,[0] * n_spw,[0] * n_spw],
+        spwmap=[[0] * n_spw, [0] * n_spw, [0] * n_spw],
         parang=True,
         applymode="calonly",
         flagbackup=False,
@@ -818,8 +817,9 @@ def measureflux_ms(src_dir, targetms, tar_ms, epoch, ATCA_band, sourcepar, n_spw
             niter=25,
             comptype="P",
             spw=spw,
+            sourcepar=sourcepar,
             outfile=outfile,
-            field="0",
+            field=tar,
         )
         tbl = table(outfile)
         flux = tbl.getcell("Flux", 0)[0].astype("float64")
@@ -853,7 +853,9 @@ def measureflux_ms(src_dir, targetms, tar_ms, epoch, ATCA_band, sourcepar, n_spw
     return
 
 
-def inspection_plots(src_dir, img_dir, visname, msname, epoch, ATCA_band, pri, sec, tar):
+def inspection_plots(
+    src_dir, img_dir, visname, msname, epoch, ATCA_band, pri, sec, tar
+):
     plotms(
         vis=visname,
         field=pri,
@@ -1069,34 +1071,39 @@ def export_fitspng(src_dir, n_spw, epoch, ATCA_band, tar):
             fitsimage=f"{src_dir}/images/{imagename}_self3_pbcor.fits",
             overwrite=True,
         )
-        extensions = ["preself", "self1","self2", "self3"]    
+        extensions = ["preself", "self1", "self2", "self3"]
         for ext in extensions:
             imname = f"{src_dir}/casa_files/{imagename}_{ext}.image"
-            plt.subplots(1,1, figsize=(18,12))
+            plt.subplots(1, 1, figsize=(18, 12))
             pix, w = buildImage(imname)
             ax = plt.subplot(1, 1, 1, projection=w)
-            p1 = int(pix.shape[0]*0.25)
-            p2 = int(pix.shape[0]*0.75)
+            p1 = int(pix.shape[0] * 0.25)
+            p2 = int(pix.shape[0] * 0.75)
 
-            norm = simple_norm(pix[p1:p2,p1:p2].transpose(), 'sqrt')
-            im = ax.imshow(pix[p1:p2,p1:p2].transpose(), origin='lower',  cmap=plt.cm.plasma,norm=norm)
+            norm = simple_norm(pix[p1:p2, p1:p2].transpose(), "sqrt")
+            im = ax.imshow(
+                pix[p1:p2, p1:p2].transpose(),
+                origin="lower",
+                cmap=plt.cm.plasma,
+                norm=norm,
+            )
             plt.colorbar(im, ax=ax)
-            ax.set_xlabel('Right Ascension', fontsize=30)
-            ax.set_ylabel('Declination',fontsize=30)
+            ax.set_xlabel("Right Ascension", fontsize=30)
+            ax.set_ylabel("Declination", fontsize=30)
             plt.title(f"{imagename} {ext}", fontsize=30)
             plt.savefig(f"{src_dir}/images/{imagename}_{ext}.png")
             plt.close()
-    mask_im=f"{src_dir}/casa_files/{tar}_{epoch}_{ATCA_band}_mfs.mask"
-    plt.subplots(1,1, figsize=(18,12))
+    mask_im = f"{src_dir}/casa_files/{tar}_{epoch}_{ATCA_band}_mfs.mask"
+    plt.subplots(1, 1, figsize=(18, 12))
     pix, w = buildImage(mask_im)
     ax = plt.subplot(1, 1, 1, projection=w)
-    p1 = int(pix.shape[0]*0.25)
-    p2 = int(pix.shape[0]*0.75)
+    p1 = int(pix.shape[0] * 0.25)
+    p2 = int(pix.shape[0] * 0.75)
 
-    im = ax.imshow(pix[p1:p2,p1:p2].transpose(), origin='lower',  cmap=plt.cm.plasma)
+    im = ax.imshow(pix[p1:p2, p1:p2].transpose(), origin="lower", cmap=plt.cm.plasma)
     plt.colorbar(im, ax=ax)
-    ax.set_xlabel('Right Ascension', fontsize=30)
-    ax.set_ylabel('Declination',fontsize=30)
+    ax.set_xlabel("Right Ascension", fontsize=30)
+    ax.set_ylabel("Declination", fontsize=30)
     plt.title(f"{tar} {epoch} {ATCA_band} mask", fontsize=30)
     plt.savefig(f"{src_dir}/images/{tar}_{epoch}_{ATCA_band}_mask.png")
     plt.close()

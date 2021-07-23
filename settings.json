@@ -1,0 +1,30 @@
+{
+	"folders": [
+		{
+			"path": [
+            ".", 
+            "/data/bin/casa-6.2.0-124/",
+            "/data/bin/casa-6.2.0-124/bin/python3",
+            "/data/bin/AstroFig"
+        ]
+		}
+	],
+	"settings": {
+		"python.pythonPath": "/usr/local/bin/python3.9",
+		"python.defaultInterpreterPath": "/usr/local/bin/python3.9",
+		"python.analysis.extraPaths" : [
+			"/usr/lib/python3/dist-packages/",
+            "/data/ATCA/ATCA_datareduction/bin",
+            "/data/bin/AstroFig/",
+            "/data/bin/casa-6.2.0-124/bin/python3"
+	],
+        "python.linting.enabled": true,
+        "python.formatting.provider": "black",
+        "python.editor.formatOnSave": true,
+        "python.typescript.format.insertSpaceAfterTypeAssertion": true,
+        "python.editor.formatOnType": true,
+        "python.linting.pylamaEnabled": true,
+        "python.linting.pylamaArgs": ["--line-length","100","--ignore=E501"],
+        "python.formatting.blackArgs": ["--line-length", "100"]
+    }
+}

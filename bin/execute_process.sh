@@ -2,10 +2,10 @@
 # This is a script to execute the python/casa script that will do the processing
 # By K.Ross 
 
-PROJECT=/data/ATCA/Code/
-EPOCH=epoch4
-BAND=L
-TARGET=J032213
+PROJECT=/data/ATCA/ATCA_datareduction/
+EPOCH=epoch3
+BAND=X
+TARGET=J001513
 
 export PROJECT
 export EPOCH
