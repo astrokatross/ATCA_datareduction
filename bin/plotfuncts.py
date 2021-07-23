@@ -295,103 +295,127 @@ def plt_sed(
             marker_color="C9",
         )
 
-    if epoch1 is True:
+    # PLOTTING THE L BAND DATA!!!
+
+    try:
         atca_Lband_e1_pd = pd.read_csv(f"{directory}/{tar}/{tar}_epoch1_L.csv")
         atca_Lband_e1 = np.array(atca_Lband_e1_pd["# S_Lband"])
         err_atca_Lband_e1 = 0.03 * (atca_Lband_e1)
-        atca_Cband_e1_pd = pd.read_csv(f"{directory}/{tar}/{tar}_epoch1_C.csv")
-        atca_Cband_e1 = np.array(atca_Cband_e1_pd["# S_Cband"])
-        err_atca_Cband_e1 = 0.03 * (atca_Cband_e1)
-        atca_Xband_e1_pd = pd.read_csv(f"{directory}/{tar}/{tar}_epoch1_X.csv")
-        atca_Xband_e1 = np.array(atca_Xband_e1_pd["# S_Xband"])
-        err_atca_Xband_e1 = 0.03 * (atca_Xband_e1)
         for i in range(len(atca_Lband_e1)):
             if atca_Lband_e1[i] <=0:
                 atca_Lband_e1[i]= np.nan
+        f.plot_spectrum(
+        freq_lband,
+        atca_Lband_e1,
+        err_atca_Lband_e1,
+        marker="o",
+        label="Epoch1",
+        marker_color="red",
+        )
+    except:
+        print("No L-Band for Epoch1")
 
+    # try:
+    #     atca_Lband_e2_pd = pd.read_csv(f"{directory}/{tar}/{tar}_epoch2_L.csv")
+    #     atca_Lband_e2 = np.array(atca_Lband_e2_pd["# S_Lband"])
+    #     err_atca_Lband_e2 = 0.03 * (atca_Lband_e2)
+    #     for i in range(len(atca_Lband_e2)):
+    #         if atca_Lband_e2[i] <=0:
+    #             atca_Lband_e2[i]= np.nan
+    #     f.plot_spectrum(
+    #     freq_lband,
+    #     atca_Lband_e2,
+    #     err_atca_Lband_e2,
+    #     marker="o",
+    #     label="Epoch2",
+    #     marker_color="mediumseagreen",
+    #     )
+    # except:
+    #     print("No L-Band for Epoch2")
+
+
+    try:
+        atca_Lband_e3_pd = pd.read_csv(f"{directory}/{tar}/{tar}_epoch3_L.csv")
+        atca_Lband_e3 = np.array(atca_Lband_e3_pd["# S_Lband"])
+        err_atca_Lband_e3 = 0.03 * (atca_Lband_e3)
+        for i in range(len(atca_Lband_e3)):
+            if atca_Lband_e3[i] <=0:
+                atca_Lband_e3[i]= np.nan
         f.plot_spectrum(
             freq_lband,
-            atca_Lband_e1,
-            err_atca_Lband_e1,
+            atca_Lband_e3,
+            err_atca_Lband_e3,
             marker="o",
-            label="Epoch1",
-            marker_color="red",
+            label="Epoch3",
+            marker_color="C9",
         )
+    except:
+        print("No L-Band for Epoch3")
+
+
+    try:
+        atca_Lband_e4_pd = pd.read_csv(f"{directory}/{tar}/{tar}_epoch4_L.csv")
+        atca_Lband_e4 = np.array(atca_Lband_e4_pd["# S_Lband"])
+        err_atca_Lband_e4 = 0.03 * (atca_Lband_e4)
+        for i in range(len(atca_Lband_e4)):
+            if atca_Lband_e4[i] <=0:
+                atca_Lband_e4[i]= np.nan
         f.plot_spectrum(
-            freq_cband,
-            atca_Cband_e1,
-            err_atca_Cband_e1,
+            freq_lband,
+            atca_Lband_e4,
+            err_atca_Lband_e4,
             marker="o",
-            marker_color="red",
+            label="Epoch4",
+            marker_color="C4",
         )
+    except:
+        print("No L-Band for Epoch4")
+
+
+
+    # PLOTTING THE C BAND DATA!!!
+    try:
+        atca_Cband_e1_pd = pd.read_csv(f"{directory}/{tar}/{tar}_epoch1_C.csv")
+        atca_Cband_e1 = np.array(atca_Cband_e1_pd["# S_Cband"])
+        err_atca_Cband_e1 = 0.03 * (atca_Cband_e1)
+        for i in range(len(atca_Cband_e1)):
+            if atca_Cband_e1[i] <=0:
+                atca_Cband_e1[i]= np.nan
         f.plot_spectrum(
-            freq_xband,
-            atca_Xband_e1,
-            err_atca_Xband_e1,
-            marker="o",
-            marker_color="red",
+        freq_cband,
+        atca_Cband_e1,
+        err_atca_Cband_e1,
+        marker="o",
+        marker_color="red",
         )
-        # atca_e1_pd = pd.read_csv(f"{directory}/{tar}/{tar}_epoch1.csv")
-        # atca_e1 = np.array(atca_e1_pd["col1"])
-        # err_atca_e1 = 0.03 * (atca_e1)
-        # f.plot_spectrum(
-        #     freq_atca,
-        #     atca_e1,
-        #     err_atca_e1,
-        #     marker="o",
-        #     label="Epoch1",
-        #     marker_color="red",
-        # )
-    if epoch2 is True:
-        # atca_Lband_e2_pd = pd.read_csv(f"{directory}/{tar}/{tar}_epoch2_L.csv")
-        # atca_Lband_e2 = np.array(atca_Lband_e2_pd["# S_Lband"])
-        # err_atca_Lband_e2 = 0.03 * (atca_Lband_e2)
+    except:
+        print("No C-Band for Epoch1")
+
+    try:
         atca_Cband_e2_pd = pd.read_csv(f"{directory}/{tar}/{tar}_epoch2_C.csv")
         atca_Cband_e2 = np.array(atca_Cband_e2_pd["# S_Cband"])
         err_atca_Cband_e2 = 0.03 * (atca_Cband_e2)
-        atca_Xband_e2_pd = pd.read_csv(f"{directory}/{tar}/{tar}_epoch2_X.csv")
-        atca_Xband_e2 = np.array(atca_Xband_e2_pd["# S_Xband"])
-        err_atca_Xband_e2 = 0.03 * (atca_Xband_e2)
-        # f.plot_spectrum(
-        #     freq_lband,
-        #     atca_Lband_e2,
-        #     err_atca_Lband_e2,
-        #     marker="o",
-        #     label="Epoch2",
-        #     marker_color="mediumseagreen",
-        # )
+        for i in range(len(atca_Cband_e2)):
+            if atca_Cband_e2[i] <=0:
+                atca_Cband_e2[i]= np.nan
         f.plot_spectrum(
-            freq_cband,
-            atca_Cband_e2,
-            err_atca_Cband_e2,
-            marker="o",
-            marker_color="mediumseagreen",
+        freq_cband,
+        atca_Cband_e2,
+        err_atca_Cband_e2,
+        marker="o",
+        marker_color="mediumseagreen",
         )
-        f.plot_spectrum(
-            freq_xband,
-            atca_Xband_e2,
-            err_atca_Xband_e2,
-            marker="o",
-            marker_color="mediumseagreen",
-        )
-    if epoch3 is True:
-        # atca_Lband_e3_pd = pd.read_csv(f"{directory}/{tar}/{tar}_epoch3_L.csv")
-        # atca_Lband_e3 = np.array(atca_Lband_e3_pd["# S_Lband"])
-        # err_atca_Lband_e3 = 0.03 * (atca_Lband_e3)
+    except:
+        print("No C-Band for Epoch2")
+
+
+    try:
         atca_Cband_e3_pd = pd.read_csv(f"{directory}/{tar}/{tar}_epoch3_C.csv")
         atca_Cband_e3 = np.array(atca_Cband_e3_pd["# S_Cband"])
         err_atca_Cband_e3 = 0.03 * (atca_Cband_e3)
-        atca_Xband_e3_pd = pd.read_csv(f"{directory}/{tar}/{tar}_epoch3_X.csv")
-        atca_Xband_e3 = np.array(atca_Xband_e3_pd["# S_Xband"])
-        err_atca_Xband_e3 = 0.03 * (atca_Xband_e3)
-        # f.plot_spectrum(
-        #     freq_lband,
-        #     atca_Lband_e3,
-        #     err_atca_Lband_e3,
-        #     marker="o",
-        #     label="Epoch3",
-        #     marker_color="C9",
-        # )
+        for i in range(len(atca_Cband_e3)):
+            if atca_Cband_e3[i] <=0:
+                atca_Cband_e3[i]= np.nan
         f.plot_spectrum(
             freq_cband,
             atca_Cband_e3,
@@ -399,31 +423,17 @@ def plt_sed(
             marker="o",
             marker_color="C9",
         )
-        f.plot_spectrum(
-            freq_xband,
-            atca_Xband_e3,
-            err_atca_Xband_e3,
-            marker="o",
-            marker_color="C9",
-        )
-    if epoch4 is True:
-        # atca_Lband_e4_pd = pd.read_csv(f"{directory}/{tar}/{tar}_epoch4_L.csv")
-        # atca_Lband_e4 = np.array(atca_Lband_e4_pd["# S_Lband"])
-        # err_atca_Lband_e4 = 0.03 * (atca_Lband_e4)
+    except:
+        print("No C-Band for Epoch3")
+
+
+    try:
         atca_Cband_e4_pd = pd.read_csv(f"{directory}/{tar}/{tar}_epoch4_C.csv")
         atca_Cband_e4 = np.array(atca_Cband_e4_pd["# S_Cband"])
         err_atca_Cband_e4 = 0.03 * (atca_Cband_e4)
-        atca_Xband_e4_pd = pd.read_csv(f"{directory}/{tar}/{tar}_epoch4_X.csv")
-        atca_Xband_e4 = np.array(atca_Xband_e4_pd["# S_Xband"])
-        err_atca_Xband_e4 = 0.03 * (atca_Xband_e4)
-        # f.plot_spectrum(
-        #     freq_lband,
-        #     atca_Lband_e4,
-        #     err_atca_Lband_e4,
-        #     marker="o",
-        #     label="Epoch4",
-        #     marker_color="C4",
-        # )
+        for i in range(len(atca_Cband_e4)):
+            if atca_Cband_e4[i] <=0:
+                atca_Cband_e4[i]= np.nan
         f.plot_spectrum(
             freq_cband,
             atca_Cband_e4,
@@ -431,6 +441,72 @@ def plt_sed(
             marker="o",
             marker_color="C4",
         )
+    except:
+        print("No C-Band for Epoch4")
+
+
+
+    # PLOTTING THE X BAND DATA!!!
+    try:
+        atca_Xband_e1_pd = pd.read_csv(f"{directory}/{tar}/{tar}_epoch1_X.csv")
+        atca_Xband_e1 = np.array(atca_Xband_e1_pd["# S_Xband"])
+        err_atca_Xband_e1 = 0.03 * (atca_Xband_e1)
+        for i in range(len(atca_Xband_e1)):
+            if atca_Xband_e1[i] <=0:
+                atca_Xband_e1[i]= np.nan
+        f.plot_spectrum(
+        freq_xband,
+        atca_Xband_e1,
+        err_atca_Xband_e1,
+        marker="o",
+        marker_color="red",
+        )
+    except:
+        print("No X-Band for Epoch1")
+
+    try:
+        atca_Xband_e2_pd = pd.read_csv(f"{directory}/{tar}/{tar}_epoch2_X.csv")
+        atca_Xband_e2 = np.array(atca_Xband_e2_pd["# S_Xband"])
+        err_atca_Xband_e2 = 0.03 * (atca_Xband_e2)
+        for i in range(len(atca_Xband_e2)):
+            if atca_Xband_e2[i] <=0:
+                atca_Xband_e2[i]= np.nan
+        f.plot_spectrum(
+        freq_xband,
+        atca_Xband_e2,
+        err_atca_Xband_e2,
+        marker="o",
+        marker_color="mediumseagreen",
+        )
+    except:
+        print("No X-Band for Epoch2")
+
+
+    try:
+        atca_Xband_e3_pd = pd.read_csv(f"{directory}/{tar}/{tar}_epoch3_X.csv")
+        atca_Xband_e3 = np.array(atca_Xband_e3_pd["# S_Xband"])
+        err_atca_Xband_e3 = 0.03 * (atca_Xband_e3)
+        for i in range(len(atca_Xband_e3)):
+            if atca_Xband_e3[i] <=0:
+                atca_Xband_e3[i]= np.nan
+        f.plot_spectrum(
+            freq_xband,
+            atca_Xband_e3,
+            err_atca_Xband_e3,
+            marker="o",
+            marker_color="C9",
+        )
+    except:
+        print("No X-Band for Epoch3")
+
+
+    try:
+        atca_Xband_e4_pd = pd.read_csv(f"{directory}/{tar}/{tar}_epoch4_X.csv")
+        atca_Xband_e4 = np.array(atca_Xband_e4_pd["# S_Xband"])
+        err_atca_Xband_e4 = 0.03 * (atca_Xband_e4)
+        for i in range(len(atca_Xband_e4)):
+            if atca_Xband_e4[i] <=0:
+                atca_Xband_e4[i]= np.nan
         f.plot_spectrum(
             freq_xband,
             atca_Xband_e4,
@@ -438,6 +514,9 @@ def plt_sed(
             marker="o",
             marker_color="C4",
         )
+    except:
+        print("No X-Band for Epoch4")
+
 
     if extra_surveys is True:
         fluxes_extra = np.array(

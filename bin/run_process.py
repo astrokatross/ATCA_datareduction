@@ -76,27 +76,27 @@ print("Here we go! Time to analyse some ATCA data!")
 # Uncomment whichever step you don't need to do
 # Initial flagging and creating targetms
 # process.flag_ms(img_dir, visname, epoch, ATCA_band, pri, sec, tar)
-process.split_ms(
-    src_dir,
-    img_dir,
-    visname,
-    msname,
-    epoch,
-    ATCA_band,
-    pri,
-    sec,
-    tar,
-)
+# process.split_ms(
+#     src_dir,
+#     img_dir,
+#     visname,
+#     msname,
+#     epoch,
+#     ATCA_band,
+#     pri,
+#     sec,
+#     tar,
+# )
 
-# Calibrate, and apply cal ms using primary and secondary
-process.calibrate_ms(src_dir, msname, epoch, ATCA_band, ref, pri, sec, tar)
-process.applycal_ms(src_dir, msname, epoch, ATCA_band, pri, sec, tar)
+# # Calibrate, and apply cal ms using primary and secondary
+# process.calibrate_ms(src_dir, msname, epoch, ATCA_band, ref, pri, sec, tar)
+# process.applycal_ms(src_dir, msname, epoch, ATCA_band, pri, sec, tar)
 
-# Post cal inspection and flagging
-process.flagcal_ms(img_dir, msname, epoch, ATCA_band, pri, sec)
-process.flagcaltar_ms(src_dir, img_dir, msname, epoch, ATCA_band, pri, sec, tar)
+# # Post cal inspection and flagging
+# process.flagcal_ms(img_dir, msname, epoch, ATCA_band, pri, sec)
+# process.flagcaltar_ms(src_dir, img_dir, msname, epoch, ATCA_band, pri, sec, tar)
 
-# Imaging of target
+# # Imaging of target
 process.imgmfs_ms(src_dir, msname, targetms, epoch, ATCA_band, n_spw, tar)
 process.img_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar)
 process.slefcal_ms(src_dir, src_dir, targetms, epoch, ATCA_band, n_spw, tar)

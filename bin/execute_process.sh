@@ -3,7 +3,7 @@
 # By K.Ross 
 
 PROJECT=/data/ATCA/Code/
-EPOCH=epoch1
+EPOCH=epoch4
 BAND=L
 TARGET=J032213
 
