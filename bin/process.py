@@ -1018,27 +1018,27 @@ def inspection_plots(
         overwrite=True,
         showgui=False,
     )
-    plotms(
-        vis=f"{src_dir}/pcal1",
-        field=tar,
-        plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{tar}_pcal1.png",
-        overwrite=True,
-        showgui=False,
-    )
-    plotms(
-        vis=f"{src_dir}/pcal2",
-        field=tar,
-        plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{tar}_pcal2.png",
-        overwrite=True,
-        showgui=False,
-    )
-    plotms(
-        vis=f"{src_dir}/pcal3",
-        field=tar,
-        plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{tar}_pcal3.png",
-        overwrite=True,
-        showgui=False,
-    )
+    # plotms(
+    #     vis=f"{src_dir}/pcal1",
+    #     field=tar,
+    #     plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{tar}_pcal1.png",
+    #     overwrite=True,
+    #     showgui=False,
+    # )
+    # plotms(
+    #     vis=f"{src_dir}/pcal2",
+    #     field=tar,
+    #     plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{tar}_pcal2.png",
+    #     overwrite=True,
+    #     showgui=False,
+    # )
+    # plotms(
+    #     vis=f"{src_dir}/pcal3",
+    #     field=tar,
+    #     plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{tar}_pcal3.png",
+    #     overwrite=True,
+    #     showgui=False,
+    # )
     return
 
 

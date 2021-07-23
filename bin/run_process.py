@@ -63,20 +63,20 @@ elif ATCA_band == "X":
 print("Here we go! Time to analyse some ATCA data!")
 # Uncomment whichever step you don't need to do
 # Initial flagging
-# process.flag_ms(visname)
+process.flag_ms(visname)
 
-# # Split to make its own ms
-# process.split_ms(
-#     src_dir,
-#     img_dir,
-#     visname,
-#     msname,
-#     epoch,
-#     ATCA_band,
-#     pri,
-#     sec,
-#     tar,
-# )
+# Split to make its own ms
+process.split_ms(
+    src_dir,
+    img_dir,
+    visname,
+    msname,
+    epoch,
+    ATCA_band,
+    pri,
+    sec,
+    tar,
+)
 
 # Calibrate, and apply cal ms using primary and secondary
 process.calibrate_ms(src_dir, msname, epoch, ATCA_band, ref, pri, sec, tar)

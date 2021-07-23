@@ -2,7 +2,8 @@
 	"folders": [
 		{
 			"path": [
-            ".", 
+            ".",
+            "./ATCA_datareduction/bin", 
             "/data/bin/casa-6.2.0-124/",
             "/data/bin/casa-6.2.0-124/bin/python3",
             "/data/bin/AstroFig"
