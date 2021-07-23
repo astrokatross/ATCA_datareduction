@@ -17,7 +17,7 @@ print(f"Target: {tar}\nEpoch: {epoch}\nATCA band: {ATCA_band}")
 
 # Setting sourcepar dictionary to measrue flux
 source_dict = {
-    "J001513": ["2327-459", (0.1, 13, 0)],
+    "J001513": ["2327-459", (0.1, 12.7, -0.5)],
     "J015445": ["0237-233", (0.15, 14.1, -2.7)],
     "J020507": ["0238-084", (0.3, 2.6, 0.7)],
     "J021246": ["0237-233", (0.15, 12.9, -5.2)],
@@ -45,7 +45,7 @@ targetms = f"{data_dir}data/{epoch}_{ATCA_band}_{tar}_img.ms"
 tar_ms = f"{data_dir}data/{epoch}_{ATCA_band}_{tar}_selfcal.ms"
 
 ref = "CA04"
-export_pngs = "True"
+export_pngs = True
 sec = source_dict[tar][0]
 sourcepar = source_dict[tar][1]
 
@@ -65,18 +65,18 @@ print("Here we go! Time to analyse some ATCA data!")
 # Initial flagging
 # process.flag_ms(visname)
 
-# Split to make its own ms
-process.split_ms(
-    src_dir,
-    img_dir,
-    visname,
-    msname,
-    epoch,
-    ATCA_band,
-    pri,
-    sec,
-    tar,
-)
+# # Split to make its own ms
+# process.split_ms(
+#     src_dir,
+#     img_dir,
+#     visname,
+#     msname,
+#     epoch,
+#     ATCA_band,
+#     pri,
+#     sec,
+#     tar,
+# )
 
 # Calibrate, and apply cal ms using primary and secondary
 process.calibrate_ms(src_dir, msname, epoch, ATCA_band, ref, pri, sec, tar)
@@ -86,7 +86,7 @@ process.applycal_ms(src_dir, msname, epoch, ATCA_band, pri, sec, tar)
 process.flagcal_ms(img_dir, msname, epoch, ATCA_band, pri, sec)
 process.flagcaltar_ms(src_dir, img_dir, msname, epoch, ATCA_band, pri, sec, tar)
 
-# # Imaging of target
+# Imaging of target
 process.imgmfs_ms(src_dir, msname, targetms, epoch, ATCA_band, n_spw, tar)
 process.img_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar)
 process.slefcal_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar)

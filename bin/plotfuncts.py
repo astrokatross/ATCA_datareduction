@@ -76,7 +76,7 @@ freq_xtra = [
 ]  # [gleamx4, TGSS, MRC, SUMSS, NVSS, VLSSr]
 # freq_lband = [1.310, 1.425, 1.725, 1.968, 2.225, 2.482, 2.739, 2.95]
 # This is freequency for cut overall Lband
-freq_lband = [1.35, 1.483, 1.754, 1.985, 2.216, 2.447, 2.678, 2.909]
+freq_lband = [1.176, 1.407, 1.638, 1.869, 2.1, 2.331, 2.562, 2.793]
 freq_cband = [4.680, 5.090, 5.500, 5.910, 6.320]
 freq_xband = [8.732, 9.245, 9.758, 10.269]
 xtra_fluxes = [

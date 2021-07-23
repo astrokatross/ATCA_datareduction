@@ -372,10 +372,9 @@ def imgmfs_ms(src_dir, msname, targetms, epoch, ATCA_band, n_spw, tar):
     mstransform(
         vis=msname,
         outputvis=targetms,
-        regridms=True,
         datacolumn="corrected",
-        mode="channel",
         nspw=n_spw,
+        regridms=True,
         field=tar,
     )
     listobs(
@@ -842,7 +841,8 @@ def measureflux_ms(src_dir, targetms, tar_ms, epoch, ATCA_band, sourcepar, n_spw
         )
         print(int_flux_c)
     elif ATCA_band == "L":
-        int_flux_l = np.array(int_flux_c[::-1])
+        # int_flux_l = np.array(int_flux_c[::-1])
+        int_flux_l = int_flux_c
         np.savetxt(
             f"{src_dir}/{tar}_{epoch}_{ATCA_band}.csv",
             int_flux_l,

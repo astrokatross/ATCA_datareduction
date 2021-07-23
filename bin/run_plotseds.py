@@ -14,6 +14,6 @@ plt.rcParams["axes.grid"] = False
 
 # constants:
 tarname = "J032213"
-directory = "/data/ATCA/Code"
+directory = "/data/ATCA/ATCA_datareduction/"
 
 plotfuncts.plt_sed(directory, tarname, models=True, extra_surveys=True)
