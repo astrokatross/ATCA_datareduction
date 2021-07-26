@@ -349,6 +349,7 @@ def imgmfs_ms(src_dir, msname, targetms, epoch, ATCA_band, n_spw, tar):
     mode = "mfs"
     nterms = 1
     niter = 3000
+    antenna = "0~6,0~6"
     if ATCA_band == "L":
         imsize = 2250
         cell = "1arcsec"
@@ -366,6 +367,8 @@ def imgmfs_ms(src_dir, msname, targetms, epoch, ATCA_band, n_spw, tar):
     robust = 0.5
     interactive = True
     gain = 0.01
+    if tar == "J215436":
+        uvrange = "<1000"
 
     os.system(f"rm -r {targetms}*")
     # split(vis=msname, datacolumn='corrected', field=tar, outputvis=targetms)
@@ -400,9 +403,11 @@ def imgmfs_ms(src_dir, msname, targetms, epoch, ATCA_band, n_spw, tar):
         stokes=stokes,
         weighting=weighting,
         robust=robust,
+        antenna=antenna,
         interactive=interactive,
         savemodel="modelcolumn",
         pbcor=False,
+        uvrange=uvrange,
     )
     tclean(
         vis=targetms,
@@ -417,11 +422,13 @@ def imgmfs_ms(src_dir, msname, targetms, epoch, ATCA_band, n_spw, tar):
         stokes=stokes,
         weighting=weighting,
         robust=robust,
+        antenna=antenna,
         interactive=interactive,
         savemodel="modelcolumn",
         pbcor=False,
         calcres=False,
         calcpsf=False,
+        uvrange=uvrange,
     )
     return
 
@@ -430,6 +437,7 @@ def img_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar):
     print(
         "+ + + + + + + + + + + + + + + + +\n+  Preself Imaging  +\n+ + + + + + + + + + + + + + + + +"
     )
+    antenna = "0~6,0~6"
     mode = "mfs"
     nterms = 1
     niter = 3000
@@ -448,6 +456,8 @@ def img_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar):
     interactive = False
     gain = 0.01
     threshold = "5e-3Jy"
+    if tar == "J215436":
+        uvrange = "<1000"
     flagmanager(vis=targetms, mode="save", versionname="preself")
     for i in range(0, n_spw):
         spw = str(i)
@@ -472,9 +482,11 @@ def img_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar):
             stokes=stokes,
             weighting=weighting,
             robust=robust,
+            antenna=antenna,
             interactive=interactive,
             savemodel="modelcolumn",
             pbcor=False,
+            uvrange=uvrange,
         )
         tclean(
             vis=targetms,
@@ -492,11 +504,13 @@ def img_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar):
             stokes=stokes,
             weighting=weighting,
             robust=robust,
+            antenna=antenna,
             interactive=interactive,
             pbcor=False,
             savemodel="modelcolumn",
             calcres=False,
             calcpsf=False,
+            uvrange=uvrange,
         )
         model_im = f"{src_dir}/casa_files/{tar}_{epoch}_{ATCA_band}_{spw}_preself.model"
         plt.subplots(1, 1, figsize=(18, 12))
@@ -526,6 +540,7 @@ def slefcal_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar):
     mode = "mfs"
     nterms = 2
     niter = 3000
+    antenna = "0~6,0~6"
     if ATCA_band == "L":
         imsize = 2250
         solint = "60s"
@@ -544,7 +559,8 @@ def slefcal_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar):
         minsnr = 3.0
         minblperant = 3
         cell = "0.5arcsec"
-
+    if tar == "J215436":
+        antenna = "0~4,0~4"
     stokes = "I"
     weighting = "briggs"
     robust = 0.5
@@ -596,6 +612,7 @@ def slefcal_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar):
             stokes=stokes,
             weighting=weighting,
             robust=robust,
+            antenna=antenna,
             interactive=interactive,
             savemodel="modelcolumn",
             pbcor=False,
@@ -616,6 +633,7 @@ def slefcal_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar):
             stokes=stokes,
             weighting=weighting,
             robust=robust,
+            antenna=antenna,
             interactive=interactive,
             pbcor=False,
             savemodel="modelcolumn",
@@ -675,6 +693,7 @@ def slefcal_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar):
             stokes=stokes,
             weighting=weighting,
             robust=robust,
+            antenna=antenna,
             interactive=interactive,
             savemodel="modelcolumn",
             pbcor=False,
@@ -695,6 +714,7 @@ def slefcal_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar):
             stokes=stokes,
             weighting=weighting,
             robust=robust,
+            antenna=antenna,
             interactive=interactive,
             pbcor=False,
             savemodel="modelcolumn",
@@ -758,6 +778,7 @@ def slefcal_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar):
             stokes=stokes,
             weighting=weighting,
             robust=robust,
+            antenna=antenna,
             interactive=interactive,
             savemodel="modelcolumn",
             pbcor=False,
@@ -778,6 +799,7 @@ def slefcal_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar):
             stokes=stokes,
             weighting=weighting,
             robust=robust,
+            antenna=antenna,
             interactive=interactive,
             pbcor=False,
             savemodel="modelcolumn",
@@ -818,7 +840,8 @@ def measureflux_ms(src_dir, targetms, tar_ms, epoch, ATCA_band, sourcepar, n_spw
             spw=spw,
             sourcepar=sourcepar,
             outfile=outfile,
-            field=tar,
+            field="0",
+            selectdata=True,
         )
         tbl = table(outfile)
         flux = tbl.getcell("Flux", 0)[0].astype("float64")

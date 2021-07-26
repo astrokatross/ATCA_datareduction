@@ -646,5 +646,5 @@ def plt_sed(
     f.format(xunit="GHz")
 
     if save_fig is True:
-        f.save(f"{directory}/SEDs/{tar}_sed_testing", ext="png")
+        f.save(f"{directory}/SEDs/{tar}_sed", ext="png")
     return
