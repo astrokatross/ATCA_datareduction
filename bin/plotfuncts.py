@@ -385,6 +385,24 @@ def plt_sed(
     except FileNotFoundError:
         print("No L-Band for Epoch4")
 
+    try:
+        atca_Lband_e5_pd = pd.read_csv(f"{directory}/{tar}/{tar}_epoch5_L.csv")
+        atca_Lband_e5 = np.array(atca_Lband_e5_pd["# S_Lband"])
+        err_atca_Lband_e5 = 0.03 * (atca_Lband_e5)
+        for i in range(len(atca_Lband_e5)):
+            if atca_Lband_e5[i] <= 0:
+                atca_Lband_e5[i] = np.nan
+        f.plot_spectrum(
+            freq_lband,
+            atca_Lband_e5,
+            err_atca_Lband_e5,
+            marker="o",
+            # label="Epoch4",
+            marker_color="C4",
+        )
+    except FileNotFoundError:
+        print("No L-Band for Epoch5")
+
     # PLOTTING THE C BAND DATA!!!
     try:
         atca_Cband_e1_pd = pd.read_csv(f"{directory}/{tar}/{tar}_epoch1_C.csv")
@@ -454,6 +472,23 @@ def plt_sed(
     except FileNotFoundError:
         print("No C-Band for Epoch4")
 
+    try:
+        atca_Cband_e5_pd = pd.read_csv(f"{directory}/{tar}/{tar}_epoch5_C.csv")
+        atca_Cband_e5 = np.array(atca_Cband_e5_pd["# S_Cband"])
+        err_atca_Cband_e5 = 0.03 * (atca_Cband_e5)
+        for i in range(len(atca_Cband_e5)):
+            if atca_Cband_e5[i] <= 0:
+                atca_Cband_e5[i] = np.nan
+        f.plot_spectrum(
+            freq_cband,
+            atca_Cband_e5,
+            err_atca_Cband_e5,
+            marker="o",
+            marker_color="C4",
+        )
+    except FileNotFoundError:
+        print("No C-Band for Epoch5")
+
     # PLOTTING THE X BAND DATA!!!
     try:
         atca_Xband_e1_pd = pd.read_csv(f"{directory}/{tar}/{tar}_epoch1_X.csv")
@@ -522,6 +557,24 @@ def plt_sed(
         )
     except FileNotFoundError:
         print("No X-Band for Epoch4")
+
+    try:
+        atca_Xband_e5_pd = pd.read_csv(f"{directory}/{tar}/{tar}_epoch5_X.csv")
+        atca_Xband_e5 = np.array(atca_Xband_e5_pd["# S_Xband"])
+        err_atca_Xband_e5 = 0.03 * (atca_Xband_e5)
+        for i in range(len(atca_Xband_e5)):
+            if atca_Xband_e5[i] <= 0:
+                atca_Xband_e5[i] = np.nan
+        f.plot_spectrum(
+            freq_xband,
+            atca_Xband_e5,
+            err_atca_Xband_e5,
+            marker="o",
+            label="ATCA",
+            marker_color="C4",
+        )
+    except FileNotFoundError:
+        print("No X-Band for Epoch5")
 
     if extra_surveys is True:
         fluxes_extra = np.array(
@@ -600,6 +653,9 @@ def plt_sed(
                 label="NVSS",
                 marker_color="navy",
             )
+        # f.plot_point(
+        #     0.34, 0.376, marker="X", label="VCSS*", marker_color="red"
+        # )
 
     if models is True:
         freq_cont = np.linspace(10, 11000, num=10000)

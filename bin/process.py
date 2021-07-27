@@ -369,7 +369,11 @@ def imgmfs_ms(src_dir, msname, targetms, epoch, ATCA_band, n_spw, tar):
     gain = 0.01
     if tar == "J215436":
         uvrange = "<1000"
-
+        cell = "10arcsec"
+        imsize = 240
+    else:
+        uvrange = ""
+    print(uvrange)
     os.system(f"rm -r {targetms}*")
     # split(vis=msname, datacolumn='corrected', field=tar, outputvis=targetms)
     mstransform(
@@ -458,6 +462,10 @@ def img_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar):
     threshold = "5e-3Jy"
     if tar == "J215436":
         uvrange = "<1000"
+        cell = "10arcsec"
+        imsize = 240
+    else:
+        uvrange = ""
     flagmanager(vis=targetms, mode="save", versionname="preself")
     for i in range(0, n_spw):
         spw = str(i)
@@ -560,7 +568,11 @@ def slefcal_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar):
         minblperant = 3
         cell = "0.5arcsec"
     if tar == "J215436":
-        antenna = "0~4,0~4"
+        uvrange = "<1000"
+        cell = "10arcsec"
+        imsize = 240
+    else:
+        uvrange = ""
     stokes = "I"
     weighting = "briggs"
     robust = 0.5
@@ -616,6 +628,7 @@ def slefcal_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar):
             interactive=interactive,
             savemodel="modelcolumn",
             pbcor=False,
+            uvrange=uvrange,
         )
         tclean(
             vis=targetms,
@@ -639,6 +652,7 @@ def slefcal_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar):
             savemodel="modelcolumn",
             calcres=False,
             calcpsf=False,
+            uvrange=uvrange,
         )
 
     threshold = "5e-5Jy"
@@ -697,6 +711,7 @@ def slefcal_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar):
             interactive=interactive,
             savemodel="modelcolumn",
             pbcor=False,
+            uvrange=uvrange,
         )
         tclean(
             vis=targetms,
@@ -720,6 +735,7 @@ def slefcal_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar):
             savemodel="modelcolumn",
             calcres=False,
             calcpsf=False,
+            uvrange=uvrange,
         )
 
     threshold = "5e-6Jy"
@@ -782,6 +798,7 @@ def slefcal_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar):
             interactive=interactive,
             savemodel="modelcolumn",
             pbcor=False,
+            uvrange=uvrange,
         )
         tclean(
             vis=targetms,
@@ -805,6 +822,7 @@ def slefcal_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar):
             savemodel="modelcolumn",
             calcres=False,
             calcpsf=False,
+            uvrange=uvrange,
         )
     return
 
@@ -828,6 +846,10 @@ def measureflux_ms(src_dir, targetms, tar_ms, epoch, ATCA_band, sourcepar, n_spw
     os.system(f"rm -r {tar_ms}")
     split(vis=targetms, datacolumn="corrected", outputvis=tar_ms)
     int_flux_c = []
+    if tar == "J215436":
+        uvrange = "<1000"
+    else:
+        uvrange = ""
     for i in range(n_spw):
         spw = str(i)
         # If things look like theyre not working, then check the source position! Chances are it can't find the source too far away from the phase centre
@@ -835,11 +857,12 @@ def measureflux_ms(src_dir, targetms, tar_ms, epoch, ATCA_band, sourcepar, n_spw
         os.system(f"rm -r {outfile}")
         uvmodelfit(
             vis=tar_ms,
-            niter=25,
+            niter=10,
             comptype="P",
             spw=spw,
             sourcepar=sourcepar,
             outfile=outfile,
+            uvrange=uvrange,
             field="0",
             selectdata=True,
         )
