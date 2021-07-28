@@ -3,9 +3,9 @@
 # By K.Ross 
 
 PROJECT=/data/ATCA/ATCA_datareduction/
-EPOCH=epoch1
-BAND=L
-TARGET=J015445
+EPOCH=epoch2
+BAND=X
+TARGET=J224408
 
 export PROJECT
 export EPOCH
@@ -24,5 +24,3 @@ then
 fi
 
 /data/bin/casa-6.2.0-124/bin/python3 ${PROJECT}bin/run_process.py 
-
-

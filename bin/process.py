@@ -850,26 +850,48 @@ def measureflux_ms(src_dir, targetms, tar_ms, epoch, ATCA_band, sourcepar, n_spw
         uvrange = "<1000"
     else:
         uvrange = ""
-    for i in range(n_spw):
-        spw = str(i)
-        # If things look like theyre not working, then check the source position! Chances are it can't find the source too far away from the phase centre
-        outfile = f"{src_dir}/casa_files/{tar}_{ATCA_band}_{epoch}_{spw}.cl"
-        os.system(f"rm -r {outfile}")
-        uvmodelfit(
-            vis=tar_ms,
-            niter=10,
-            comptype="P",
-            spw=spw,
-            sourcepar=sourcepar,
-            outfile=outfile,
-            uvrange=uvrange,
-            field="0",
-            selectdata=True,
-        )
-        tbl = table(outfile)
-        flux = tbl.getcell("Flux", 0)[0].astype("float64")
-        int_flux_c.append(flux)
-        print(flux)
+    if (tar in ["J001513", "J224408", "J223933"]) and (epoch == "epoch2") and (ATCA_band == "X"):
+        for i in range(n_spw-1):
+            spw = str(i)
+            # If things look like theyre not working, then check the source position! Chances are it can't find the source too far away from the phase centre
+            outfile = f"{src_dir}/casa_files/{tar}_{ATCA_band}_{epoch}_{spw}.cl"
+            os.system(f"rm -r {outfile}")
+            uvmodelfit(
+                vis=tar_ms,
+                niter=10,
+                comptype="P",
+                spw=spw,
+                sourcepar=sourcepar,
+                outfile=outfile,
+                uvrange=uvrange,
+                field="0",
+                selectdata=True,
+            )
+            tbl = table(outfile)
+            flux = tbl.getcell("Flux", 0)[0].astype("float64")
+            int_flux_c.append(flux)
+            print(flux)
+    else:
+        for i in range(n_spw):
+            spw = str(i)
+            # If things look like theyre not working, then check the source position! Chances are it can't find the source too far away from the phase centre
+            outfile = f"{src_dir}/casa_files/{tar}_{ATCA_band}_{epoch}_{spw}.cl"
+            os.system(f"rm -r {outfile}")
+            uvmodelfit(
+                vis=tar_ms,
+                niter=10,
+                comptype="P",
+                spw=spw,
+                sourcepar=sourcepar,
+                outfile=outfile,
+                uvrange=uvrange,
+                field="0",
+                selectdata=True,
+            )
+            tbl = table(outfile)
+            flux = tbl.getcell("Flux", 0)[0].astype("float64")
+            int_flux_c.append(flux)
+            print(flux)
     if ATCA_band == "C":
         np.savetxt(
             f"{src_dir}/{tar}_{epoch}_{ATCA_band}.csv",

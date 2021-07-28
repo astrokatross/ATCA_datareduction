@@ -13,7 +13,27 @@ plt.rcParams["font.family"] = "serif"
 plt.rcParams["axes.grid"] = False
 
 # constants:
-tarname = "J032213"
-directory = "/data/ATCA/ATCA_datareduction/"
 
-plotfuncts.plt_sed(directory, tarname, models=True, extra_surveys=True)
+source_dict = [
+    "J001513",
+    "J015445",
+    "J020507",
+    "J021246",
+    "J022744",
+    "J024838",
+    "J032213",
+    "J032836",
+    "J033023",
+    "J042502",
+    "J044033",
+    "J044737",
+    "J052824",
+    "J223933",
+    "J224408",
+    "J215436",
+]
+
+# tarname = "J015445"
+directory = "/data/ATCA/ATCA_datareduction/"
+for tarname in source_dict:
+    plotfuncts.plt_sed(directory, tarname, models=True, extra_surveys=True)
