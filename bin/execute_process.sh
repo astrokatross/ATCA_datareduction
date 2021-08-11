@@ -3,14 +3,16 @@
 # By K.Ross 
 
 PROJECT=/data/ATCA/ATCA_datareduction/
-EPOCH=epoch2
+EPOCH=epoch4
 BAND=X
-TARGET=J224408
+TARGET=J033023
+SECONDARY=NO
 
 export PROJECT
 export EPOCH
 export BAND
 export TARGET
+export SECONDARY
 
 cd $PROJECT/processing/
 
@@ -24,3 +26,6 @@ then
 fi
 
 /data/bin/casa-6.2.0-124/bin/python3 ${PROJECT}bin/run_process.py 
+
+echo "Finished processing, plotting the SED"
+/usr/bin/python3 /home/katross/data/ATCA/ATCA_datareduction/bin/run_plotseds.py

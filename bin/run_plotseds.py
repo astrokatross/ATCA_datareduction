@@ -7,7 +7,7 @@
 # Importing relevant packages
 import plotfuncts
 import matplotlib.pyplot as plt
-
+import os
 
 plt.rcParams["font.family"] = "serif"
 plt.rcParams["axes.grid"] = False
@@ -33,7 +33,11 @@ source_dict = [
     "J215436",
 ]
 
-# tarname = "J015445"
+# directory = str(os.environ["PROJECT"])
+# tarname = str(os.environ["TARGET"])
+
+tarname = "J223933"
 directory = "/data/ATCA/ATCA_datareduction/"
-for tarname in source_dict:
-    plotfuncts.plt_sed(directory, tarname, models=True, extra_surveys=True)
+# for tarname in source_dict:
+
+plotfuncts.plt_sed(directory, tarname)

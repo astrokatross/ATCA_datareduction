@@ -50,9 +50,13 @@ def buildImage(imname="", chan=0):
     return pix, w
 
 
-def flag_ms(visname):
+def flag_ms(visname):  # , rawname1, rawname2, rawname3):
+    print("Flagging antennas affected by shadowing...")
+    # importatca(
+    #     vis=visname, files=[rawname1, rawname2, rawname3], options="birdie,noac", edge=4
+    # )
     flagmanager(vis=visname, mode="save", versionname="before_online_flagging")
-    print("Flagging antennae affected by shadowing...")
+    print("Flagging antennas affected by shadowing...")
     flagdata(vis=visname, mode="shadow", tolerance=0.0, flagbackup=False)
     print("Flagging visibilities with zero amplitudes...")
     flagdata(vis=visname, mode="clip", clipzeros=True, flagbackup=False)
@@ -111,6 +115,7 @@ def split_ms(
     pri,
     sec,
     tar,
+    n_spw
 ):
     os.system(f"rm -r {msname}")
     os.system(f"rm -r {msname}.flagversions")
@@ -121,6 +126,10 @@ def split_ms(
         outputvis=msname,
         datacolumn="data",
         field=f"{pri},{sec},{tar}",
+        nspw=n_spw,
+        regridms=True,
+        # field=f"{sec},{tar}",
+        # scan="3,>90"
     )
     listobs(
         vis=msname,
@@ -147,18 +156,16 @@ def calibrate_ms(src_dir, msname, epoch, ATCA_band, ref, pri, sec, tar):
         field=pri,
         refant=ref,
         gaintype="G",
-        combine="spw,scan",
         calmode="p",
         parang=True,
         minblperant=3,
-        solint="120s",
+        solint="60s",
     )
     print(f"Performing bandpass calibration on {pri}")
     bandpass(
         vis=msname,
         caltable=f"{src_dir}/cal_tables/cal_{pri}_{epoch}_{ATCA_band}.B0",
         field=pri,
-        combine="spw,scan",
         refant=ref,
         solnorm=True,
         solint="inf",
@@ -172,18 +179,16 @@ def calibrate_ms(src_dir, msname, epoch, ATCA_band, ref, pri, sec, tar):
         caltable=f"{src_dir}/cal_tables/cal_{pri}_{epoch}_{ATCA_band}.G1",
         field=pri + "," + sec,
         refant=ref,
-        combine="spw,scan",
         gaintype="G",
         calmode="ap",
         parang=True,
-        solint="120s",
+        solint="inf",
         gaintable=[f"{src_dir}/cal_tables/cal_{pri}_{epoch}_{ATCA_band}.B0"],
     )
     bandpass(
         vis=msname,
         caltable=f"{src_dir}/cal_tables/cal_{pri}_{epoch}_{ATCA_band}.B1",
         field=pri,
-        combine="spw,scan",
         refant=ref,
         solnorm=True,
         solint="inf",
@@ -197,7 +202,6 @@ def calibrate_ms(src_dir, msname, epoch, ATCA_band, ref, pri, sec, tar):
         caltable=f"{src_dir}/cal_tables/cal_{pri}_{epoch}_{ATCA_band}.G2",
         field=pri,
         refant=ref,
-        combine="spw,scan",
         gaintype="G",
         calmode="ap",
         parang=True,
@@ -211,7 +215,6 @@ def calibrate_ms(src_dir, msname, epoch, ATCA_band, ref, pri, sec, tar):
         caltable=f"{src_dir}/cal_tables/cal_{pri}_{epoch}_{ATCA_band}.G2",
         field=sec,
         refant=ref,
-        combine="spw,scan",
         gaintype="G",
         calmode="ap",
         parang=True,
@@ -350,6 +353,14 @@ def imgmfs_ms(src_dir, msname, targetms, epoch, ATCA_band, n_spw, tar):
     nterms = 1
     niter = 3000
     antenna = "0~6,0~6"
+    if (
+        (tar in ["J001513", "J224408", "J223933"])
+        and (epoch == "epoch2")
+        and (ATCA_band == "X")
+    ):
+        n_spw = n_spw - 1
+    else:
+        n_spw = n_spw
     if ATCA_band == "L":
         imsize = 2250
         cell = "1arcsec"
@@ -360,7 +371,7 @@ def imgmfs_ms(src_dir, msname, targetms, epoch, ATCA_band, n_spw, tar):
         threshold = "2e-2Jy"
     if ATCA_band == "X":
         imsize = 1152
-        cell = "0.5arcsec"
+        cell = "0.2arcsec"
         threshold = "2e-2Jy"
     stokes = "I"
     weighting = "briggs"
@@ -380,7 +391,7 @@ def imgmfs_ms(src_dir, msname, targetms, epoch, ATCA_band, n_spw, tar):
         vis=msname,
         outputvis=targetms,
         datacolumn="corrected",
-        nspw=n_spw,
+        # nspw=n_spw,
         regridms=True,
         field=tar,
     )
@@ -445,6 +456,14 @@ def img_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar):
     mode = "mfs"
     nterms = 1
     niter = 3000
+    if (
+        (tar in ["J001513", "J224408", "J223933"])
+        and (epoch == "epoch2")
+        and (ATCA_band == "X")
+    ):
+        n_spw = n_spw - 1
+    else:
+        n_spw = n_spw
     if ATCA_band == "L":
         imsize = 2250
         cell = "1arcsec"
@@ -453,7 +472,7 @@ def img_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar):
         cell = "0.5arcsec"
     if ATCA_band == "X":
         imsize = 1152
-        cell = "0.5arcsec"
+        cell = "0.2arcsec"
     stokes = "I"
     weighting = "briggs"
     robust = 0.5
@@ -549,6 +568,14 @@ def slefcal_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar):
     nterms = 2
     niter = 3000
     antenna = "0~6,0~6"
+    if (
+        (tar in ["J001513", "J224408", "J223933"])
+        and (epoch == "epoch2")
+        and (ATCA_band == "X")
+    ):
+        n_spw = n_spw - 1
+    else:
+        n_spw = n_spw
     if ATCA_band == "L":
         imsize = 2250
         solint = "60s"
@@ -566,7 +593,7 @@ def slefcal_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar):
         solint = "60s"
         minsnr = 3.0
         minblperant = 3
-        cell = "0.5arcsec"
+        cell = "0.2arcsec"
     if tar == "J215436":
         uvrange = "<1000"
         cell = "10arcsec"
@@ -828,6 +855,14 @@ def slefcal_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar):
 
 
 def pbcor_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar):
+    if (
+        (tar in ["J001513", "J224408", "J223933"])
+        and (epoch == "epoch2")
+        and (ATCA_band == "X")
+    ):
+        n_spw = n_spw - 1
+    else:
+        n_spw = n_spw
     for i in range(0, n_spw):
         spw = str(i)
         imagename = f"{src_dir}/casa_files/{tar}_{epoch}_{ATCA_band}_{spw}"
@@ -850,48 +885,34 @@ def measureflux_ms(src_dir, targetms, tar_ms, epoch, ATCA_band, sourcepar, n_spw
         uvrange = "<1000"
     else:
         uvrange = ""
-    if (tar in ["J001513", "J224408", "J223933"]) and (epoch == "epoch2") and (ATCA_band == "X"):
-        for i in range(n_spw-1):
-            spw = str(i)
-            # If things look like theyre not working, then check the source position! Chances are it can't find the source too far away from the phase centre
-            outfile = f"{src_dir}/casa_files/{tar}_{ATCA_band}_{epoch}_{spw}.cl"
-            os.system(f"rm -r {outfile}")
-            uvmodelfit(
-                vis=tar_ms,
-                niter=10,
-                comptype="P",
-                spw=spw,
-                sourcepar=sourcepar,
-                outfile=outfile,
-                uvrange=uvrange,
-                field="0",
-                selectdata=True,
-            )
-            tbl = table(outfile)
-            flux = tbl.getcell("Flux", 0)[0].astype("float64")
-            int_flux_c.append(flux)
-            print(flux)
+    if (
+        (tar in ["J001513", "J224408", "J223933"])
+        and (epoch == "epoch2")
+        and (ATCA_band == "X")
+    ):
+        n_spw = n_spw - 1
     else:
-        for i in range(n_spw):
-            spw = str(i)
-            # If things look like theyre not working, then check the source position! Chances are it can't find the source too far away from the phase centre
-            outfile = f"{src_dir}/casa_files/{tar}_{ATCA_band}_{epoch}_{spw}.cl"
-            os.system(f"rm -r {outfile}")
-            uvmodelfit(
-                vis=tar_ms,
-                niter=10,
-                comptype="P",
-                spw=spw,
-                sourcepar=sourcepar,
-                outfile=outfile,
-                uvrange=uvrange,
-                field="0",
-                selectdata=True,
-            )
-            tbl = table(outfile)
-            flux = tbl.getcell("Flux", 0)[0].astype("float64")
-            int_flux_c.append(flux)
-            print(flux)
+        n_spw = n_spw
+    for i in range(n_spw):
+        spw = str(i)
+        # If things look like theyre not working, then check the source position! Chances are it can't find the source too far away from the phase centre
+        outfile = f"{src_dir}/casa_files/{tar}_{ATCA_band}_{epoch}_{spw}.cl"
+        os.system(f"rm -r {outfile}")
+        uvmodelfit(
+            vis=tar_ms,
+            niter=25,
+            comptype="P",
+            spw=spw,
+            sourcepar=sourcepar,
+            outfile=outfile,
+            uvrange=uvrange,
+            field="0",
+            selectdata=True,
+        )
+        tbl = table(outfile)
+        flux = tbl.getcell("Flux", 0)[0].astype("float64")
+        int_flux_c.append(flux)
+        print(flux)
     if ATCA_band == "C":
         np.savetxt(
             f"{src_dir}/{tar}_{epoch}_{ATCA_band}.csv",
@@ -922,41 +943,41 @@ def measureflux_ms(src_dir, targetms, tar_ms, epoch, ATCA_band, sourcepar, n_spw
 
 
 def inspection_plots(
-    src_dir, img_dir, visname, msname, epoch, ATCA_band, pri, sec, tar
+    src_dir, img_dir, visname, msname, targetms, epoch, ATCA_band, pri, sec, tar
 ):
-    plotms(
-        vis=visname,
-        field=pri,
-        xaxis="channel",
-        yaxis="amp",
-        correlation="xy,yx",
-        ydatacolumn="data",
-        plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{pri}_ampvschan_postRFI_flag.png",
-        showgui=False,
-        overwrite=True,
-    )
-    plotms(
-        vis=visname,
-        field=sec,
-        xaxis="channel",
-        yaxis="amp",
-        correlation="xy,yx",
-        ydatacolumn="data",
-        plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{sec}_ampvschan_postRFI_flag.png",
-        showgui=False,
-        overwrite=True,
-    )
-    plotms(
-        vis=visname,
-        field=tar,
-        xaxis="channel",
-        yaxis="amp",
-        correlation="xy,yx",
-        ydatacolumn="data",
-        plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{tar}_ampvschan_postRFI_flag.png",
-        showgui=False,
-        overwrite=True,
-    )
+    # plotms(
+    #     vis=visname,
+    #     field=pri,
+    #     xaxis="channel",
+    #     yaxis="amp",
+    #     correlation="xy,yx",
+    #     ydatacolumn="data",
+    #     plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{pri}_ampvschan_postRFI_flag.png",
+    #     showgui=False,
+    #     overwrite=True,
+    # )
+    # plotms(
+    #     vis=visname,
+    #     field=sec,
+    #     xaxis="channel",
+    #     yaxis="amp",
+    #     correlation="xy,yx",
+    #     ydatacolumn="data",
+    #     plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{sec}_ampvschan_postRFI_flag.png",
+    #     showgui=False,
+    #     overwrite=True,
+    # )
+    # plotms(
+    #     vis=targetms,
+    #     field=tar,
+    #     xaxis="channel",
+    #     yaxis="amp",
+    #     correlation="xy,yx",
+    #     ydatacolumn="data",
+    #     plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{tar}_ampvschan_postRFI_flag.png",
+    #     showgui=False,
+    #     overwrite=True,
+    # )
     plotms(
         vis=msname,
         field=pri,
@@ -981,42 +1002,42 @@ def inspection_plots(
         showgui=False,
         overwrite=True,
     )
-    plotms(
-        vis=msname,
-        field=pri,
-        xaxis="frequency",
-        yaxis="amp",
-        correlation="xx,yy",
-        ydatacolumn="corrected",
-        coloraxis="spw",
-        plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{pri}_ampvsfreq_post_cal.png",
-        showgui=False,
-        overwrite=True,
-    )
-    plotms(
-        vis=msname,
-        field=sec,
-        xaxis="frequency",
-        yaxis="amp",
-        correlation="xx,yy",
-        ydatacolumn="corrected",
-        coloraxis="spw",
-        plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{sec}_ampvsfreq_post_cal.png",
-        showgui=False,
-        overwrite=True,
-    )
-    plotms(
-        vis=msname,
-        field=pri,
-        xaxis="frequency",
-        yaxis="amp",
-        correlation="xx,yy",
-        ydatacolumn="corrected",
-        coloraxis="baseline",
-        plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{pri}_ampvsfreqbaseline_post_cal.png",
-        showgui=False,
-        overwrite=True,
-    )
+    # plotms(
+    #     vis=msname,
+    #     field=pri,
+    #     xaxis="frequency",
+    #     yaxis="amp",
+    #     correlation="xx,yy",
+    #     ydatacolumn="corrected",
+    #     coloraxis="spw",
+    #     plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{pri}_ampvsfreq_post_cal.png",
+    #     showgui=False,
+    #     overwrite=True,
+    # )
+    # plotms(
+    #     vis=msname,
+    #     field=sec,
+    #     xaxis="frequency",
+    #     yaxis="amp",
+    #     correlation="xx,yy",
+    #     ydatacolumn="corrected",
+    #     coloraxis="spw",
+    #     plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{sec}_ampvsfreq_post_cal.png",
+    #     showgui=False,
+    #     overwrite=True,
+    # )
+    # plotms(
+    #     vis=msname,
+    #     field=pri,
+    #     xaxis="frequency",
+    #     yaxis="amp",
+    #     correlation="xx,yy",
+    #     ydatacolumn="corrected",
+    #     coloraxis="baseline",
+    #     plotfile=f"{img_dir}/{epoch}_{ATCA_band}_{pri}_ampvsfreqbaseline_post_cal.png",
+    #     showgui=False,
+    #     overwrite=True,
+    # )
     plotms(
         vis=msname,
         field=pri,
@@ -1042,7 +1063,7 @@ def inspection_plots(
         overwrite=True,
     )
     plotms(
-        vis=msname,
+        vis=targetms,
         field=tar,
         xaxis="frequency",
         yaxis="amp",
@@ -1054,7 +1075,7 @@ def inspection_plots(
         overwrite=True,
     )
     plotms(
-        vis=msname,
+        vis=targetms,
         field=tar,
         xaxis="frequency",
         yaxis="amp",
@@ -1066,7 +1087,7 @@ def inspection_plots(
         overwrite=True,
     )
     plotms(
-        vis=msname,
+        vis=targetms,
         field=tar,
         xaxis="frequency",
         yaxis="amp",

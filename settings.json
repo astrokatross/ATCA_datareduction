@@ -25,7 +25,7 @@
         "python.typescript.format.insertSpaceAfterTypeAssertion": true,
         "python.editor.formatOnType": true,
         "python.linting.pylamaEnabled": true,
-        "python.linting.pylamaArgs": ["--line-length","100","--ignore=E501,C901"],
+        "python.linting.pylamaArgs": ["--line-length","100","--ignore=E501,C901,E722"],
         "python.formatting.blackArgs": ["--line-length", "100"]
     }
 }
