@@ -3,9 +3,9 @@
 # By K.Ross 
 
 PROJECT=/data/ATCA/ATCA_datareduction/
-EPOCH=epoch4
+EPOCH=epoch3
 BAND=X
-TARGET=J033023
+TARGET=J020507
 SECONDARY=NO
 
 export PROJECT

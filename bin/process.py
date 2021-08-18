@@ -126,7 +126,7 @@ def split_ms(
         outputvis=msname,
         datacolumn="data",
         field=f"{pri},{sec},{tar}",
-        nspw=n_spw,
+        # nspw=n_spw,
         regridms=True,
         # field=f"{sec},{tar}",
         # scan="3,>90"
@@ -158,7 +158,7 @@ def calibrate_ms(src_dir, msname, epoch, ATCA_band, ref, pri, sec, tar):
         gaintype="G",
         calmode="p",
         parang=True,
-        minblperant=3,
+        # minblperant=3,
         solint="60s",
     )
     print(f"Performing bandpass calibration on {pri}")
@@ -168,7 +168,7 @@ def calibrate_ms(src_dir, msname, epoch, ATCA_band, ref, pri, sec, tar):
         field=pri,
         refant=ref,
         solnorm=True,
-        solint="inf",
+        solint="120s",
         bandtype="B",
         gaintable=[f"{src_dir}/cal_tables/cal_{pri}_{epoch}_{ATCA_band}.G0"],
         parang=True,
@@ -182,7 +182,7 @@ def calibrate_ms(src_dir, msname, epoch, ATCA_band, ref, pri, sec, tar):
         gaintype="G",
         calmode="ap",
         parang=True,
-        solint="inf",
+        solint="120s",
         gaintable=[f"{src_dir}/cal_tables/cal_{pri}_{epoch}_{ATCA_band}.B0"],
     )
     bandpass(
@@ -191,7 +191,7 @@ def calibrate_ms(src_dir, msname, epoch, ATCA_band, ref, pri, sec, tar):
         field=pri,
         refant=ref,
         solnorm=True,
-        solint="inf",
+        solint="120s",
         bandtype="B",
         gaintable=[f"{src_dir}/cal_tables/cal_{pri}_{epoch}_{ATCA_band}.G1"],
         parang=True,
@@ -205,8 +205,8 @@ def calibrate_ms(src_dir, msname, epoch, ATCA_band, ref, pri, sec, tar):
         gaintype="G",
         calmode="ap",
         parang=True,
-        solint="120s",
-        minblperant=3,
+        solint="60s",
+        # minblperant=3,
         gaintable=[f"{src_dir}/cal_tables/cal_{pri}_{epoch}_{ATCA_band}.B1"],
     )
     print(f"Deriving gain calibration using {sec}")
@@ -218,8 +218,8 @@ def calibrate_ms(src_dir, msname, epoch, ATCA_band, ref, pri, sec, tar):
         gaintype="G",
         calmode="ap",
         parang=True,
-        solint="120s",
-        minblperant=3,
+        solint="60s",
+        # minblperant=3,
         gaintable=[f"{src_dir}/cal_tables/cal_{pri}_{epoch}_{ATCA_band}.B1"],
         append=True,
     )
@@ -391,7 +391,7 @@ def imgmfs_ms(src_dir, msname, targetms, epoch, ATCA_band, n_spw, tar):
         vis=msname,
         outputvis=targetms,
         datacolumn="corrected",
-        # nspw=n_spw,
+        nspw=n_spw,
         regridms=True,
         field=tar,
     )

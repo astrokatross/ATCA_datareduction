@@ -364,7 +364,7 @@ def plt_sed(
     )
     for i in range(0, 4):
         if i == 1:
-            if tar in ["J001513", "J224408"]:
+            if tar in ["J001513"]:
                 freq_atca = [
                     1.33,
                     1.407,
@@ -440,8 +440,7 @@ def plt_sed(
             fluxes_extra[0:4],
             gleam_err,
             marker="o",
-            label="GLEAM",
-            marker_color="grey",
+            marker_color="C6",
         )
         if fluxes_extra[8] != np.nan:
             pass

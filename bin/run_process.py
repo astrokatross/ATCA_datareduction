@@ -19,7 +19,7 @@ print(f"Target: {tar}\nEpoch: {epoch}\nATCA band: {ATCA_band}")
 # Setting sourcepar dictionary to measrue flux
 source_dict = {
     "J001513": ["2327-459", (0.1, 12.7, -0.5)],
-    "J015445": ["0237-233", (0.15, 14.1, -2.7)],
+    "J015445": ["0237-233", (0.15, 14, -2.8)],
     "J020507": ["0238-084", (0.3, 2.6, 0.7)],
     "J021246": ["0237-233", (0.15, 12.9, -5.2)],
     "J022744": ["0238-084", (0.25, 6, 0.3)],
@@ -101,11 +101,11 @@ elif ATCA_band == "X":
         visname = f"{data_dir}data/epoch2_X_9000_nspw1_join.ms"
     if epoch == "epoch2":
         visname = f"{data_dir}data/{epoch}_{ATCA_band}_9500.ms"
-    #     msname = f"{data_dir}data/{epoch}_{ATCA_band}_{tar}_second.ms"
+        # msname = f"{data_dir}data/{epoch}_{ATCA_band}_first.ms"
     # if (tar in ["J001513", "J224408", "J223933"]) and (epoch == "epoch2"):
     # visname = f"{data_dir}data/{epoch}_casa_xycorr.ms"
     n_spw = 4
-    pri = "1934_cal_cx"
+    pri = "1934_cal_CX"
 
 
 print("Here we go! Time to analyse some ATCA data!")
@@ -134,14 +134,14 @@ process.applycal_ms(src_dir, msname, epoch, ATCA_band, pri, sec, tar)
 # # Post cal inspection and flagging
 process.flagcal_ms(img_dir, msname, epoch, ATCA_band, pri, sec)
 
-# # Imaging of target
+# Imaging of target
 if secondary == "YES":
     process.imgmfs_ms(src_dir, msname, targetms, epoch, ATCA_band, n_spw, sec)
     process.imgmfs_ms(src_dir, msname, targetms, epoch, ATCA_band, n_spw, sec)
     process.img_ms(src_dir, targetms, epoch, ATCA_band, n_spw, sec)
     process.slefcal_ms(src_dir, targetms, epoch, ATCA_band, n_spw, sec)
 else:
-    process.flagcaltar_ms(src_dir, img_dir, msname, epoch, ATCA_band, pri, sec, tar)
+    # process.flagcaltar_ms(src_dir, img_dir, msname, epoch, ATCA_band, pri, sec, tar)
     process.imgmfs_ms(src_dir, msname, targetms, epoch, ATCA_band, n_spw, tar)
     process.img_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar)
     process.slefcal_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar)
