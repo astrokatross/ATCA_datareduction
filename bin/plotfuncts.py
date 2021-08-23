@@ -329,13 +329,13 @@ def plt_sed(
             label="MWAYr2",
             marker_color="mediumblue",
         )
-        f.plot_residuals(
-            freq_mwa[4:20],
-            mwa_flux[0],
-            mwa_flux[1],
-            mwa_flux[2],
-            mwa_flux[3],
-        )
+        # f.plot_residuals(
+        #     freq_mwa[4:20],
+        #     mwa_flux[0],
+        #     mwa_flux[1],
+        #     mwa_flux[2],
+        #     mwa_flux[3],
+        # )
         f.display_model(
             freq_cont,
             model_vals[0],
@@ -362,67 +362,15 @@ def plt_sed(
         marker="o",
         marker_color=colours[2],
     )
+    # f.plot_residuals(
+    #     freq_mwa,
+    #     mwa_fluxes_e3,
+    #     mwa_fluxes_e3,
+    #     mwa_errors_e3,
+    #     mwa_errors_e3,
+    #     color=colours[2],
+    # )
     for i in range(0, 4):
-        if i == 1:
-            if tar in ["J001513"]:
-                freq_atca = [
-                    1.33,
-                    1.407,
-                    1.638,
-                    1.869,
-                    2.1,
-                    2.331,
-                    2.562,
-                    2.793,
-                    4.71,
-                    5.090,
-                    5.500,
-                    5.910,
-                    6.320,
-                    8.732,
-                    9.245,
-                    9.758,
-                ]
-            else:
-                freq_atca = [
-                    1.33,
-                    1.407,
-                    1.638,
-                    1.869,
-                    2.1,
-                    2.331,
-                    2.562,
-                    2.793,
-                    4.71,
-                    5.090,
-                    5.500,
-                    5.910,
-                    6.320,
-                    8.732,
-                    9.245,
-                    9.758,
-                    10.269,
-                ]
-        else:
-            freq_atca = [
-                1.33,
-                1.407,
-                1.638,
-                1.869,
-                2.1,
-                2.331,
-                2.562,
-                2.793,
-                4.71,
-                5.090,
-                5.500,
-                5.910,
-                6.320,
-                8.732,
-                9.245,
-                9.758,
-                10.269,
-            ]
         f.plot_spectrum(
             freq_atca,
             atca_fluxes[i],
@@ -430,6 +378,14 @@ def plt_sed(
             marker="o",
             marker_color=colours[i],
             label=epoch_nms[i],
+        )
+        f.plot_residuals(
+            freq_atca,
+            atca_fluxes[2],
+            atca_fluxes[i],
+            atca_fluxes[2] * 0.03,
+            atca_fluxes[i] * 0.03,
+            color=colours[i],
         )
 
     if extra_surveys is True:
@@ -449,8 +405,8 @@ def plt_sed(
                 freq_xtra[8],
                 fluxes_extra[8],
                 marker="X",
-                label="VLSSr",
-                marker_color="red",
+                # label="VLSSr",
+                marker_color="k",
             )
         if fluxes_extra[4] == np.nan:
             pass
@@ -459,7 +415,7 @@ def plt_sed(
                 freq_xtra[4],
                 fluxes_extra[4] * 0.001,
                 marker="s",
-                label="TGSS",
+                # label="TGSS",
                 marker_color="k",
             )
         if fluxes_extra[5] == np.nan:
@@ -469,8 +425,8 @@ def plt_sed(
                 freq_xtra[5],
                 fluxes_extra[5],
                 marker="*",
-                label="MRC",
-                marker_color="green",
+                # label="MRC",
+                marker_color="k",
             )
         if fluxes_extra[6] == np.nan:
             print("No SUMSS")
@@ -480,8 +436,8 @@ def plt_sed(
                 freq_xtra[6],
                 fluxes_extra[6] * 0.001,
                 marker="p",
-                label="SUMSS",
-                marker_color="orange",
+                # label="SUMSS",
+                marker_color="k",
             )
         if fluxes_extra[7] == np.nan:
             pass
@@ -490,8 +446,8 @@ def plt_sed(
                 freq_xtra[7],
                 fluxes_extra[7] * 0.001,
                 marker="D",
-                label="NVSS",
-                marker_color="navy",
+                # label="NVSS",
+                marker_color="k",
             )
 
     f.legend(values[1], values[2], loc="lower center")

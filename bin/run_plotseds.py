@@ -33,11 +33,11 @@ source_dict = [
     "J215436",
 ]
 
-directory = str(os.environ["PROJECT"])
-tarname = str(os.environ["TARGET"])
+# directory = str(os.environ["PROJECT"])
+# tarname = str(os.environ["TARGET"])
 
 # tarname = "J224408"
-# directory = "/data/ATCA/ATCA_datareduction/"
-# for tarname in source_dict:
+directory = "/data/ATCA/ATCA_datareduction/"
+for tarname in source_dict:
 
-plotfuncts.plt_sed(directory, tarname)
+    plotfuncts.plt_sed(directory, tarname)
