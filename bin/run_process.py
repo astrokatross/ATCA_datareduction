@@ -5,7 +5,6 @@
 # Importing relevant python packages
 import process
 import os
-import numpy as np
 
 
 data_dir = str(os.environ["PROJECT"])
@@ -18,23 +17,23 @@ print(f"Target: {tar}\nEpoch: {epoch}\nATCA band: {ATCA_band}")
 
 # Setting sourcepar dictionary to measrue flux
 source_dict = {
-    "J001513": ["2327-459", (0.1, 12.7, -0.5)],
-    "J015445": ["0237-233", (0.15, 14, -2.8)],
-    "J020507": ["0238-084", (0.3, 2.6, 0.7)],
-    "J021246": ["0237-233", (0.15, 12.9, -5.2)],
-    "J022744": ["0238-084", (0.25, 6, 0.3)],
-    "J024838": ["0237-233", (0.1, 1.5, 0.5)],
-    "J032213": ["0355-483", (0.35, 2.6, -3.4)],
-    "J032836": ["0310-150", (0.35, 4, -2.5)],
-    "J033023": ["0310-150", (0.15, 0.7, 0.0)],
-    "J042502": ["0445-221", (0.1, 4.6, 1.9)],
-    "J044033": ["0355-483", (0.2, 8.2, -0.3)],
-    "J044737": ["0445-221", (0.25, 3.4, -2.2)],
-    "J052824": ["0528-250", (0.2, 8, -3.9)],
-    "J223933": ["2327-459", (0.2, 10, -3.1)],
-    "J224408": ["2240-260", (0.25, 8.3, -5.2)],
-    "J215436": ["2211-388", (0.3, 1.1, -0.34)],
-    "1934_cal_l": ["1934_cal_l", (1, 0, 0)],
+    "J001513": ["2327-459", (0.1, 12.7, -0.5), (0.5, 0, 0)],
+    "J015445": ["0237-233", (0.15, 14, -2.8), (0.5, 0, 0)],
+    "J020507": ["0238-084", (0.3, 2.6, 0.7), (0.5, 0, 0)],
+    "J021246": ["0237-233", (0.15, 12.9, -5.2), (0.5, 0, 0)],
+    "J022744": ["0238-084", (0.25, 6, 0.3), (0.5, 0, 0)],
+    "J024838": ["0237-233", (0.1, 1.5, 0.5), (0.5, 0, 0)],
+    "J032213": ["0355-483", (0.35, 2.6, -3.4), (0.5, 0, 0)],
+    "J032836": ["0310-150", (0.35, 4, -2.5), (0.5, 0, 0)],
+    "J033023": ["0310-150", (0.15, 0.7, 0.0), (0.5, 0, 0)],
+    "J042502": ["0445-221", (0.1, 4.6, 1.9), (0.5, 0, 0)],
+    "J044033": ["0355-483", (0.2, 8.2, -0.3), (0.5, 0, 0)],
+    "J044737": ["0445-221", (0.25, 3.4, -2.2), (0.5, 0, 0)],
+    "J052824": ["0528-250", (0.2, 8, -3.9), (0.5, 0, 0)],
+    "J223933": ["2327-459", (0.2, 10, -3.1), (0.5, 0, 0)],
+    "J224408": ["2240-260", (0.25, 8.3, -5.2), (0.5, 0, 0)],
+    "J215436": ["2211-388", (0.3, 1.1, -0.34), (0.5, 0, 0)],
+    "1934_cal_l": ["1934_cal_l", (1, 0, 0), (0.5, 0, 0)],
 }
 
 
@@ -57,6 +56,8 @@ if secondary == "YES":
     msname = f"{data_dir}data/{epoch}_{ATCA_band}_{sec}.ms"
     targetms = f"{data_dir}data/{epoch}_{ATCA_band}_{sec}_img.ms"
     tar_ms = f"{data_dir}data/{epoch}_{ATCA_band}_{sec}_selfcal.ms"
+    sourcepar = source_dict[tar][2]
+    export_pngs = False
 
 if ATCA_band == "L":
     n_spw = 8
@@ -84,49 +85,52 @@ print("Here we go! Time to analyse some ATCA data!")
 # process.flag_ms(visname)
 
 # Split to make its own ms
-process.split_ms(
-    src_dir,
-    img_dir,
-    visname,
-    msname,
-    epoch,
-    ATCA_band,
-    pri,
-    sec,
-    tar,
-    n_spw,
-)
+# process.split_ms(
+#     src_dir,
+#     img_dir,
+#     visname,
+#     msname,
+#     epoch,
+#     ATCA_band,
+#     pri,
+#     sec,
+#     tar,
+#     n_spw,
+# )
 
-# Calibrate, and apply cal ms using primary and secondary
-process.calibrate_ms(src_dir, msname, epoch, ATCA_band, ref, pri, sec, tar)
-process.applycal_ms(src_dir, msname, epoch, ATCA_band, pri, sec, tar)
+# # Calibrate, and apply cal ms using primary and secondary
+# process.calibrate_ms(src_dir, msname, epoch, ATCA_band, ref, pri, sec, tar)
+# process.applycal_ms(src_dir, msname, epoch, ATCA_band, pri, sec, tar)
 
-# # Post cal inspection and flagging
-process.flagcal_ms(img_dir, msname, epoch, ATCA_band, pri, sec)
+# # # Post cal inspection and flagging
+# process.flagcal_ms(img_dir, msname, epoch, ATCA_band, pri, sec)
 
 # Imaging of target
 if secondary == "YES":
     process.imgmfs_ms(src_dir, msname, targetms, epoch, ATCA_band, n_spw, sec)
-    process.imgmfs_ms(src_dir, msname, targetms, epoch, ATCA_band, n_spw, sec)
     process.img_ms(src_dir, targetms, epoch, ATCA_band, n_spw, sec)
     process.slefcal_ms(src_dir, targetms, epoch, ATCA_band, n_spw, sec)
+    process.measureflux_ms(
+        src_dir, targetms, tar_ms, epoch, ATCA_band, sourcepar, n_spw, sec
+    )
 else:
     # process.flagcaltar_ms(src_dir, img_dir, msname, epoch, ATCA_band, pri, sec, tar)
-    process.imgmfs_ms(src_dir, msname, targetms, epoch, ATCA_band, n_spw, tar)
-    process.img_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar)
-    process.slefcal_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar)
+    # process.imgmfs_ms(src_dir, msname, targetms, epoch, ATCA_band, n_spw, tar)
+    # process.img_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar)
+    # process.slefcal_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar)
+    process.measureflux_ms(
+        src_dir, targetms, tar_ms, epoch, ATCA_band, sourcepar, n_spw, tar
+    )
 
 # # Post image analysis: pbcor, measure flux
-process.pbcor_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar)
-process.measureflux_ms(
-    src_dir, targetms, tar_ms, epoch, ATCA_band, sourcepar, n_spw, tar
-)
+# process.pbcor_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar)
 
-# Post analysis
-if export_pngs is True:
-    process.inspection_plots(
-        src_dir, img_dir, visname, msname, targetms, epoch, ATCA_band, pri, sec, tar
-    )
-process.export_fitspng(src_dir, n_spw, epoch, ATCA_band, tar)
+
+# # Post analysis
+# if export_pngs is True:
+#     process.inspection_plots(
+#         src_dir, img_dir, visname, msname, targetms, epoch, ATCA_band, pri, sec, tar
+#     )
+# # process.export_fitspng(src_dir, n_spw, epoch, ATCA_band, tar)
 
 print(f"Completed running for {tar} {epoch} {ATCA_band}")

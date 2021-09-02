@@ -174,8 +174,19 @@ source_dict = {
     "J044737": ["GLEAM J044737-220335"],
     "J052824": ["GLEAM J052824-331104"],
     "J223933": ["GLEAM J223933-451414"],
-    "J224408": ["GLEAM J224408-202719"],
+    "J224408": ["GLEAM J224408-202719", "2240-260", "GLEAM J224558-201823", "J224558"],
     "J215436": ["GLEAM J215436-410853"],
+    "J020510": ["GLEAM J020510-113515"],
+    "J001530": ["GLEAM J001530-480052"],
+    "J022802": ["GLEAM J022802-064437"],
+    "J025040": ["GLEAM J025040-313523"],
+    "J032119": ["GLEAM J032119-460253"],
+    "J032843": ["GLEAM J032843-205825"],
+    "J033131": ["GLEAM J033131-072956"],
+    "J033147": ["GLEAM J033147-080112"],
+    "J044149": ["GLEAM J044149-430658"],
+    "J224000": ["GLEAM J224000-454637"],
+    "J224558": [],
 }
 subchans_dict = {
     "69": ["072-080", "080-088", "088-095", "095-103"],
@@ -186,9 +197,8 @@ subchans_dict = {
 }
 
 
-def read_gleam_fluxes(directory, tar):
+def read_gleam_fluxes(directory, name):
     master_pop_pd = pd.read_csv(f"{directory}/master_pop_extended.csv")
-    name = source_dict[tar][0]
     source_pd = master_pop_pd.query(f"Name=='{name}'")
     vip = np.array(source_pd["VIP"])
     moss = np.array(source_pd["MOSS"])
@@ -223,8 +233,7 @@ def read_gleam_fluxes(directory, tar):
     return mwa_flux, model_vals, xtra_values, values
 
 
-def read_mwa_fluxes(directory, tar, epoch):
-    name = source_dict[tar][0]
+def read_mwa_fluxes(directory, tarcomp, name, epoch):
     mwa_flux = []
     mwa_errs = []
     for i in range(len(channel)):
@@ -233,7 +242,7 @@ def read_mwa_fluxes(directory, tar, epoch):
         for subchan in subchans:
             try:
                 src_mwa_pd = pd.read_csv(
-                    f"{directory}/{epoch}/{chan}/minimosaic/{tar}_{subchan}MHz_scaled_comp_xmatch.csv"
+                    f"{directory}/{epoch}/{chan}/minimosaic/{tarcomp}_{subchan}MHz_ddmod_scaled_comp_xmatch.csv"
                 )
                 src_pd = src_mwa_pd.query(f"Name=='{name}'")
                 mwa_flux_chan = np.array(src_pd["int_flux"])[0]
@@ -247,19 +256,19 @@ def read_mwa_fluxes(directory, tar, epoch):
                 mwa_errs.append(mwa_errs_chan)
             except (FileNotFoundError, KeyError):
                 print(
-                    f"{directory}/{epoch}/{chan}/minimosaic/{tar}_{subchan}MHz_scaled_comp_xmatch.csv not found!"
+                    f"{directory}/{epoch}/{chan}/minimosaic/{tarcomp}_{subchan}MHz_ddmod_scaled_comp_xmatch.csv not found!"
                 )
                 mwa_flux.append(np.nan)
                 mwa_errs.append(np.nan)
             except:
-                print(f"{tar} {subchan} not found in catalogue! Maybe too faint")
+                print(f"{name} {subchan} not found in catalogue! Maybe too faint")
                 mwa_flux.append(np.nan)
                 mwa_errs.append(np.nan)
 
     return mwa_flux, mwa_errs
 
 
-def read_atca_fluxes(directory, tar):
+def read_atca_fluxes(directory, tar_dir, tar):
     atca_fluxes = [
         [np.nan] * 17,
         [np.nan] * 17,
@@ -268,24 +277,25 @@ def read_atca_fluxes(directory, tar):
         [np.nan] * 17,
     ]
     epochs = ("epoch1", "epoch2", "epoch3", "epoch4", "epoch5")
-    for i in range(0, 4):
+    for i in range(0, 5):
         epoch = epochs[i]
         try:
-            atca_Lband_pd = pd.read_csv(f"{directory}/{tar}/{tar}_{epoch}_L.csv")
+            print(f"{directory}/{tar_dir}/{tar}_{epoch}_L.csv")
+            atca_Lband_pd = pd.read_csv(f"{directory}/{tar_dir}/{tar}_{epoch}_L.csv")
             atca_Lband_epoch = np.array(atca_Lband_pd["# S_Lband"])
         except FileNotFoundError:
             print(f"No L-Band for {epoch}")
             atca_Lband_epoch = [[np.nan] * 8]
 
         try:
-            atca_Cband_pd = pd.read_csv(f"{directory}/{tar}/{tar}_{epoch}_C.csv")
+            atca_Cband_pd = pd.read_csv(f"{directory}/{tar_dir}/{tar}_{epoch}_C.csv")
             atca_Cband_epoch = np.array(atca_Cband_pd["# S_Cband"])
         except FileNotFoundError:
             print(f"No C-Band for {epoch}")
             atca_Cband_epoch = [[np.nan] * 5]
 
         try:
-            atca_Xband_pd = pd.read_csv(f"{directory}/{tar}/{tar}_{epoch}_X.csv")
+            atca_Xband_pd = pd.read_csv(f"{directory}/{tar_dir}/{tar}_{epoch}_X.csv")
             atca_Xband_epoch = np.array(atca_Xband_pd["# S_Xband"])
         except FileNotFoundError:
             print(f"No X-Band for {epoch}")
@@ -307,18 +317,19 @@ def plt_sed(
     save_fig=True,
 ):
     colours = ("red", "mediumseagreen", "C9", "C4", "C4")
-    epoch_nms = ("Epoch1", "Epoch2", "Epoch3", "Epoch4", "Epoch5")
-    mwa_flux, model_vals, xtra_values, values = read_gleam_fluxes("/data/MWA", tar)
-    mwa_fluxes_e3, mwa_errors_e3 = read_mwa_fluxes("/data/MWA", tar, "epoch3")
-    atca_fluxes = read_atca_fluxes(directory, tar)
+    epoch_nms = ("Jan20", "Mar20", "Apr20", "May20", "")
+    atca_fluxes = read_atca_fluxes(directory, tar, tar)
+    tarnm = source_dict[tar][0]
+    mwa_fluxes_e3, mwa_errors_e3 = read_mwa_fluxes("/data/MWA", tar, tarnm, "epoch3")
     f = CF.sed_fig()
     if MWA is True:
+        mwa_flux, model_vals, xtra_values, values = read_gleam_fluxes("/data/MWA", tarnm)
         f.plot_spectrum(
             freq_mwa[4:20],
             mwa_flux[0],
             mwa_flux[2],
             marker="o",
-            label="MWAYr1",
+            label="2013",
             marker_color="C6",
         )
         f.plot_spectrum(
@@ -326,7 +337,7 @@ def plt_sed(
             mwa_flux[1],
             mwa_flux[3],
             marker="o",
-            label="MWAYr2",
+            label="2014",
             marker_color="mediumblue",
         )
         # f.plot_residuals(
@@ -354,7 +365,7 @@ def plt_sed(
             model_max=None,
             alpha_patch=0.2,
         )
-    print(mwa_fluxes_e3)
+    # print(mwa_fluxes_e3)
     f.plot_spectrum(
         freq_mwa,
         mwa_fluxes_e3,
@@ -370,7 +381,7 @@ def plt_sed(
     #     mwa_errors_e3,
     #     color=colours[2],
     # )
-    for i in range(0, 4):
+    for i in range(0, 5):
         f.plot_spectrum(
             freq_atca,
             atca_fluxes[i],
@@ -379,6 +390,7 @@ def plt_sed(
             marker_color=colours[i],
             label=epoch_nms[i],
         )
+    for i in [0,1,3,4]:
         f.plot_residuals(
             freq_atca,
             atca_fluxes[2],
@@ -449,7 +461,7 @@ def plt_sed(
                 # label="NVSS",
                 marker_color="k",
             )
-
+    # if MWA == True:
     f.legend(values[1], values[2], loc="lower center")
     f.title(values[0])
     f.format(xunit="GHz")
@@ -457,3 +469,93 @@ def plt_sed(
     if save_fig is True:
         f.save(f"{directory}/SEDs/{tar}_sed", ext="png")
     return
+
+
+def plt_secondary(directory, tar, save_fig=True):
+    name = source_dict[tar][1]
+    atca_fluxes = read_atca_fluxes(directory, tar, name)
+    colours = ("red", "mediumseagreen", "C9", "C4", "C4")
+    epoch_nms = ("Jan20", "Mar20", "Apr20", "May20", "")
+    f = CF.sed_fig()
+    for i in range(0, 4):
+        f.plot_spectrum(
+            freq_atca,
+            atca_fluxes[i],
+            atca_fluxes[i] * 0.03,
+            marker="o",
+            marker_color=colours[i],
+            label=epoch_nms[i],
+        )
+        f.plot_residuals(
+            freq_atca,
+            atca_fluxes[2],
+            atca_fluxes[i],
+            atca_fluxes[2] * 0.03,
+            atca_fluxes[i] * 0.03,
+            color=colours[i],
+        )
+    f.format(xunit="GHz")
+    f.title(name)
+    f.legend(0,0)
+    if save_fig is True:
+        f.save(f"{directory}/SEDs/{tar}_sec_sed", ext="png")
+    return
+
+
+def plt_nearby(directory, tar, MWA=True, extra_surveys=True, save_fig=True):
+    colours = ("red", "mediumseagreen", "C9", "C4", "C4")
+    epoch_nms = ("Jan20", "Mar20", "Apr20", "May20", "")
+    name = source_dict[tar][3]
+    secnm = source_dict[tar][2]
+    mwa_fluxes_e3, mwa_errors_e3 = read_mwa_fluxes("/data/MWA", tar, secnm, "epoch3")
+    mwa_flux, model_vals, xtra_values, values = read_gleam_fluxes("/data/MWA", secnm)
+    f = CF.sed_fig()
+    f.plot_spectrum(
+        freq_mwa[4:20],
+        mwa_flux[0],
+        mwa_flux[2],
+        marker="o",
+        label="2013",
+        marker_color="C6",
+    )
+    f.plot_spectrum(
+        freq_mwa[4:20],
+        mwa_flux[1],
+        mwa_flux[3],
+        marker="o",
+        label="2014",
+        marker_color="mediumblue",
+    )
+    f.display_model(
+        freq_cont,
+        model_vals[0],
+        color="C6",
+        label=None,
+        model_min=None,
+        model_max=None,
+        alpha_patch=0.2,
+    )
+    f.display_model(
+        freq_cont,
+        model_vals[1],
+        color="mediumblue",
+        label=None,
+        model_min=None,
+        model_max=None,
+        alpha_patch=0.2,
+    )
+    f.plot_spectrum(
+        freq_mwa,
+        mwa_fluxes_e3,
+        mwa_errors_e3,
+        marker="o",
+        label=epoch_nms[2],
+        marker_color=colours[2],
+    )
+    f.format(xunit="GHz")
+    f.title(secnm)
+    f.legend(0,0)
+    if save_fig is True:
+        f.save(f"{directory}/SEDs/{name}_sed", ext="png")
+    return
+    
