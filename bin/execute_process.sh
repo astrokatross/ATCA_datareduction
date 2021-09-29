@@ -3,16 +3,16 @@
 # By K.Ross 
 
 PROJECT=/data/ATCA/ATCA_datareduction/
-EPOCH=epoch3
-BAND=L
-TARGET=J224408
-SECONDARY=NO
+EPOCH=epoch2
+BAND=X
+TARGET=J020507
+CALIBRATOR=TARGET
 
 export PROJECT
 export EPOCH
 export BAND
 export TARGET
-export SECONDARY
+export CALIBRATOR
 
 cd $PROJECT/processing/
 
@@ -25,7 +25,7 @@ then
     mkdir ${PROJECT}${TARGET}/images 
 fi
 
-/data/bin/casa-6.2.0-124/bin/python3 ${PROJECT}bin/run_process.py 
+# /data/bin/casa-6.2.0-124/bin/python3 ${PROJECT}bin/run_process.py 
 
 echo "Finished processing, plotting the SED"
 /usr/bin/python3 /home/katross/data/ATCA/ATCA_datareduction/bin/run_plotseds.py

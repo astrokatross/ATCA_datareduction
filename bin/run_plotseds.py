@@ -12,41 +12,13 @@ import os
 plt.rcParams["font.family"] = "serif"
 plt.rcParams["axes.grid"] = False
 
-# constants:
-
-source_dict = [
-    # "J001513",
-    # "J015445",
-    # "J020507",
-    # "J021246",
-    # "J022744",
-    # "J022802",
-    # "J024838",
-    # "J025040",
-    # "J032213",
-    # "J032836",
-    # "J033023",
-    # "J042502",
-    # "J044033",
-    # "J044737",
-    # "J052824",
-    # "J223933",
-    "J224408",
-    # "J215436",
-    # "J020510",
-    # "J001530",
-    # "J032119",
-    # "J032843",
-    # "J033147",
-    # "J044149",
-    # "J224000",
-    # "J224558",
-]
-sec_dict = ["2240-260"]
-
 directory = str(os.environ["PROJECT"])
 tarname = str(os.environ["TARGET"])
+calibrator = str(os.environ["CALIBRATOR"])
 
 plotfuncts.plt_sed(directory, tarname)
 plotfuncts.plt_secondary(directory, tarname)
 plotfuncts.plt_nearby(directory, tarname)
+
+# if calibrator == "PRI":
+#     plotfuncts.plt_secondary(directory, tarname)

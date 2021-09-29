@@ -105,18 +105,7 @@ def flag_ms(visname):  # , rawname1, rawname2, rawname3):
     return
 
 
-def split_ms(
-    src_dir,
-    img_dir,
-    visname,
-    msname,
-    epoch,
-    ATCA_band,
-    pri,
-    sec,
-    tar,
-    n_spw
-):
+def split_ms(src_dir, img_dir, visname, msname, epoch, ATCA_band, pri, sec, tar, n_spw):
     os.system(f"rm -r {msname}")
     os.system(f"rm -r {msname}.flagversions")
     os.system("rm -r *.last")
@@ -877,22 +866,33 @@ def pbcor_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar):
     return
 
 
-def measureflux_ms(src_dir, targetms, tar_ms, epoch, ATCA_band, sourcepar, n_spw, tar):
+def measureflux_ms(src_dir, targetms, tar_ms, epoch, ATCA_band, sourcepar, n_spw, tar, calibrator):
     os.system(f"rm -r {tar_ms}")
-    split(vis=targetms, datacolumn="corrected", outputvis=tar_ms)
+    if calibrator == "TARGET": 
+        split(vis=targetms, datacolumn="corrected", field=tar, outputvis=tar_ms)#, nspw=n_spw)
+    else:
+        mstransform(
+            vis=targetms,
+            outputvis=tar_ms,
+            datacolumn="corrected",
+            nspw=n_spw,
+            regridms=True,
+            field=tar,
+        )
+
     int_flux_c = []
     if tar == "J215436":
         uvrange = "<1000"
     else:
         uvrange = ""
-    if (
-        (tar in ["J001513", "J224408", "J223933"])
-        and (epoch == "epoch2")
-        and (ATCA_band == "X")
-    ):
-        n_spw = n_spw - 1
-    else:
-        n_spw = n_spw
+    # if (
+    #     (tar in ["J001513", "J224408", "J223933", "1934_cal_l"])
+    #     and (epoch == "epoch1")
+    #     and (ATCA_band == "L")
+    # ):
+    #     n_spw = n_spw
+    # else:
+    #     n_spw = n_spw
     for i in range(n_spw):
         spw = str(i)
         # If things look like theyre not working, then check the source position! Chances are it can't find the source too far away from the phase centre
