@@ -23,12 +23,15 @@
     //     }
     // },
     "files.watcherExclude" : {
-        "/data/ATCA/J**/**" : true,
-        "/data/ATCA/data/**" : true,
-        "/data/ATCA/processing/**" : true
+        "/data/ATCA/ATCA_datareduction/1934*/**": true,
+        "/data/ATCA/ATCA_datareduction/data/**": true,
+        "/data/ATCA/ATCA_datareduction/j*/**": true,
+        "/data/ATCA/ATCA_datareduction/J*/**": true,
+        "/data/ATCA/ATCA_datareduction/processing/**": true
     },
     "terminal.integrated.inheritEnv": true,
     "python.autoComplete.extraPaths": [
         "/usr/lib/python3/dist-packages/"
-        ]
+        ],
+        "python.terminal.executeInFileDir": true
 }

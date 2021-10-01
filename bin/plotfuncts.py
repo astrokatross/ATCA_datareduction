@@ -7,9 +7,299 @@ import matplotlib.pyplot as plt
 import CFigTools.CustomFigure as CF
 import numpy as np
 import gpscssmodels
+import cmasher as cmr
+import scipy.optimize as opt
+import emcee
+import corner
 
 plt.rcParams["axes.grid"] = False
 plt.rcParams["font.family"] = "serif"
+
+freq_cont = np.linspace(0.01, 15, num=10000)
+epochs = ["epoch1", "epoch2", "epoch3", "epoch4", "epoch5", "epoch6"]
+epoch_nms = ("2013", "2014", "Jan20", "Mar20", "Apr20", "May20", "July20", "Oct20")
+channel = ("69", "93", "121", "145", "169")
+subchans_dict = {
+    "69": ["072-080", "080-088", "088-095", "095-103"],
+    "93": ["103-111", "111-118", "118-126", "126-134"],
+    "121": ["139-147", "147-154", "154-162", "162-170"],
+    "145": ["170-177", "177-185", "185-193", "193-200"],
+    "169": ["200-208", "208-216", "216-223", "223-231"],
+}
+
+
+def read_mwa_fluxes(directory, tarcomp, name, epoch):
+    mwa_flux = []
+    mwa_errs = []
+    for i in range(len(channel)):
+        subchans = subchans_dict[channel[i]]
+        chan = channel[i]
+        for subchan in subchans:
+            try:
+                src_mwa_pd = pd.read_csv(
+                    f"{directory}/{epoch}/{chan}/minimosaic/{tarcomp}_{subchan}MHz_ddmod_scaled_comp_xmatch.csv"
+                )
+                mask = src_mwa_pd["Name"] == name
+                src_pd = src_mwa_pd[mask]
+                mwa_flux_chan = np.squeeze(src_pd["int_flux"].values)
+                mwa_errs_chan = np.squeeze(
+                    np.sqrt(src_pd["local_rms"]) ** 2 + (0.02 * mwa_flux_chan) ** 2
+                )
+                mwa_flux.append(mwa_flux_chan)
+                mwa_errs.append(mwa_errs_chan)
+            except (FileNotFoundError, KeyError):
+                # print(
+                # f"{directory}/{epoch}/{chan}/minimosaic/{tarcomp}_{subchan}MHz_ddmod_scaled_comp_xmatch.csv not found!"
+                # )
+                mwa_flux.append(np.nan)
+                mwa_errs.append(np.nan)
+            except:
+                # print(f"{name} {subchan} not found in catalogue! Maybe too faint")
+                mwa_flux.append(np.nan)
+                mwa_errs.append(np.nan)
+
+    return np.array(mwa_flux), np.array(mwa_errs)
+
+
+def read_atca_fluxes(directory, tar_dir, tar):
+    atca_fluxes = [
+        [np.nan] * 17,
+        [np.nan] * 17,
+        [np.nan] * 17,
+        [np.nan] * 17,
+        [np.nan] * 17,
+        [np.nan] * 17,
+    ]
+    epochs = ("epoch1", "epoch2", "epoch3", "epoch4", "epoch5", "epoch6")
+    for i in range(0, 6):
+        epoch = epochs[i]
+        try:
+            atca_Lband_pd = pd.read_csv(f"{directory}/{tar_dir}/{tar}_{epoch}_L.csv")
+            atca_Lband_epoch = np.array(atca_Lband_pd["# S_Lband"])
+        except FileNotFoundError:
+            # print(f"No L-Band for {epoch}")
+            atca_Lband_epoch = [[np.nan] * 8]
+
+        try:
+            atca_Cband_pd = pd.read_csv(f"{directory}/{tar_dir}/{tar}_{epoch}_C.csv")
+            atca_Cband_epoch = np.array(atca_Cband_pd["# S_Cband"])
+        except FileNotFoundError:
+            # print(f"No C-Band for {epoch}")
+            atca_Cband_epoch = [[np.nan] * 5]
+
+        try:
+            atca_Xband_pd = pd.read_csv(f"{directory}/{tar_dir}/{tar}_{epoch}_X.csv")
+            atca_Xband_epoch = np.array(atca_Xband_pd["# S_Xband"])
+        except FileNotFoundError:
+            # print(f"No X-Band for {epoch}")
+            atca_Xband_epoch = [[np.nan] * 4]
+
+        atca_epoch = np.concatenate(
+            (atca_Lband_epoch, atca_Cband_epoch, atca_Xband_epoch), axis=None
+        )
+        atca_epoch[np.where(atca_epoch < 0.0)] = np.nan
+        atca_fluxes[i] = atca_epoch
+    return atca_fluxes
+
+
+def create_epochcat(directory, gleam_tar, tar, epoch):
+    mwa_flux, err_mwa = read_mwa_fluxes("/data/MWA", tar, gleam_tar, epochs[epoch])
+    atca_flux_all = read_atca_fluxes(directory, tar, tar)
+    atca_flux = atca_flux_all[epoch]
+    src_flux = np.hstack((mwa_flux, atca_flux))
+    src_errs = np.hstack((err_mwa, atca_flux * 0.05))
+    return src_flux, src_errs
+
+
+def fit_model(freq, flux, err_flux, model):
+    poptsingssa, pcovsingssa = opt.curve_fit(
+        model, freq, flux, sigma=err_flux, maxfev=10000
+    )
+    return poptsingssa, pcovsingssa
+
+
+def log_likelihood(params, freq, flux, err_flux, model):
+    model_flux = model(freq, *params)
+    sigma2 = err_flux ** 2
+    return -0.5 * np.sum((flux - model_flux) ** 2 / sigma2 + np.log(sigma2))
+
+
+def log_prior(theta):
+    S_norm, beta, peak_freq = theta
+    if 0.0 < S_norm < 20 and 0.0 < beta < 10.0 and 0.0 < peak_freq < 20:
+        return 0.0
+    return -np.inf
+
+
+def log_probability(params, freq, flux, err_flux, model):
+    lp = log_prior(params)
+    if not np.isfinite(lp):
+        return -np.inf
+    return lp + log_likelihood(params, freq, flux, err_flux, model)
+
+
+def run_mcmc(nwalkers, ndim, p0, freq, flux, err_flux, chosen_model, niters=10000):
+    # Setting up and running the MCMC
+    sampler = emcee.EnsembleSampler(
+        nwalkers,
+        ndim,
+        log_likelihood,
+        args=(freq, flux, err_flux, chosen_model),
+    )
+    sampler.run_mcmc(p0, niters, progress=True)
+    return sampler
+
+
+def plot_mcmcqualitycheck(directory, figname, sampler, p0, labels):
+    # Plotting the different walkers and how they sample the space/converge
+    fig, axes = plt.subplots(len(labels), figsize=(10, 7), sharex=True)
+    samples = sampler.get_chain()
+    for i in range(len(labels)):
+        ax = axes[i]
+        ax.plot(samples[:, :, i], "k", alpha=0.3)
+        ax.set_xlim(0, len(samples))
+        ax.set_ylabel(labels[i])
+        ax.yaxis.set_label_coords(-0.1, 0.5)
+
+    axes[-1].set_xlabel("step number")
+    plt.title(f"{figname} Parameter Chains")
+    plt.savefig(f"{directory}/{figname}_paramchains.png", overwrite=True)
+    plt.clf()
+    flat_samples = sampler.get_chain(discard=100, thin=15, flat=True)
+    # Plotting the corner plot of the different variables
+    corner.corner(flat_samples, labels=labels, truths=p0)
+    plt.title()
+    plt.savefig(f"{directory}/{figname}_corner.png", overwrite=True)
+    plt.clf()
+    return
+
+
+def plot_sed(directory, freq_cont, freq, gleam_tar, tar, colors):
+    # mwa_flux, model_vals, xtra_values, values = read_gleam_fluxes(
+    #     "/data/MWA", gleam_tar
+    # )
+    src_epoch1, err_src_epoch1 = create_epochcat(directory, gleam_tar, tar, 0)
+    src_epoch2, err_src_epoch2 = create_epochcat(directory, gleam_tar, tar, 1)
+    src_epoch3, err_src_epoch3 = create_epochcat(directory, gleam_tar, tar, 2)
+    src_epoch4, err_src_epoch4 = create_epochcat(directory, gleam_tar, tar, 3)
+    src_epoch5, err_src_epoch5 = create_epochcat(directory, gleam_tar, tar, 4)
+    src_epoch6, err_src_epoch6 = create_epochcat(directory, gleam_tar, tar, 5)
+    # plotting SED
+    f = CF.sed_fig()
+    # f.plot_spectrum(
+    #     freq[4:20],
+    #     mwa_flux[0],
+    #     mwa_flux[2],
+    #     marker="o",
+    #     label=epoch_nms[0],
+    #     marker_color=colors[0],
+    #     s=75,
+    # )
+    # f.plot_spectrum(
+    #     freq[4:20],
+    #     mwa_flux[1],
+    #     mwa_flux[3],
+    #     marker="o",
+    #     label=epoch_nms[1],
+    #     marker_color=colors[1],
+    #     s=75,
+    # )
+
+    f.plot_spectrum(
+        freq,
+        src_epoch1,
+        err_src_epoch1,
+        marker="o",
+        label=epoch_nms[2],
+        marker_color=colors[2],
+        s=75,
+    )
+    f.plot_spectrum(
+        freq,
+        src_epoch2,
+        err_src_epoch2,
+        marker="o",
+        label=epoch_nms[3],
+        marker_color=colors[3],
+        s=75,
+    )
+    f.plot_spectrum(
+        freq,
+        src_epoch3,
+        err_src_epoch3,
+        marker="o",
+        label=epoch_nms[4],
+        marker_color=colors[4],
+        s=75,
+    )
+    f.plot_spectrum(
+        freq,
+        src_epoch4,
+        err_src_epoch4,
+        marker="o",
+        label=epoch_nms[5],
+        marker_color=colors[5],
+        s=75,
+    )
+    f.plot_spectrum(
+        freq,
+        src_epoch5,
+        err_src_epoch5,
+        marker="o",
+        label=epoch_nms[6],
+        marker_color=colors[6],
+        s=75,
+    )
+    f.plot_spectrum(
+        freq,
+        src_epoch6,
+        err_src_epoch6,
+        marker="o",
+        label=epoch_nms[7],
+        marker_color=colors[7],
+        s=75,
+    )
+    # f.plt_mcmcfits(sampler, chosen_model, freq_cont, color=colors[5])
+    f.legend(0.0, 0.0, loc="lower center")
+    f.title(gleam_tar)
+    f.format(xunit="GHz")
+    f.save(f"{directory}/SEDs/{tar}_sed", ext="png")
+    return
+
+
+def plot_epochsed(
+    directory,
+    epoch,
+    freq_cont,
+    freq,
+    gleam_tar,
+    tar,
+    colors,
+    sampler,
+    chosen_model,
+    model_nm,
+):
+    epoch_nms = ("2013", "2014", "Jan20", "Mar20", "Apr20", "May20", "July20", "Oct20")
+    epoch_nm = epoch_nms[epoch]
+    src_flux, err_src_flux = create_epochcat(directory, gleam_tar, tar, 0)
+    # plotting SED
+    f = CF.sed_fig()
+    f.plot_spectrum(
+        freq,
+        src_flux,
+        err_src_flux,
+        marker="o",
+        label=epoch_nms[epoch],
+        marker_color=colors[epoch],
+        s=75,
+    )
+    f.plt_mcmcfits(sampler, chosen_model, freq_cont, color=colors[epoch])
+    f.legend(loc="lower center")
+    f.title(f"{gleam_tar} {epoch_nm} {model_nm}")
+    f.format(xunit="GHz")
+    f.save(f"{directory}/SEDs/{tar}_{epoch_nm}_{model_nm}_sed", ext="png")
+    return
+
 
 # Setting the frequencies (delete individual atca bands when processed)
 freq_cont = np.linspace(0.01, 11, num=10000)
@@ -87,7 +377,14 @@ xtra_fluxes = [
     "total_flux_source",
 ]
 
+NUM_COLORS = 8
 
+# colors = []
+# cm = pylab.get_cmap('gnuplot2')
+# cm = cmr.bubblegum
+colors = cmr.take_cmap_colors(
+    "cmr.bubblegum", NUM_COLORS, cmap_range=(0.15, 0.85), return_fmt="hex"
+)
 gleam_fluxes = ["S_076_err", "S_084_err", "S_092_err", "S_099_err"]
 ext = ("yr1", "yr2")
 channel = ("69", "93", "121", "145", "169")
@@ -195,7 +492,7 @@ subchans_dict = {
     "145": ["170-177", "177-185", "185-193", "193-200"],
     "169": ["200-208", "208-216", "216-223", "223-231"],
 }
-
+epochs = ("epoch1", "epoch2", "epoch3", "epoch4", "epoch5", "epoch6")
 extensions = [
     "072_080",
     "080_088",
@@ -220,9 +517,10 @@ extensions = [
 ]
 gleamx_fluxes = []
 gleamx_errors = []
-for subchans in extensions: 
+for subchans in extensions:
     gleamx_fluxes.append(f"int_flux_N_{subchans}MHz")
-    gleamx_errors.append(f"err_int_flux_N_{subchans}MHz")
+    gleamx_errors.append(f"local_rms_N_{subchans}MHz")
+
 
 def read_gleam_fluxes(directory, name):
     master_pop_pd = pd.read_csv(f"{directory}/master_pop_extended.csv")
@@ -262,98 +560,128 @@ def read_gleam_fluxes(directory, name):
 
 def read_gleamx_fluxes(directory, name):
     gleamx_pop_pd = pd.read_csv(
-        f"{directory}/XG_D-27_20201001_joined_cat_020507_xmatch.csv"
+        f"{directory}/XG_D-27_20201001_joined_rescaled_cat_015445_xmatch.csv"
     )
-    try: 
-        source_pd = gleamx_pop_pd.query(f"Name=='{name}'")
-        gleamx_flux = np.array(source_pd.loc[:, source_pd.columns.isin(gleamx_fluxes)])[0]
-        gleamx_errs = np.sqrt(
-            (np.array(source_pd.loc[:, source_pd.columns.isin(gleamx_errors)])[0]) ** 2
-            + (0.01 * gleamx_flux) ** 2
+    mask = gleamx_pop_pd["Name"] == name
+    sub_csv = gleamx_pop_pd[mask]
+    try:
+        gleamx_flux = np.squeeze(sub_csv[gleamx_fluxes].values)
+        gleamx_errs = np.squeeze(
+            np.sqrt(sub_csv[gleamx_errors] ** 2 + (0.02 * gleamx_flux) ** 2)
         )
-        print(gleamx_errs)
-    except: 
-        gleamx_flux = [[np.nan] * 20]
-        gleamx_errs = [[np.nan] * 20]
+    #         print(gleamx_errs)
+    except:
+        gleamx_flux = np.array([np.nan] * 20)
+        gleamx_errs = np.array([np.nan] * 20)
 
-    return np.array(gleamx_flux), np.array(gleamx_errs)
-
-
-def read_mwa_fluxes(directory, tarcomp, name, epoch):
-    mwa_flux = []
-    mwa_errs = []
-    for i in range(len(channel)):
-        subchans = subchans_dict[channel[i]]
-        chan = channel[i]
-        for subchan in subchans:
-            try:
-                src_mwa_pd = pd.read_csv(
-                    f"{directory}/{epoch}/{chan}/minimosaic/{tarcomp}_{subchan}MHz_ddmod_scaled_comp_xmatch.csv"
-                )
-                src_pd = src_mwa_pd.query(f"Name=='{name}'")
-                mwa_flux_chan = np.array(src_pd["int_flux"])[0]
-                mwa_errs_chan = np.sqrt(
-                    (
-                        np.array(src_pd["err_int_flux"]) ** 2
-                        + (0.01 * mwa_flux_chan) ** 2
-                    )
-                )[0]
-                mwa_flux.append(mwa_flux_chan)
-                mwa_errs.append(mwa_errs_chan)
-            except (FileNotFoundError, KeyError):
-                print(
-                    f"{directory}/{epoch}/{chan}/minimosaic/{tarcomp}_{subchan}MHz_ddmod_scaled_comp_xmatch.csv not found!"
-                )
-                mwa_flux.append(np.nan)
-                mwa_errs.append(np.nan)
-            except:
-                print(f"{name} {subchan} not found in catalogue! Maybe too faint")
-                mwa_flux.append(np.nan)
-                mwa_errs.append(np.nan)
-
-    return np.array(mwa_flux), np.array(mwa_errs)
+    return gleamx_flux, gleamx_errs
 
 
-def read_atca_fluxes(directory, tar_dir, tar):
-    atca_fluxes = [
-        [np.nan] * 17,
-        [np.nan] * 17,
-        [np.nan] * 17,
-        [np.nan] * 17,
-        [np.nan] * 17,
-        [np.nan] * 17,
-    ]
-    epochs = ("epoch1", "epoch2", "epoch3", "epoch4", "epoch5", "epoch6")
-    for i in range(0, 6):
-        epoch = epochs[i]
-        try:
-            print(f"{directory}/{tar_dir}/{tar}_{epoch}_L.csv")
-            atca_Lband_pd = pd.read_csv(f"{directory}/{tar_dir}/{tar}_{epoch}_L.csv")
-            atca_Lband_epoch = np.array(atca_Lband_pd["# S_Lband"])
-        except FileNotFoundError:
-            print(f"No L-Band for {epoch}")
-            atca_Lband_epoch = [[np.nan] * 8]
+# def read_mwa_fluxes(directory, tarcomp, name, epoch):
+#     mwa_flux = []
+#     mwa_errs = []
+#     for i in range(len(channel)):
+#         subchans = subchans_dict[channel[i]]
+#         chan = channel[i]
+#         for subchan in subchans:
+#             try:
+#                 src_mwa_pd = pd.read_csv(
+#                     f"{directory}/{epoch}/{chan}/minimosaic/{tarcomp}_{subchan}MHz_ddmod_scaled_comp_xmatch.csv"
+#                 )
+#                 mask = src_mwa_pd["Name"] == name
+#                 src_pd = src_mwa_pd[mask]
+#                 mwa_flux_chan = np.squeeze(src_pd["int_flux"].values)
+#                 mwa_errs_chan = np.squeeze(
+#                     np.sqrt(src_pd["local_rms"]) ** 2 + (0.02 * mwa_flux_chan) ** 2
+#                 )
+#                 mwa_flux.append(mwa_flux_chan)
+#                 mwa_errs.append(mwa_errs_chan)
+#             except (FileNotFoundError, KeyError):
+#                 # print(
+#                 # f"{directory}/{epoch}/{chan}/minimosaic/{tarcomp}_{subchan}MHz_ddmod_scaled_comp_xmatch.csv not found!"
+#                 # )
+#                 mwa_flux.append(np.nan)
+#                 mwa_errs.append(np.nan)
+#             except:
+#                 # print(f"{name} {subchan} not found in catalogue! Maybe too faint")
+#                 mwa_flux.append(np.nan)
+#                 mwa_errs.append(np.nan)
 
-        try:
-            atca_Cband_pd = pd.read_csv(f"{directory}/{tar_dir}/{tar}_{epoch}_C.csv")
-            atca_Cband_epoch = np.array(atca_Cband_pd["# S_Cband"])
-        except FileNotFoundError:
-            print(f"No C-Band for {epoch}")
-            atca_Cband_epoch = [[np.nan] * 5]
+#     return np.array(mwa_flux), np.array(mwa_errs)
 
-        try:
-            atca_Xband_pd = pd.read_csv(f"{directory}/{tar_dir}/{tar}_{epoch}_X.csv")
-            atca_Xband_epoch = np.array(atca_Xband_pd["# S_Xband"])
-        except FileNotFoundError:
-            print(f"No X-Band for {epoch}")
-            atca_Xband_epoch = [[np.nan] * 4]
 
-        atca_epoch = np.concatenate(
-            (atca_Lband_epoch, atca_Cband_epoch, atca_Xband_epoch), axis=None
-        )
-        atca_epoch[np.where(atca_epoch < 0.0)] = np.nan
-        atca_fluxes[i] = atca_epoch
-    return atca_fluxes
+# def read_atca_fluxes(directory, tar_dir, tar):
+#     atca_fluxes = [
+#         [np.nan] * 17,
+#         [np.nan] * 17,
+#         [np.nan] * 17,
+#         [np.nan] * 17,
+#         [np.nan] * 17,
+#         [np.nan] * 17,
+#     ]
+#     epochs = ("epoch1", "epoch2", "epoch3", "epoch4", "epoch5", "epoch6")
+#     for i in range(0, 6):
+#         epoch = epochs[i]
+#         try:
+#             atca_Lband_pd = pd.read_csv(f"{directory}/{tar_dir}/{tar}_{epoch}_L.csv")
+#             atca_Lband_epoch = np.array(atca_Lband_pd["# S_Lband"])
+#         except FileNotFoundError:
+#             # print(f"No L-Band for {epoch}")
+#             atca_Lband_epoch = [[np.nan] * 8]
+
+#         try:
+#             atca_Cband_pd = pd.read_csv(f"{directory}/{tar_dir}/{tar}_{epoch}_C.csv")
+#             atca_Cband_epoch = np.array(atca_Cband_pd["# S_Cband"])
+#         except FileNotFoundError:
+#             # print(f"No C-Band for {epoch}")
+#             atca_Cband_epoch = [[np.nan] * 5]
+
+#         try:
+#             atca_Xband_pd = pd.read_csv(f"{directory}/{tar_dir}/{tar}_{epoch}_X.csv")
+#             atca_Xband_epoch = np.array(atca_Xband_pd["# S_Xband"])
+#         except FileNotFoundError:
+#             # print(f"No X-Band for {epoch}")
+#             atca_Xband_epoch = [[np.nan] * 4]
+
+#         atca_epoch = np.concatenate(
+#             (atca_Lband_epoch, atca_Cband_epoch, atca_Xband_epoch), axis=None
+#         )
+#         atca_epoch[np.where(atca_epoch < 0.0)] = np.nan
+#         atca_fluxes[i] = atca_epoch
+#     return atca_fluxes
+
+
+# Originally in Tingay, de Kool 2003
+def singSSA(freq, S_norm, beta, peak_freq):  # Single SSA model
+    return (
+        S_norm
+        * ((freq / peak_freq) ** (-(beta - 1) / 2))
+        * (1 - np.exp(-((freq / peak_freq) ** (-(beta + 4) / 2))))
+        / ((freq / peak_freq) ** (-(beta + 4) / 2))
+    )
+
+
+def fit_singSSA(freq, flux, err_flux):
+    poptsingssa, pcovsingssa = opt.curve_fit(
+        singSSA, freq, flux, sigma=err_flux, maxfev=10000
+    )
+    return poptsingssa, pcovsingssa
+
+
+def fit_quadSSA(freq, flux, err_flux):
+    poptquadssa, pcovquadssa = opt.curve_fit(
+        gpscssmodels.singhomobremss, freq, flux, sigma=err_flux, maxfev=10000
+    )
+    return poptquadssa, pcovquadssa
+
+
+# def create_epochcat(directory, gleam_tar, tar, epoch):
+#     mwa_flux, err_mwa = read_mwa_fluxes("/data/MWA", tar, gleam_tar, epochs[epoch])
+#     atca_flux_all = read_atca_fluxes(directory, tar, tar)
+#     atca_flux = atca_flux_all[epoch]
+#     src_flux = np.hstack((mwa_flux, atca_flux))
+#     src_errs = np.hstack((err_mwa, atca_flux * 0.05))
+#     return src_flux, src_errs
 
 
 def plt_sed(
@@ -663,7 +991,7 @@ def plt_sed(
         mwa_errors_e6,
         color=colours[5],
     )
-    
+
     # if MWA == True:
     f.legend(values[1], values[2], loc="lower center")
     f.title(values[0])
