@@ -116,8 +116,8 @@ model_params_dict = {
 # Source/run information
 save_dir = "/data/ATCA/analysis/"
 data_dir = "/data/ATCA/ATCA_datareduction/"
-gleam_tar = "GLEAM J020507-110922"
-tar = "J020507"
+gleam_tar = "GLEAM J024838-321336"
+tar = "J024838"
 epoch = 4
 epoch_nm = epoch_nms[epoch + 2]
 color = colors[epoch + 2]
@@ -177,7 +177,12 @@ elif epoch == 5:
 else:
     src_flux, err_src_flux = fitfuncts.create_epochcat(data_dir, tar, gleam_tar, epoch)
 
-print(np.where(src_flux == np.nan))
+mask = np.where(~np.isnan(src_flux))
+src_flux = src_flux[mask]
+err_src_flux = err_src_flux[mask]
+freq = freq[mask]
+
+print(src_flux)
 
 
 # Initial conditions of mcmc for homobreak
@@ -186,7 +191,7 @@ transform_funct = fitfuncts.priortrans_singhomobremssbreak
 model_nm = "singhomobremssbreak"
 labels = model_params_dict[model_nm]
 directory = f"{save_dir}{tar}/{epoch_nm}/{model_nm}/"
-
+print(f"Fitting for {model_nm}")
 # Trying to see if it's already run the mcmc before and just load it if you have, otherwise runs the mcmc again
 try:
     sampler_homobreak = ultranest.integrator.read_file(
@@ -198,11 +203,13 @@ except:
         directory, labels, freq, src_flux, err_src_flux, chosen_model, transform_funct
     )
     sampler_homobreak.run(max_iters=50000)
+    print(f"Finished fitting for {model_nm}")
+
     sampler_homobreak.store_tree()
     sampler_homobreak.plot()
     band = PredictionBand(freq_cont)
-    for Snorm, alpha, p, freqpeak, breakfreq in sampler_homobreak.results['samples']:
-        band.add(chosen_model(freq_cont, Snorm, alpha, p, freqpeak, breakfreq))
+    for Snorm, alpha, freqpeak, breakfreq in sampler_homobreak.results['samples']:
+        band.add(chosen_model(freq_cont, Snorm, alpha, freqpeak, breakfreq))
 
     fitfuncts.plot_epochsed(
         f"{save_dir}/{tar}_{epoch_nm}_{model_nm}",
@@ -221,6 +228,7 @@ transform_funct = fitfuncts.priortrans_singinhomobremssbreak
 model_nm = "singinhomobremssbreak"
 labels = model_params_dict[model_nm]
 directory = f"{save_dir}{tar}/{epoch_nm}/{model_nm}/"
+print(f"Fitting for {model_nm}")
 
 # Trying to see if it's already run the mcmc before and just load it if you have, otherwise runs the mcmc again
 try:
@@ -234,6 +242,7 @@ except:
         directory, labels, freq, src_flux, err_src_flux, chosen_model, transform_funct
     )
     sampler_inhomobreak.run(max_iters=50000)
+    print(f"Finished fitting for {model_nm}")
     sampler_inhomobreak.store_tree()
     sampler_inhomobreak.plot()
     band = PredictionBand(freq_cont)
@@ -258,13 +267,12 @@ transform_funct = fitfuncts.priortrans_singSSAbreakexp
 model_nm = "singSSAbreakexp"
 labels = model_params_dict[model_nm]
 directory = f"{save_dir}{tar}/{epoch_nm}/{model_nm}/"
-print(freq)
-print(type(freq))
+print(f"Fitting for {model_nm}")
 
 # Trying to see if it's already run the mcmc before and just load it if you have, otherwise runs the mcmc again
 try:
     sampler_singssabreak = ultranest.integrator.read_file(
-        f"{directory}/run2/", len(labels), check_insertion_order=False
+        f"{directory}/run1/", len(labels), check_insertion_order=False
     )
     print(sampler_singssabreak[1]["logz"])
 
@@ -273,6 +281,7 @@ except:
         directory, labels, freq, src_flux, err_src_flux, chosen_model, transform_funct
     )
     sampler_singssabreak.run(max_iters=50000)
+    print(f"Finished fitting for {model_nm}")
     sampler_singssabreak.store_tree()
     sampler_singssabreak.plot()
     band = PredictionBand(freq_cont)
@@ -290,11 +299,85 @@ except:
     )
 
 
+# Initial conditions of mcmc for singhomobremssbreakexp
+chosen_model = gpscssmodels.singhomobremssbreakexp
+transform_funct = fitfuncts.priortrans_singhomobremssbreak
+model_nm = "singhomobremssbreakexp"
+labels = model_params_dict[model_nm]
+directory = f"{save_dir}{tar}/{epoch_nm}/{model_nm}/"
+print(f"Fitting for {model_nm}")
+
+# Trying to see if it's already run the mcmc before and just load it if you have, otherwise runs the mcmc again
+try:
+    sampler_singhomobremssbreakexp = ultranest.integrator.read_file(
+        f"{directory}/run1/", len(labels), check_insertion_order=False
+    )
+    print(sampler_singhomobremssbreakexp[1]["logz"])
+
+except:
+    sampler_singhomobremssbreakexp = fitfuncts.run_ultranest_mcmc(
+        directory, labels, freq, src_flux, err_src_flux, chosen_model, transform_funct
+    )
+    sampler_singhomobremssbreakexp.run(max_iters=50000)
+    print(f"Finished fitting for {model_nm}")
+    sampler_singhomobremssbreakexp.store_tree()
+    sampler_singhomobremssbreakexp.plot()
+    band = PredictionBand(freq_cont)
+    for Snorm, alpha, freqpeak, breakfreq in sampler_singhomobremssbreakexp.results['samples']:
+        band.add(chosen_model(freq_cont, Snorm, alpha, freqpeak, breakfreq))
+
+    fitfuncts.plot_epochsed(
+        f"{save_dir}/{tar}_{epoch_nm}_{model_nm}",
+        freq,
+        src_flux,
+        err_src_flux,
+        band,
+        color,
+        tar,
+    )
+
+
+# Initial conditions of mcmc for singhomobremssbreakexp
+chosen_model = gpscssmodels.singinhomobremssbreakexp
+transform_funct = fitfuncts.priortrans_singinhomobremssbreak
+model_nm = "singinhomobremssbreakexp"
+labels = model_params_dict[model_nm]
+directory = f"{save_dir}{tar}/{epoch_nm}/{model_nm}/"
+print(f"Fitting for {model_nm}")
+
+# Trying to see if it's already run the mcmc before and just load it if you have, otherwise runs the mcmc again
+try:
+    sampler_singinhomobremssbreakexp = ultranest.integrator.read_file(
+        f"{directory}/run1/", len(labels), check_insertion_order=False
+    )
+    print(sampler_singinhomobremssbreakexp[1]["logz"])
+
+except:
+    sampler_singinhomobremssbreakexp = fitfuncts.run_ultranest_mcmc(
+        directory, labels, freq, src_flux, err_src_flux, chosen_model, transform_funct
+    )
+    sampler_singinhomobremssbreakexp.run(max_iters=50000)
+    print(f"Finished fitting for {model_nm}")
+    sampler_singinhomobremssbreakexp.store_tree()
+    sampler_singinhomobremssbreakexp.plot()
+    band = PredictionBand(freq_cont)
+    for Snorm, alpha, p, freqpeak, breakfreq in sampler_singinhomobremssbreakexp.results['samples']:
+        band.add(chosen_model(freq_cont, Snorm, alpha, p, freqpeak, breakfreq))
+
+    fitfuncts.plot_epochsed(
+        f"{save_dir}/{tar}_{epoch_nm}_{model_nm}",
+        freq,
+        src_flux,
+        err_src_flux,
+        band,
+        color,
+        tar,
+    )
 
 
 
-K_factor = np.exp(sampler_inhomobreak[1]["logz"] - sampler_homobreak[1]["logz"])
-print("K factor = %.2f" % K_factor)
+# K_factor = np.exp(sampler_inhomobreak[1]["logz"] - sampler_homobreak[1]["logz"])
+# print("K factor = %.2f" % K_factor)
 
 
 

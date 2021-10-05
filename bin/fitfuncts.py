@@ -449,9 +449,9 @@ def priortrans_singinhomobremssbreak(cube):
     params = cube.copy()
     params[0] = 10**(cube[0]*3 - 1)
     params[1] = cube[1]*20 - 10
-    params[2] = cube[2]*2 - 1
+    params[2] = cube[2]*5 - 1
     params[3] = cube[3] * 0.5
-    params[4] = (10 ** (cube[4] * 3 - 1))
+    params[4] = ((10 ** (cube[4] * 2)))*2
     return params
 
 
@@ -460,7 +460,7 @@ def priortrans_singhomobremssbreak(cube):
     params[0] = 10**(cube[0]*3 - 1)
     params[1] = cube[1]*20 - 10
     params[2] = cube[2] * 0.5
-    params[3] = (10 ** (cube[4] * 3 - 1))
+    params[3] = (10 ** (cube[3] * 2))*2
     return params
 
 
@@ -469,19 +469,19 @@ def priortrans_singSSAbreakexp(cube):
     params[0] = 10**(cube[0]*3 - 1)
     params[1] = cube[1]*20 - 10
     params[2] = cube[2] * 0.5
-    params[3] = (10 ** (cube[3] * 3 - 1))
+    params[3] = (10 ** (cube[3] * 2))*2
     return params
 
 
-def run_ultranest_mcmc(directory, parameters, freq, flux, err_flux, model, prior_transform):
-    log = ultranest.utils.make_run_dir(directory, run_num=1)
+def run_ultranest_mcmc(directory, parameters, freq, flux, err_flux, model, prior_transform, resume = "resume-similar", run_num=1):
+    log = ultranest.utils.make_run_dir(directory, run_num=run_num)
     # ultranest.utils.create_logger("ultranest", log_dir=directory)
     sampler = ultranest.ReactiveNestedSampler(
         param_names=parameters,
         loglike=create_lnlike(freq, flux, err_flux, model),
         transform=prior_transform,
         log_dir=log['run_dir'],
-        resume="resume-similar",
+        resume=resume,
         storage_backend="hdf5",
     )
     return sampler 
