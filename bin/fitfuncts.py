@@ -2,6 +2,8 @@
 # This script fits the entire MWA and ATCA seds
 # By K.Ross 29/09/21
 
+from emcee import backends
+from numpy.core.numeric import NaN
 import pandas as pd
 import scipy.optimize as opt
 import numpy as np
@@ -10,6 +12,10 @@ import gpscssmodels
 import emcee
 import corner
 import matplotlib.pyplot as plt
+from multiprocessing import Pool
+import time
+import ultranest
+from ultranest.plot import PredictionBand
 
 freq_cont = np.linspace(0.01, 15, num=10000)
 epochs = ["epoch1", "epoch2", "epoch3", "epoch4", "epoch5", "epoch6"]
@@ -22,6 +28,107 @@ subchans_dict = {
     "145": ["170-177", "177-185", "185-193", "193-200"],
     "169": ["200-208", "208-216", "216-223", "223-231"],
 }
+
+xtra_fluxes = [
+    "S_tgss",
+    "S_mrc",
+    "S_sumss",
+    "S_nvss",
+    "S_vlssr",
+    "S20",
+    "S8",
+    "S5",
+    "total_flux_source",  # RACS
+]
+exts = [
+    "107",
+    "115",
+    "123",
+    "130",
+    "143",
+    "150",
+    "158",
+    "166",
+    "174",
+    "181",
+    "189",
+    "197",
+    "204",
+    "212",
+    "220",
+    "227",
+]
+mwa_yr1_fluxes = ["S_076", "S_084", "S_092", "S_099"]
+mwa_yr2_fluxes = []
+mwa_yr1_errors = ["S_076_err", "S_084_err", "S_092_err", "S_099_err"]
+mwa_yr2_errors = []
+for ext in exts:
+    mwa_yr1_fluxes.append(f"S_{ext}_yr1")
+    mwa_yr2_fluxes.append(f"S_{ext}_yr2")
+    mwa_yr1_errors.append(f"local_rms_{ext}_yr1")
+    mwa_yr2_errors.append(f"local_rms_{ext}_yr2")
+freq = [
+    0.076,
+    0.084,
+    0.092,
+    0.099,
+    0.107,
+    0.115,
+    0.122,
+    0.130,
+    0.143,
+    0.151,
+    0.158,
+    0.166,
+    0.174,
+    0.181,
+    0.189,
+    0.197,
+    0.204,
+    0.212,
+    0.220,
+    0.227,
+    1.33,
+    1.407,
+    1.638,
+    1.869,
+    2.1,
+    2.331,
+    2.562,
+    2.793,
+    4.71,
+    5.090,
+    5.500,
+    5.910,
+    6.320,
+    8.732,
+    9.245,
+    9.758,
+    10.269,
+]
+
+
+def read_gleam_fluxes(directory, name):
+    master_pop_pd = pd.read_csv(f"{directory}/master_pop_extended.csv")
+    mask = master_pop_pd["Name"] == name
+    src_pd = master_pop_pd[mask]
+    mwa_flux_yr1 = np.squeeze(src_pd[mwa_yr1_fluxes].values)
+    err_mwa_flux_yr1 = np.squeeze(
+        np.sqrt(src_pd[mwa_yr1_errors]) ** 2 + (0.02 * mwa_flux_yr1) ** 2
+    )
+    mwa_flux_yr2 = np.squeeze(src_pd[mwa_yr2_fluxes].values)
+    err_mwa_flux_yr2 = np.squeeze(
+        np.sqrt(src_pd[mwa_yr2_errors]) ** 2 + (0.02 * mwa_flux_yr2) ** 2
+    )
+
+    buffer = np.empty(4)
+    buffer[:] = np.nan
+    mwa_flux_yr2 = np.hstack((buffer, mwa_flux_yr2))
+    err_mwa_flux_yr2 = np.hstack((buffer, err_mwa_flux_yr2))
+
+    fluxes_extra = np.squeeze(src_pd[xtra_fluxes].values)
+
+    return mwa_flux_yr1, err_mwa_flux_yr1, mwa_flux_yr2, err_mwa_flux_yr2, fluxes_extra
 
 
 def read_mwa_fluxes(directory, tarcomp, name, epoch):
@@ -117,6 +224,9 @@ def fit_model(freq, flux, err_flux, model):
 def log_likelihood(params, freq, flux, err_flux, model):
     model_flux = model(freq, *params)
     sigma2 = err_flux ** 2
+    likelihood = -0.5 * np.sum((flux - model_flux) ** 2 / sigma2 + np.log(sigma2))
+    if np.isnan(likelihood) == True:
+        return -np.inf
     return -0.5 * np.sum((flux - model_flux) ** 2 / sigma2 + np.log(sigma2))
 
 
@@ -134,16 +244,34 @@ def log_probability(params, freq, flux, err_flux, model):
     return lp + log_likelihood(params, freq, flux, err_flux, model)
 
 
-def run_mcmc(nwalkers, ndim, p0, freq, flux, err_flux, chosen_model, niters=10000):
-    # Setting up and running the MCMC
-    sampler = emcee.EnsembleSampler(
-        nwalkers,
-        ndim,
-        log_likelihood,
-        args=(freq, flux, err_flux, chosen_model),
-    )
-    sampler.run_mcmc(p0, niters, progress=True)
+def run_mcmc(
+    nwalkers, ndim, p0, freq, flux, err_flux, chosen_model, backend, niters=5000
+):
+    with Pool() as pool:
+        # Setting up and running the MCMC
+        sampler = emcee.EnsembleSampler(
+            nwalkers,
+            ndim,
+            log_likelihood,
+            backend=backend,
+            args=(freq, flux, err_flux, chosen_model),
+            pool=pool,
+        )
+        start = time.time()
+        sampler.run_mcmc(p0, niters, progress=True)
+        end = time.time()
+        time_take = end - start
+        print(f"Multiprocessing took {time_take}")
     return sampler
+
+
+def run_furthermcmc(nwalkers, ndim, chosen_model, backend_filename, backend, niters):
+    new_backend = emcee.backends.HDFBackend(backend_filename, name=backend)
+    new_sampler = emcee.EnsembleSampler(
+        nwalkers, ndim, log_likelihood, backend=new_backend
+    )
+    new_sampler.run_mcmc(None, niters)
+    return new_sampler
 
 
 def plot_mcmcqualitycheck(directory, figname, sampler, p0, labels):
@@ -162,7 +290,8 @@ def plot_mcmcqualitycheck(directory, figname, sampler, p0, labels):
     plt.savefig(f"{directory}_paramchains.png", overwrite=True)
     plt.clf()
     plt.close()
-    flat_samples = sampler.get_chain(discard=100, thin=15, flat=True)
+    # tau = sampler.get_autocorr_time()
+    flat_samples = sampler.get_chain(flat=True)
     # Plotting the corner plot of the different variables
     corner.corner(flat_samples, labels=labels, truths=p0)
     plt.title(f"{figname}")
@@ -173,9 +302,19 @@ def plot_mcmcqualitycheck(directory, figname, sampler, p0, labels):
 
 
 def plot_sed(save_dir, data_dir, freq_cont, freq, gleam_tar, tar, colors):
-    # mwa_flux, model_vals, xtra_values, values = read_gleam_fluxes(
-    #     "/data/MWA", gleam_tar
-    # )
+    (
+        mwa_flux_yr1,
+        err_mwa_flux_yr1,
+        mwa_flux_yr2,
+        err_mwa_flux_yr2,
+        fluxes_extra,
+    ) = read_gleam_fluxes("/data/MWA", gleam_tar)
+    atca_buffer = np.empty(17)
+    atca_buffer[:] = np.nan
+    mwa_flux_yr1 = np.hstack((mwa_flux_yr1, atca_buffer))
+    err_mwa_flux_yr1 = np.hstack((err_mwa_flux_yr1, atca_buffer))
+    mwa_flux_yr2 = np.hstack((mwa_flux_yr2, atca_buffer))
+    err_mwa_flux_yr2 = np.hstack((err_mwa_flux_yr2, atca_buffer))
     src_epoch1, err_src_epoch1 = create_epochcat(data_dir, tar, gleam_tar, 0)
     src_epoch2, err_src_epoch2 = create_epochcat(data_dir, tar, gleam_tar, 1)
     src_epoch3, err_src_epoch3 = create_epochcat(data_dir, tar, gleam_tar, 2)
@@ -184,24 +323,24 @@ def plot_sed(save_dir, data_dir, freq_cont, freq, gleam_tar, tar, colors):
     src_epoch6, err_src_epoch6 = create_epochcat(data_dir, tar, gleam_tar, 5)
     # plotting SED
     f = CF.sed_fig()
-    # f.plot_spectrum(
-    #     freq[4:20],
-    #     mwa_flux[0],
-    #     mwa_flux[2],
-    #     marker="o",
-    #     label=epoch_nms[0],
-    #     marker_color=colors[0],
-    #     s=75,
-    # )
-    # f.plot_spectrum(
-    #     freq[4:20],
-    #     mwa_flux[1],
-    #     mwa_flux[3],
-    #     marker="o",
-    #     label=epoch_nms[1],
-    #     marker_color=colors[1],
-    #     s=75,
-    # )
+    f.plot_spectrum(
+        freq,
+        mwa_flux_yr1,
+        err_mwa_flux_yr1,
+        marker="o",
+        label=epoch_nms[0],
+        marker_color=colors[0],
+        s=75,
+    )
+    f.plot_spectrum(
+        freq,
+        mwa_flux_yr2,
+        err_mwa_flux_yr2,
+        marker="o",
+        label=epoch_nms[1],
+        marker_color=colors[1],
+        s=75,
+    )
 
     f.plot_spectrum(
         freq,
@@ -261,26 +400,20 @@ def plot_sed(save_dir, data_dir, freq_cont, freq, gleam_tar, tar, colors):
     f.legend(loc="lower center")
     f.title(gleam_tar)
     f.format(xunit="GHz")
-    f.save(f"{save_dir}/{tar}_sed", ext="png")
+    f.save(f"{save_dir}/{tar}_sed_ultranest", ext="png")
     return
 
 
 def plot_epochsed(
     save_dir,
-    data_dir,
-    epoch,
-    freq_cont,
     freq,
-    gleam_tar,
+    src_flux,
+    err_src_flux,
+    band,
+    color,
     tar,
-    colors,
-    sampler,
-    chosen_model,
-    model_nm,
 ):
-    epoch_nms = ("2013", "2014", "Jan20", "Mar20", "Apr20", "May20", "July20", "Oct20")
-    epoch_nm = epoch_nms[epoch+2]
-    src_flux, err_src_flux = create_epochcat(data_dir, tar, gleam_tar, epoch)
+    # src_flux, err_src_flux = create_epochcat(data_dir, tar, gleam_tar, epoch)
     # plotting SED
     f = CF.sed_fig()
     f.plot_spectrum(
@@ -288,13 +421,68 @@ def plot_epochsed(
         src_flux,
         err_src_flux,
         marker="o",
-        label=f"{model_nm}",
-        marker_color=colors[epoch+2],
+        marker_color=color,
         s=75,
     )
-    f.plt_mcmcfits(sampler, chosen_model, freq_cont, color=colors[epoch+2])
+    f.plt_mcmcfits(band, color)
+    # f.plt_mcmcfits(sampler, chosen_model, freq_cont, color=colors[epoch + 2])
     # f.legend(loc="lower center")
-    f.title(f"{gleam_tar} {epoch_nm} {model_nm}")
+    f.title(f"{tar}")
     f.format(xunit="GHz")
-    f.save(f"{save_dir}/{tar}_{epoch_nm}_{model_nm}_sed", ext="png")
+    f.save(f"{save_dir}_sed", ext="png")
     return
+
+
+def create_lnlike(freq, int_flux, err_flux, model):
+    def lnlike(params):
+        model_flux = model(freq, *params)
+        sigma2 = err_flux ** 2
+        likelihood = -0.5 * np.sum(
+            (int_flux - model_flux) ** 2 / sigma2 + np.log(sigma2)
+        )
+        return likelihood
+
+    return lnlike
+
+
+def priortrans_singinhomobremssbreak(cube):
+    params = cube.copy()
+    params[0] = 10**(cube[0]*3 - 1)
+    params[1] = cube[1]*20 - 10
+    params[2] = cube[2]*2 - 1
+    params[3] = cube[3] * 0.5
+    params[4] = (10 ** (cube[4] * 3 - 1))
+    return params
+
+
+def priortrans_singhomobremssbreak(cube):
+    params = cube.copy()
+    params[0] = 10**(cube[0]*3 - 1)
+    params[1] = cube[1]*20 - 10
+    params[2] = cube[2] * 0.5
+    params[3] = (10 ** (cube[4] * 3 - 1))
+    return params
+
+
+def priortrans_singSSAbreakexp(cube):
+    params = cube.copy()
+    params[0] = 10**(cube[0]*3 - 1)
+    params[1] = cube[1]*20 - 10
+    params[2] = cube[2] * 0.5
+    params[3] = (10 ** (cube[3] * 3 - 1))
+    return params
+
+
+def run_ultranest_mcmc(directory, parameters, freq, flux, err_flux, model, prior_transform):
+    log = ultranest.utils.make_run_dir(directory, run_num=1)
+    # ultranest.utils.create_logger("ultranest", log_dir=directory)
+    sampler = ultranest.ReactiveNestedSampler(
+        param_names=parameters,
+        loglike=create_lnlike(freq, flux, err_flux, model),
+        transform=prior_transform,
+        log_dir=log['run_dir'],
+        resume="resume-similar",
+        storage_backend="hdf5",
+    )
+    return sampler 
+
