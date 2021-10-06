@@ -16,3 +16,5 @@ bin/.vscode/settings.json
 1934_cal_*
 j*
 bin/run*py
+bin/plotfuncts.py
+

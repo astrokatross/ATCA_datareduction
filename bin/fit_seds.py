@@ -2,14 +2,12 @@
 # This script fits the entire MWA and ATCA seds
 # By K.Ross 29/09/21
 
-import emcee
 import fitfuncts
 import numpy as np
 import gpscssmodels
 import cmasher as cmr
 import ultranest
 from ultranest.plot import PredictionBand
-import CFigTools.CustomFigure as CF
 
 num_colors = 8
 colors = cmr.take_cmap_colors(
@@ -116,8 +114,8 @@ model_params_dict = {
 # Source/run information
 save_dir = "/data/ATCA/analysis/"
 data_dir = "/data/ATCA/ATCA_datareduction/"
-gleam_tar = "GLEAM J024838-321336"
-tar = "J024838"
+gleam_tar = "GLEAM J001513-472706"
+tar = "J001513"
 epoch = 4
 epoch_nm = epoch_nms[epoch + 2]
 color = colors[epoch + 2]
@@ -167,6 +165,8 @@ src_epoch4, err_src_epoch4 = fitfuncts.create_epochcat(data_dir, tar, gleam_tar,
 src_epoch5, err_src_epoch5 = fitfuncts.create_epochcat(data_dir, tar, gleam_tar, 4)
 src_epoch6, err_src_epoch6 = fitfuncts.create_epochcat(data_dir, tar, gleam_tar, 5)
 
+print(src_epoch6)
+
 # Calculating a good starting point using scipy.stats.opt.curve_fit or whatever it is
 if epoch == 4:
     src_flux = np.hstack((src_epoch5[0:20], src_epoch4[20:37]))
@@ -177,12 +177,14 @@ elif epoch == 5:
 else:
     src_flux, err_src_flux = fitfuncts.create_epochcat(data_dir, tar, gleam_tar, epoch)
 
+print(src_flux)
+
+# Making sure there's no nan's in flux
 mask = np.where(~np.isnan(src_flux))
 src_flux = src_flux[mask]
 err_src_flux = err_src_flux[mask]
 freq = freq[mask]
 
-print(src_flux)
 
 
 # Initial conditions of mcmc for homobreak
@@ -192,6 +194,7 @@ model_nm = "singhomobremssbreak"
 labels = model_params_dict[model_nm]
 directory = f"{save_dir}{tar}/{epoch_nm}/{model_nm}/"
 print(f"Fitting for {model_nm}")
+
 # Trying to see if it's already run the mcmc before and just load it if you have, otherwise runs the mcmc again
 try:
     sampler_homobreak = ultranest.integrator.read_file(
@@ -239,7 +242,7 @@ try:
 
 except:
     sampler_inhomobreak = fitfuncts.run_ultranest_mcmc(
-        directory, labels, freq, src_flux, err_src_flux, chosen_model, transform_funct
+        directory, labels, freq, src_flux, err_src_flux, chosen_model, transform_funct, resume="overwrite"
     )
     sampler_inhomobreak.run(max_iters=50000)
     print(f"Finished fitting for {model_nm}")
@@ -269,6 +272,7 @@ labels = model_params_dict[model_nm]
 directory = f"{save_dir}{tar}/{epoch_nm}/{model_nm}/"
 print(f"Fitting for {model_nm}")
 
+# Making sure there's no nan's in flux
 # Trying to see if it's already run the mcmc before and just load it if you have, otherwise runs the mcmc again
 try:
     sampler_singssabreak = ultranest.integrator.read_file(
@@ -278,7 +282,7 @@ try:
 
 except:
     sampler_singssabreak = fitfuncts.run_ultranest_mcmc(
-        directory, labels, freq, src_flux, err_src_flux, chosen_model, transform_funct
+        directory, labels, freq, src_flux, err_src_flux, chosen_model, transform_funct, resume="overwrite"
     )
     sampler_singssabreak.run(max_iters=50000)
     print(f"Finished fitting for {model_nm}")
@@ -307,6 +311,7 @@ labels = model_params_dict[model_nm]
 directory = f"{save_dir}{tar}/{epoch_nm}/{model_nm}/"
 print(f"Fitting for {model_nm}")
 
+
 # Trying to see if it's already run the mcmc before and just load it if you have, otherwise runs the mcmc again
 try:
     sampler_singhomobremssbreakexp = ultranest.integrator.read_file(
@@ -316,7 +321,7 @@ try:
 
 except:
     sampler_singhomobremssbreakexp = fitfuncts.run_ultranest_mcmc(
-        directory, labels, freq, src_flux, err_src_flux, chosen_model, transform_funct
+        directory, labels, freq, src_flux, err_src_flux, chosen_model, transform_funct, resume="overwrite"
     )
     sampler_singhomobremssbreakexp.run(max_iters=50000)
     print(f"Finished fitting for {model_nm}")
@@ -354,7 +359,7 @@ try:
 
 except:
     sampler_singinhomobremssbreakexp = fitfuncts.run_ultranest_mcmc(
-        directory, labels, freq, src_flux, err_src_flux, chosen_model, transform_funct
+        directory, labels, freq, src_flux, err_src_flux, chosen_model, transform_funct, resume="overwrite"
     )
     sampler_singinhomobremssbreakexp.run(max_iters=50000)
     print(f"Finished fitting for {model_nm}")
@@ -375,47 +380,3 @@ except:
     )
 
 
-
-# K_factor = np.exp(sampler_inhomobreak[1]["logz"] - sampler_homobreak[1]["logz"])
-# print("K factor = %.2f" % K_factor)
-
-
-
-
-
-# ------------------------------------------------------------------------------
-# This is for the regular emcee mcmc stuff, uncommment if you'd rather this but mostly using the ultranest now
-# ------------------------------------------------------------------------------
-
-
-
-
-# Setting up saving the chain so we can come back :)
-# filename = f"{save_dir}{tar}_{epoch}.h5"
-# backend = emcee.backends.HDFBackend(filename, name=model_nm)
-# # I think this clears it if it's already there, comment out if you actually just want to load it
-# backend.reset(nwalkers, ndim)
-
-
-# sampler = fitfuncts.run_mcmc(
-#     nwalkers,
-#     ndim,
-#     p0,
-#     freq,
-#     src_flux,
-#     err_src_flux,
-#     chosen_model,
-#     niters=niters,
-#     backend=backend,
-# )
-
-# # Checking how long before it forgets the initial conditions, to be cut kinda like the burn in
-# fitfuncts.plot_mcmcqualitycheck(
-#     f"{save_dir}{tar}_{epoch_nm}_{model_nm}",
-#     f"{tar} {epoch_nm} {model_nm}",
-#     sampler,
-#     poptstart,
-#     labels,
-# )
-
-# fitfuncts.plot_sed(save_dir, data_dir, freq_cont, freq, gleam_tar, tar, colors)

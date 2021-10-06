@@ -2,8 +2,6 @@
 # This script fits the entire MWA and ATCA seds
 # By K.Ross 29/09/21
 
-from emcee import backends
-from numpy.core.numeric import NaN
 import pandas as pd
 import scipy.optimize as opt
 import numpy as np
@@ -67,45 +65,6 @@ for ext in exts:
     mwa_yr2_fluxes.append(f"S_{ext}_yr2")
     mwa_yr1_errors.append(f"local_rms_{ext}_yr1")
     mwa_yr2_errors.append(f"local_rms_{ext}_yr2")
-freq = [
-    0.076,
-    0.084,
-    0.092,
-    0.099,
-    0.107,
-    0.115,
-    0.122,
-    0.130,
-    0.143,
-    0.151,
-    0.158,
-    0.166,
-    0.174,
-    0.181,
-    0.189,
-    0.197,
-    0.204,
-    0.212,
-    0.220,
-    0.227,
-    1.33,
-    1.407,
-    1.638,
-    1.869,
-    2.1,
-    2.331,
-    2.562,
-    2.793,
-    4.71,
-    5.090,
-    5.500,
-    5.910,
-    6.320,
-    8.732,
-    9.245,
-    9.758,
-    10.269,
-]
 
 
 def read_gleam_fluxes(directory, name):
@@ -447,42 +406,58 @@ def create_lnlike(freq, int_flux, err_flux, model):
 
 def priortrans_singinhomobremssbreak(cube):
     params = cube.copy()
-    params[0] = 10**(cube[0]*3 - 1)
-    params[1] = cube[1]*20 - 10
-    params[2] = cube[2]*5 - 1
+    params[0] = 10 ** (cube[0] * 3 - 1)
+    params[1] = cube[1] * 20 - 10
+    params[2] = cube[2] * 2 - 1
     params[3] = cube[3] * 0.5
-    params[4] = ((10 ** (cube[4] * 2)))*2
+    params[4] = ((10 ** (cube[4] * 2))) * 2
     return params
 
 
 def priortrans_singhomobremssbreak(cube):
     params = cube.copy()
-    params[0] = 10**(cube[0]*3 - 1)
-    params[1] = cube[1]*20 - 10
+    params[0] = 10 ** (cube[0] * 3 - 1)
+    params[1] = cube[1] * 20 - 10
     params[2] = cube[2] * 0.5
-    params[3] = (10 ** (cube[3] * 2))*2
+    params[3] = (10 ** (cube[3] * 2)) * 2
     return params
 
 
 def priortrans_singSSAbreakexp(cube):
     params = cube.copy()
-    params[0] = 10**(cube[0]*3 - 1)
-    params[1] = cube[1]*20 - 10
+    params[0] = 10 ** (cube[0] * 3 - 1)
+    params[1] = cube[1] * 20 - 10
     params[2] = cube[2] * 0.5
-    params[3] = (10 ** (cube[3] * 2))*2
+    params[3] = (10 ** (cube[3] * 2)) * 2
     return params
 
 
-def run_ultranest_mcmc(directory, parameters, freq, flux, err_flux, model, prior_transform, resume = "resume-similar", run_num=1):
+def run_ultranest_mcmc(
+    directory,
+    parameters,
+    freq,
+    flux,
+    err_flux,
+    model,
+    prior_transform,
+    resume="resume-similar",
+    run_num=1,
+):
     log = ultranest.utils.make_run_dir(directory, run_num=run_num)
     # ultranest.utils.create_logger("ultranest", log_dir=directory)
     sampler = ultranest.ReactiveNestedSampler(
         param_names=parameters,
         loglike=create_lnlike(freq, flux, err_flux, model),
         transform=prior_transform,
-        log_dir=log['run_dir'],
+        log_dir=log["run_dir"],
         resume=resume,
         storage_backend="hdf5",
     )
-    return sampler 
+    return sampler
 
+
+def model_comparison(bayes_name, model1_lnlike, model2_lnlike):
+    K_factor = np.exp(model1_lnlike - model2_lnlike)
+    print(f"{bayes_name} factor = %.2f" % K_factor)
+    print("The first model is %.2f times more probable than the second model" % K_factor)
+    return K_factor
