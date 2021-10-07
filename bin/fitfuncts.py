@@ -2,6 +2,7 @@
 # This script fits the entire MWA and ATCA seds
 # By K.Ross 29/09/21
 
+from typing_extensions import ParamSpecArgs
 import pandas as pd
 import scipy.optimize as opt
 import numpy as np
@@ -14,6 +15,8 @@ from multiprocessing import Pool
 import time
 import ultranest
 from ultranest.plot import PredictionBand
+import json
+import cmasher as cmr
 
 freq_cont = np.linspace(0.01, 15, num=10000)
 epochs = ["epoch1", "epoch2", "epoch3", "epoch4", "epoch5", "epoch6"]
@@ -103,22 +106,25 @@ def read_mwa_fluxes(directory, tarcomp, name, epoch):
                 )
                 mask = src_mwa_pd["Name"] == name
                 src_pd = src_mwa_pd[mask]
-                mwa_flux_chan = np.squeeze(src_pd["int_flux"].values)
-                mwa_errs_chan = np.squeeze(
-                    np.sqrt(src_pd["local_rms"]) ** 2 + (0.02 * mwa_flux_chan) ** 2
-                )
-                mwa_flux.append(mwa_flux_chan)
-                mwa_errs.append(mwa_errs_chan)
+                if src_pd.empty == False:
+                    mwa_flux_chan = np.squeeze(src_pd["int_flux"].values)
+                    mwa_errs_chan = np.squeeze(
+                        np.sqrt(src_pd["local_rms"]) ** 2 + (0.02 * mwa_flux_chan) ** 2
+                    )
+                    mwa_flux.append(mwa_flux_chan)
+                    mwa_errs.append(mwa_errs_chan)
+                else:
+                    print("empty pd")
+                    mwa_flux.append(np.nan)
+                    mwa_errs.append(np.nan)
+                    pass
             except (FileNotFoundError, KeyError):
                 # print(
                 # f"{directory}/{epoch}/{chan}/minimosaic/{tarcomp}_{subchan}MHz_ddmod_scaled_comp_xmatch.csv not found!"
                 # )
                 mwa_flux.append(np.nan)
                 mwa_errs.append(np.nan)
-            except:
-                # print(f"{name} {subchan} not found in catalogue! Maybe too faint")
-                mwa_flux.append(np.nan)
-                mwa_errs.append(np.nan)
+                pass
 
     return np.array(mwa_flux), np.array(mwa_errs)
 
@@ -404,6 +410,16 @@ def create_lnlike(freq, int_flux, err_flux, model):
     return lnlike
 
 
+def priortrans_singinhomobremss(cube):
+    params = cube.copy()
+    params[0] = 10 ** (cube[0] * 3 - 1)
+    params[1] = cube[1] * 20 - 10
+    params[2] = cube[2] * 2 - 1
+    params[3] = cube[3] * 0.5
+    # params[4] = ((10 ** (cube[4] * 2))) * 2
+    return params
+
+
 def priortrans_singinhomobremssbreak(cube):
     params = cube.copy()
     params[0] = 10 ** (cube[0] * 3 - 1)
@@ -420,6 +436,23 @@ def priortrans_singhomobremssbreak(cube):
     params[1] = cube[1] * 20 - 10
     params[2] = cube[2] * 0.5
     params[3] = (10 ** (cube[3] * 2)) * 2
+    return params
+
+
+def priortrans_singhomobremss(cube):
+    params = cube.copy()
+    params[0] = 10 ** (cube[0] * 3 - 1)
+    params[1] = cube[1] * 20 - 10
+    params[2] = cube[2] * 0.5
+    # params[3] = (10 ** (cube[3] * 2)) * 2
+    return params
+
+
+def priortrans_singSSA(cube):
+    params = cube.copy()
+    params[0] = 10 ** (cube[0] * 3 - 1)
+    params[1] = cube[1] * 20 - 10
+    params[2] = cube[2] * 0.5
     return params
 
 
@@ -457,7 +490,49 @@ def run_ultranest_mcmc(
 
 
 def model_comparison(bayes_name, model1_lnlike, model2_lnlike):
-    K_factor = np.exp(model1_lnlike - model2_lnlike)
-    print(f"{bayes_name} factor = %.2f" % K_factor)
-    print("The first model is %.2f times more probable than the second model" % K_factor)
+    K_factor = np.exp(model2_lnlike - model1_lnlike)
+    print(f"{bayes_name} factor = {K_factor}")
+    print(
+        f"The first model {K_factor} times more probable than the second model for {bayes_name}"
+    )
     return K_factor
+
+
+def plot_paramswithtime(
+    directory,
+    target,
+    model,
+    labels,
+    colors=cmr.take_cmap_colors(
+        "cmr.rainforest", 12, cmap_range=(0.15, 0.85), return_fmt="hex"
+    ),
+):
+    params = []
+    errlo_params = []
+    errup_params = []
+    months = [4, 5, 7, 10]
+    for epoch in ["Apr20", "May20", "July20", "Oct20"]:
+        sampler = open(
+            f"/data/ATCA/analysis/{target}/{epoch}/{model}/run1/info/results.json"
+        )
+        results = json.load(sampler)
+        paramnames = results["paramnames"]
+        parameters = np.array(results["maximum_likelihood"]["point"])
+        errlo_arr = np.array(results["posterior"]["errlo"])
+        errup_arr = np.array(results["maximum_likelihood"]["point"])
+        errlo = parameters - errlo_arr
+        errup = errup_arr - parameters
+        params.append(parameters)
+        errlo_params.append(errlo)
+        errup_params.append(errup)
+    paramsT = np.transpose(params)
+    errloT = np.transpose(errlo_params)
+    errupT = np.transpose(errup_params)
+    for i in range(len(paramnames)):
+        f = CF.timeseries()
+        name = paramnames[i]
+        f.plot_params(months, paramsT[i], err_params=errloT[i],s=75)
+        f.format()
+        f.title(f"{target} {name}")
+        f.save(f"{directory}_{name}", ext="png")
+    return
