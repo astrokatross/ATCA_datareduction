@@ -179,7 +179,7 @@ def create_epochcat(directory, tar, gleam_tar, epoch):
     return src_flux, src_errs
 
 
-def plot_sed(save_dir, data_dir, freq_cont, freq, gleam_tar, tar, colors):
+def plot_sed(save_dir, data_dir, freq, gleam_tar, tar, colors):
     (
         mwa_flux_yr1,
         err_mwa_flux_yr1,
@@ -394,5 +394,5 @@ def plot_paramswithtime(
         f.plot_params(months, paramsT[i], err_params=errloT[i],s=75)
         f.format()
         f.title(f"{target} {name}")
-        f.save(f"{directory}_{name}", ext="png")
+        f.save(f"{directory}_{name}_{model}", ext="png")
     return
