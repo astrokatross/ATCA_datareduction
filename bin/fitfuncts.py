@@ -278,7 +278,7 @@ def plot_sed(save_dir, data_dir, freq, gleam_tar, tar, colors):
     f.legend(loc="lower center")
     f.title(gleam_tar)
     f.format(xunit="GHz")
-    f.save(f"{save_dir}/{tar}_sed_ultranest", ext="png")
+    f.save(f"{save_dir}/{tar}_sed", ext="png")
     return
 
 
@@ -370,8 +370,8 @@ def plot_paramswithtime(
     params = []
     errlo_params = []
     errup_params = []
-    months = [4, 5, 7, 10]
-    for epoch in ["Apr20", "May20", "July20", "Oct20"]:
+    months = [0, 1, 4, 5, 7, 10]
+    for epoch in ["2013", "2014", "Apr20", "May20", "July20", "Oct20"]:
         sampler = open(
             f"/data/ATCA/analysis/{target}/{epoch}/{model}/run1/info/results.json"
         )
@@ -391,8 +391,8 @@ def plot_paramswithtime(
     for i in range(len(paramnames)):
         f = CF.timeseries()
         name = paramnames[i]
-        f.plot_params(months, paramsT[i], err_params=errloT[i],s=75)
-        f.format()
+        f.plot_params(months, paramsT[i], err_params=errloT[i], s=75)
+        f.format(xticksnames==["2013", "2014", "Apr20", "May20", "July20", "Oct20"],xticksnames=[0, 1, 4, 5, 7, 10])
         f.title(f"{target} {name}")
         f.save(f"{directory}_{name}_{model}", ext="png")
     return

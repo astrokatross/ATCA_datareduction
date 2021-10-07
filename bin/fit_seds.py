@@ -140,15 +140,15 @@ data_dir = "/data/ATCA/ATCA_datareduction/"
 gleam_tar = "GLEAM J020507-110922"
 target = "J020507"
 fit_models = [
-    "singhomobremss",
-    "singinhomobremss",
+    # "singhomobremss",
+    # "singinhomobremss",
     # "internalbremss",
-    "singSSA",
+    # "singSSA",
     # "singhomobremsscurve",
     # "singinhomobremsscurve",
     "singinhomobremssbreakexp",
-    "singhomobremssbreakexp",
-    "singSSAbreakexp",
+    # "singhomobremssbreakexp",
+    # "singSSAbreakexp",
 ]
 epochs = [0, 1, 2, 3, 4, 5, 6, 7]
 
@@ -164,10 +164,6 @@ src_epoch6, err_src_epoch6 = fitfuncts.create_epochcat(data_dir, target, gleam_t
 
 logz = np.zeros((len(fit_models), len(epochs)))
 for i in range(len(fit_models)):
-
-
-
-    
     model = fit_models[i]
     model_funct = model_params_dict[model][0]
     model_trans = model_params_dict[model][1]
@@ -260,6 +256,7 @@ for i in range(len(fit_models)):
             sampler.store_tree()
             sampler.plot()
 
+        
             # TODO: figure out how to generalise the band plotting thing
             # band = PredictionBand(freq_cont)
             # for Snorm, alpha, freqpeak in sampler.results["samples"]:
@@ -283,7 +280,9 @@ for i in range(len(fit_models)):
         maxlike_params.append(results["maximum_likelihood"]["point"])
         err_maxlike_params.append(results["posterior"]["stdev"])
         logz[i][j] = results["logz"]
-
+    fitfuncts.plot_paramswithtime(
+        f"{save_dir}/{target}/{target}", target, model, labels
+    )
         # # homoFFA inhomoFFA
         # K_homoinhomo = fitfuncts.model_comparison(
         #     "homovsinhomoFFA",
@@ -291,6 +290,4 @@ for i in range(len(fit_models)):
         #     sampler_singinhomobremss[1]["logz"],
         # )
 
-    fitfuncts.plot_paramswithtime(
-        f"{save_dir}/{target}/{target}", target, model, labels
-    )
+
