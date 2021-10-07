@@ -6,6 +6,7 @@ from numpy.lib.npyio import save
 import fitfuncts
 import numpy as np
 import gpscssmodels
+import priortransfuncts
 import cmasher as cmr
 import ultranest
 from ultranest.plot import PredictionBand
@@ -16,100 +17,117 @@ num_colors = 12
 colors = cmr.take_cmap_colors(
     "cmr.rainforest", num_colors, cmap_range=(0.15, 0.85), return_fmt="hex"
 )
-epochs = ["epoch1", "epoch2", "epoch3", "epoch4", "epoch5", "epoch6"]
+freq_cont = np.linspace(0.01, 15, num=10000)
+freq = np.array(
+    0.076,
+    0.084,
+    0.092,
+    0.099,
+    0.107,
+    0.115,
+    0.122,
+    0.130,
+    0.143,
+    0.151,
+    0.158,
+    0.166,
+    0.174,
+    0.181,
+    0.189,
+    0.197,
+    0.204,
+    0.212,
+    0.220,
+    0.227,
+    1.33,
+    1.407,
+    1.638,
+    1.869,
+    2.1,
+    2.331,
+    2.562,
+    2.793,
+    4.71,
+    5.090,
+    5.500,
+    5.910,
+    6.320,
+    8.732,
+    9.245,
+    9.758,
+    10.269,
+)
 epoch_nms = ("2013", "2014", "Jan20", "Mar20", "Apr20", "May20", "July20", "Oct20")
 model_params_dict = {
-    "curve": ["freqpeak", "peakfreq", "alphathick", "alphathin"],
-    "straight_line": ["m", "b"],
-    "powlaw": ["a", "alpha"],
-    "quad": ["a", "b", "c"],
-    "singhomobremss": ["Snorm", "alpha", "freqpeak"],
-    "doubhomobremss": [
-        "Snorm1",
-        "Snorm2",
-        "alpha1",
-        "alpha2",
-        "freqpeak1",
-        "freqpeak2",
+    "singhomobremss": [
+        gpscssmodels.singhomobremss,
+        priortransfuncts.singhomobremss,
+        "Snorm",
+        "alpha",
+        "freqpeak",
     ],
-    "doubhomobremsscurve": [
-        "Snorm1",
-        "Snorm2",
-        "alpha1",
-        "alpha2",
-        "freqpeak1",
-        "freqpeak2",
-        "gamma1",
-        "gamma2",
+    "singinhomobremss": [
+        gpscssmodels.singinhomobremss,
+        priortransfuncts.singinhomobremss,
+        "Snorm",
+        "alpha",
+        "p",
+        "freqpeak",
     ],
-    "singinhomobremss": ["Snorm", "alpha", "p", "freqpeak"],
-    "doubinhomobremss": [
-        "Snorm1",
-        "Snorm2",
-        "alpha1",
-        "alpha2",
-        "p1",
-        "p2",
-        "freqpeak1",
-        "freqpeak2",
+    "internalbremss": [
+        gpscssmodels.internalbremss,
+        priortransfuncts.internalbremss,
+        "Snorm",
+        "alpha",
+        "freqpeak",
     ],
-    "internalbremss": ["Snorm", "alpha", "freqpeak"],
-    "singSSA": ["Snorm", "beta", "peakfreq"],
-    "doubSSA": ["Snorm1", "Snorm2", "beta1", "beta2", "peakfreq1", "peakfreq2"],
-    "tripSSA": [
-        "Snorm1",
-        "Snorm2",
-        "Snorm3",
-        "beta1",
-        "beta2",
-        "beta3",
-        "peakfreq1",
-        "peakfreq2",
-        "peakfreq3",
+    "singSSA": [
+        gpscssmodels.singSSA,
+        priortransfuncts.singSSA,
+        "Snorm",
+        "beta",
+        "peakfreq",
     ],
-    "quadSSA": [
-        "Snorm1",
-        "Snorm2",
-        "Snorm3",
-        "Snorm4",
-        "beta1",
-        "beta2",
-        "beta3",
-        "beta4",
-        "peakfreq1",
-        "peakfreq2",
-        "peakfreq3",
-        "peakfreq4",
+    "singhomobremsscurve": [
+        gpscssmodels.singhomobremsscurve,
+        priortransfuncts.singhomobremsscurve,
+        "Snorm",
+        "alpha",
+        "freqpeak",
+        "q",
     ],
-    "singhomobremsscurve": ["Snorm", "alpha", "freqpeak", "q"],
-    "curvepowlaw": ["Snorm", "alpha", "q"],
-    "singinhomobremsscurve": ["Snorm", "alpha", "p", "freqpeak", "q"],
-    "duffcurve": ["Snorm", "q", "peakfreq"],
-    "logduffcurve": ["Snormlog", "q", "peakfreqlog"],
-    "powlawbreak_nophys": ["Snorm", "alpha", "alpha1", "breakfreq"],
-    "powlawbreak": ["Snorm", "alpha", "breakfreq"],
-    "singhomobremssbreak": ["Snorm", "alpha", "freqpeak", "breakfreq"],
-    "singinhomobremssbreak": ["Snorm", "alpha", "p", "freqpeak", "breakfreq"],
-    "powlawexp": ["Snorm", "alpha", "breakfreq"],
-    "singinhomobremssbreakexp": ["Snorm", "alpha", "p", "freqpeak", "breakfreq"],
-    "singhomobremssbreakexp": ["Snorm", "alpha", "freqpeak", "breakfreq"],
-    "doubhomobremssbreakexp": [
-        "Snorm1",
-        "Snorm2",
-        "alpha1",
-        "alpha2",
-        "freqpeak1",
-        "freqpeak2",
+    "singinhomobremsscurve": [
+        gpscssmodels.singinhomobremsscurve,
+        priortransfuncts.singinhomobremsscurve,
+        "Snorm",
+        "alpha",
+        "p",
+        "freqpeak",
+        "q",
+    ],
+    "singinhomobremssbreakexp": [
+        gpscssmodels.singinhomobremssbreakexp,
+        priortransfuncts.singinhomobremssbreakexp,
+        "Snorm",
+        "alpha",
+        "p",
+        "freqpeak",
         "breakfreq",
     ],
-    "singSSAbreakexp": ["Snorm", "beta", "peakfreq", "breakfreq"],
-    "doubSSAbreakexp": [
-        "Snorm1",
-        "Snorm2",
-        "beta1",
-        "beta2",
-        "peakfreq1",
-        "peakfreq2",
+    "singhomobremssbreakexp": [
+        gpscssmodels.singhomobremssbreakexp,
+        priortransfuncts.singhomobremssbreakexp,
+        "Snorm",
+        "alpha",
+        "freqpeak",
+        "breakfreq",
+    ],
+    "singSSAbreakexp": [
+        gpscssmodels.singSSAbreakexp,
+        priortransfuncts.singSSAbreakexp,
+        "Snorm",
+        "beta",
+        "peakfreq",
         "breakfreq",
     ],
 }
@@ -118,75 +136,118 @@ model_params_dict = {
 save_dir = "/data/ATCA/analysis/"
 data_dir = "/data/ATCA/ATCA_datareduction/"
 gleam_tar = "GLEAM J020507-110922"
-tar = "J020507"
-epoch = 5
-epoch_nm = epoch_nms[epoch + 2]
-color = colors[epoch + 2]
-
-freq = np.array(
-    [
-        0.076,
-        0.084,
-        0.092,
-        0.099,
-        0.107,
-        0.115,
-        0.122,
-        0.130,
-        0.143,
-        0.151,
-        0.158,
-        0.166,
-        0.174,
-        0.181,
-        0.189,
-        0.197,
-        0.204,
-        0.212,
-        0.220,
-        0.227,
-        1.33,
-        1.407,
-        1.638,
-        1.869,
-        2.1,
-        2.331,
-        2.562,
-        2.793,
-        4.71,
-        5.090,
-        5.500,
-        5.910,
-        6.320,
-        8.732,
-        9.245,
-        9.758,
-        10.269,
-    ]
-)
-freq_cont = np.linspace(0.01, 15, num=10000)
-
-src_epoch4, err_src_epoch4 = fitfuncts.create_epochcat(data_dir, tar, gleam_tar, 3)
-src_epoch5, err_src_epoch5 = fitfuncts.create_epochcat(data_dir, tar, gleam_tar, 4)
-src_epoch6, err_src_epoch6 = fitfuncts.create_epochcat(data_dir, tar, gleam_tar, 5)
+target = "J020507"
+fit_models = [
+    "singhomobremss",
+    "singinhomobremss",
+    "internalbremss",
+    "singSSA",
+    "singhomobremsscurve",
+    "singinhomobremsscurve",
+    "singinhomobremssbreakexp",
+    "singhomobremssbreakexp",
+    "singSSAbreakexp",
+]
+epochs = [0, 1, 2, 3, 4, 5]
 
 
-# Calculating a good starting point using scipy.stats.opt.curve_fit or whatever it is
-if epoch == 4:
-    src_flux = np.hstack((src_epoch5[0:20], src_epoch4[20:37]))
-    err_src_flux = np.hstack((err_src_epoch5[0:20], err_src_epoch4[20:37]))
-elif epoch == 5:
-    src_flux = np.hstack((src_epoch6[0:20], src_epoch4[20:37]))
-    err_src_flux = np.hstack((err_src_epoch6[0:20], err_src_epoch4[20:37]))
-else:
-    src_flux, err_src_flux = fitfuncts.create_epochcat(data_dir, tar, gleam_tar, epoch)
+fitfuncts.plot_sed(f"{save_dir}/{target}", data_dir, freq, gleam_tar, target, colors)
+
+for model in fit_models:
+    model_funct = model_params_dict[model][0]
+    model_trans = model_params_dict[model][1]
+    labels = model_params_dict[model][2:]
 
 
-# Making sure there's no nan's in flux
-mask = np.where(~np.isnan(src_flux))
-src_flux = src_flux[mask]
-err_src_flux = err_src_flux[mask]
-freq = freq[mask]
+    maxlike_params = []
+    err_maxlike_params = []
+    for epoch in epochs:
+        epoch_nm = epoch_nms[epoch]
+        color = colors[epoch]
+
+        # Reading in the flux for this epoch (note there accommodations for epochs that don't have atca)
+        src_epoch4, err_src_epoch4 = fitfuncts.create_epochcat(data_dir, tar, gleam_tar, 3)
+        src_epoch5, err_src_epoch5 = fitfuncts.create_epochcat(data_dir, tar, gleam_tar, 4)
+        src_epoch6, err_src_epoch6 = fitfuncts.create_epochcat(data_dir, tar, gleam_tar, 5)
+        if epoch == 4:
+            src_flux = np.hstack((src_epoch5[0:20], src_epoch4[20:37]))
+            err_src_flux = np.hstack((err_src_epoch5[0:20], err_src_epoch4[20:37]))
+        elif epoch == 5:
+            src_flux = np.hstack((src_epoch6[0:20], src_epoch4[20:37]))
+            err_src_flux = np.hstack((err_src_epoch6[0:20], err_src_epoch4[20:37]))
+        elif epoch == 0:
+            (
+                mwa_flux_yr1,
+                err_mwa_flux_yr1,
+                mwa_flux_yr2,
+                err_mwa_flux_yr2,
+                fluxes_extra,
+            ) = fitfuncts.read_gleam_fluxes("/data/MWA", gleam_tar)
+            src_flux = np.hstack((mwa_flux_yr1, src_epoch4[20:37]))
+            err_src_flux = np.hstack((err_mwa_flux_yr1, err_src_epoch4[20:37]))
+        elif epoch == 1:
+            (
+                mwa_flux_yr1,
+                err_mwa_flux_yr1,
+                mwa_flux_yr2,
+                err_mwa_flux_yr2,
+                fluxes_extra,
+            ) = fitfuncts.read_gleam_fluxes("/data/MWA", gleam_tar)
+            src_flux = np.hstack((mwa_flux_yr2, src_epoch4[20:37]))
+            err_src_flux = np.hstack((err_mwa_flux_yr2, err_src_epoch4[20:37]))
+        else:
+            src_flux, err_src_flux = fitfuncts.create_epochcat(
+                data_dir, tar, gleam_tar, epoch
+            )
+
+        # Making sure there's no nan's in flux
+        mask = np.where(~np.isnan(src_flux))
+        src_flux = src_flux[mask]
+        err_src_flux = err_src_flux[mask]
+        freq = freq[mask]
+
+        try:
+            sampler = open(
+                f"/data/ATCA/analysis/{target}/{epoch_nm}/{model}/run1/info/results.json"
+            )
+        except (FileNotFoundError, KeyError):
+            sampler = fitfuncts.run_ultranest_mcmc(
+                f"/data/ATCA/analysis/{target}/{epoch_nm}/{model}",
+                labels,
+                freq,
+                src_flux,
+                err_src_flux,
+                model,
+                model_trans,
+            )
+            sampler.run(max_iters=50000)
+            print(f"Finished fitting for {model}")
+            sampler.store_tree()
+            sampler.plot()
+
+            # TODO: figure out how to generalise the band plotting thing 
+            # band = PredictionBand(freq_cont)
+            # for Snorm, alpha, freqpeak in sampler.results["samples"]:
+            #     band.add(chosen_model(freq_cont, Snorm, alpha, freqpeak))
+
+            # fitfuncts.plot_epochsed(
+            #     f"{save_dir}/{tar}_{epoch_nm}_{model_nm}",
+            #     freq,
+            #     src_flux,
+            #     err_src_flux,
+            #     band,
+            #     color,
+            #     tar,
+            # )
+
+            sampler = open(
+                f"/data/ATCA/analysis/{target}/{epoch_nm}/{model}/run1/info/results.json"
+            )
+
+        results = json.load(sampler)
+        maxlike_params.append(results["maximum_likelihood"]["point"])
+        err_maxlike_params.append(results["posterior"]["stdev"])
+        
 
 # ------------------------------------------------------------------------------
 #  Running initial no break models: singSSA, singhomobremss, singinhomobremss
@@ -207,33 +268,33 @@ freq = freq[mask]
 #     )
 #     print(sampler_singssa[1]["logz"])
 # except:
-#     sampler_singssa = fitfuncts.run_ultranest_mcmc(
-#         directory,
-#         labels,
-#         freq,
-#         src_flux,
-#         err_src_flux,
-#         chosen_model,
-#         transform_funct,
-#         resume="overwrite",
-#     )
-#     sampler_singssa.run(max_iters=50000)
-#     print(f"Finished fitting for {model_nm}")
-#     sampler_singssa.store_tree()
-#     sampler_singssa.plot()
-#     band = PredictionBand(freq_cont)
-#     for Snorm, alpha, freqpeak in sampler_singssa.results["samples"]:
-#         band.add(chosen_model(freq_cont, Snorm, alpha, freqpeak))
+        # sampler_singssa = fitfuncts.run_ultranest_mcmc(
+        #     directory,
+        #     labels,
+        #     freq,
+        #     src_flux,
+        #     err_src_flux,
+        #     chosen_model,
+        #     transform_funct,
+        #     resume="overwrite",
+        # )
+        # sampler_singssa.run(max_iters=50000)
+        # print(f"Finished fitting for {model_nm}")
+        # sampler_singssa.store_tree()
+        # sampler_singssa.plot()
+        # band = PredictionBand(freq_cont)
+        # for Snorm, alpha, freqpeak in sampler_singssa.results["samples"]:
+        #     band.add(chosen_model(freq_cont, Snorm, alpha, freqpeak))
 
-#     fitfuncts.plot_epochsed(
-#         f"{save_dir}/{tar}_{epoch_nm}_{model_nm}",
-#         freq,
-#         src_flux,
-#         err_src_flux,
-#         band,
-#         color,
-#         tar,
-#     )
+        # fitfuncts.plot_epochsed(
+        #     f"{save_dir}/{tar}_{epoch_nm}_{model_nm}",
+        #     freq,
+        #     src_flux,
+        #     err_src_flux,
+        #     band,
+        #     color,
+        #     tar,
+        # )
 
 
 # # Initial conditions of mcmc for singhomo
@@ -533,39 +594,39 @@ freq = freq[mask]
 #     )
 #     print(sampler_singinhomobremssbreakexp[1]["logz"])
 # except:
-    # sampler_singinhomobremssbreakexp = fitfuncts.run_ultranest_mcmc(
-    #     directory,
-    #     labels,
-    #     freq,
-    #     src_flux,
-    #     err_src_flux,
-    #     chosen_model,
-    #     transform_funct,
-    #     resume="overwrite",
-    # )
-    # sampler_singinhomobremssbreakexp.run(max_iters=50000)
-    # print(f"Finished fitting for {model_nm}")
-    # sampler_singinhomobremssbreakexp.store_tree()
-    # sampler_singinhomobremssbreakexp.plot()
-    # band = PredictionBand(freq_cont)
-    # for (
-    #     Snorm,
-    #     alpha,
-    #     p,
-    #     freqpeak,
-    #     breakfreq,
-    # ) in sampler_singinhomobremssbreakexp.results["samples"]:
-    #     band.add(chosen_model(freq_cont, Snorm, alpha, p, freqpeak, breakfreq))
+# sampler_singinhomobremssbreakexp = fitfuncts.run_ultranest_mcmc(
+#     directory,
+#     labels,
+#     freq,
+#     src_flux,
+#     err_src_flux,
+#     chosen_model,
+#     transform_funct,
+#     resume="overwrite",
+# )
+# sampler_singinhomobremssbreakexp.run(max_iters=50000)
+# print(f"Finished fitting for {model_nm}")
+# sampler_singinhomobremssbreakexp.store_tree()
+# sampler_singinhomobremssbreakexp.plot()
+# band = PredictionBand(freq_cont)
+# for (
+#     Snorm,
+#     alpha,
+#     p,
+#     freqpeak,
+#     breakfreq,
+# ) in sampler_singinhomobremssbreakexp.results["samples"]:
+#     band.add(chosen_model(freq_cont, Snorm, alpha, p, freqpeak, breakfreq))
 
-    # fitfuncts.plot_epochsed(
-    #     f"{save_dir}/{tar}_{epoch_nm}_{model_nm}",
-    #     freq,
-    #     src_flux,
-    #     err_src_flux,
-    #     band,
-    #     color,
-    #     tar,
-    # )
+# fitfuncts.plot_epochsed(
+#     f"{save_dir}/{tar}_{epoch_nm}_{model_nm}",
+#     freq,
+#     src_flux,
+#     err_src_flux,
+#     band,
+#     color,
+#     tar,
+# )
 
 
 # ------------------------------------------------------------------------------
@@ -615,12 +676,12 @@ best_model_results = sampler_singinhomobremssbreakexp[1]
 print(best_model_results)
 params_bestfit = best_model_results["median"]
 # TODO: find a better way to incorporate the asymmetric errors (errlo and errup in the results)
-err_params_bestfit = best_model_results['stdev']
+err_params_bestfit = best_model_results["stdev"]
 
 chosen_model = gpscssmodels.singinhomobremssbreakexp
 model_nm = "singinhomobremssbreakexp"
-model=model_nm
-target=tar
+model = model_nm
+target = tar
 labels = model_params_dict[model_nm]
 print(f"plotting params for {model_nm}")
 fitfuncts.plot_paramswithtime(f"{save_dir}/{tar}/{tar}", tar, model_nm, labels)
