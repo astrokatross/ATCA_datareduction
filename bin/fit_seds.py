@@ -158,6 +158,7 @@ fitfuncts.plot_sed(
 )
 src_epoch1, err_src_epoch1 = fitfuncts.create_epochcat(data_dir, target, gleam_tar, 0)
 src_epoch2, err_src_epoch2 = fitfuncts.create_epochcat(data_dir, target, gleam_tar, 1)
+src_epoch3, err_src_epoch3 = fitfuncts.create_epochcat(data_dir, target, gleam_tar, 2)
 src_epoch4, err_src_epoch4 = fitfuncts.create_epochcat(data_dir, target, gleam_tar, 3)
 src_epoch5, err_src_epoch5 = fitfuncts.create_epochcat(data_dir, target, gleam_tar, 4)
 src_epoch6, err_src_epoch6 = fitfuncts.create_epochcat(data_dir, target, gleam_tar, 5)
@@ -224,10 +225,12 @@ for i in range(len(fit_models)):
         elif epoch == 7:
             src_flux = np.hstack((src_epoch6[0:20], src_epoch4[20:37]))
             err_src_flux = np.hstack((err_src_epoch6[0:20], err_src_epoch4[20:37]))
-        else:
-            src_flux, err_src_flux = fitfuncts.create_epochcat(
-                data_dir, target, gleam_tar, epoch
-            )
+        elif epoch == 4:
+            src_flux = src_epoch3
+            err_src_flux = err_src_epoch3
+        elif epoch == 5: 
+            src_flux = src_epoch4
+            err_src_flux = err_src_epoch4
 
         # Making sure there's no nan's in flux
         mask = np.where(~np.isnan(src_flux))
