@@ -262,7 +262,7 @@ for i in range(len(fit_models)):
                 f"/data/ATCA/analysis/{target}/{epoch_nm}/{model}/run1/info/results.json"
             )
         
-        if os.path.exists(f"{save_dir}/{target}/seds/{target}_{epoch}_{model}_sed.png")==False:
+        if os.path.exists(f"{save_dir}/{target}/seds/{target}_{epoch_nm}_{model}_sed.png")==False:
             sequence, final = ultranest.integrator.read_file(f"{save_dir}{target}/{epoch_nm}/{model}/run1/", len(labels), check_insertion_order=False)
 
             # TODO: figure out how to generalise the band plotting thing
