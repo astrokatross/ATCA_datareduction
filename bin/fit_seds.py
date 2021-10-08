@@ -2,7 +2,6 @@
 # This script fits the entire MWA and ATCA seds
 # By K.Ross 29/09/21
 
-from numpy.lib.npyio import save
 import fitfuncts
 import numpy as np
 import gpscssmodels
@@ -12,6 +11,7 @@ import ultranest
 from ultranest.plot import PredictionBand
 import matplotlib.pylab as plt
 import json
+import os
 
 num_colors = 12
 colors = cmr.take_cmap_colors(
@@ -140,15 +140,15 @@ data_dir = "/data/ATCA/ATCA_datareduction/"
 gleam_tar = "GLEAM J020507-110922"
 target = "J020507"
 fit_models = [
-    # "singhomobremss",
-    # "singinhomobremss",
-    # "internalbremss",
-    # "singSSA",
-    # "singhomobremsscurve",
-    # "singinhomobremsscurve",
+    "singhomobremss",
+    "singinhomobremss",
+    "internalbremss",
+    "singSSA",
+    "singhomobremsscurve",
+    "singinhomobremsscurve",
     "singinhomobremssbreakexp",
-    # "singhomobremssbreakexp",
-    # "singSSAbreakexp",
+    "singhomobremssbreakexp",
+    "singSSAbreakexp",
 ]
 epochs = [0, 1, 2, 3, 4, 5, 6, 7]
 
@@ -238,12 +238,12 @@ for i in range(len(fit_models)):
         try:
             print("Found results of run, continuing with analysis")
             sampler = open(
-                f"/data/ATCA/analysis/{target}/{epoch_nm}/{model}/run1/info/results.json"
+                f"{save_dir}{target}/{epoch_nm}/{model}/run1/info/results.json"
             )
             print("Found results of run, continuing with analysis")
         except:
             sampler = fitfuncts.run_ultranest_mcmc(
-                f"/data/ATCA/analysis/{target}/{epoch_nm}/{model}",
+                f"{save_dir}{target}/{epoch_nm}/{model}",
                 labels,
                 freq,
                 src_flux,
@@ -255,25 +255,26 @@ for i in range(len(fit_models)):
             print(f"Finished fitting for {model}")
             sampler.store_tree()
             sampler.plot()
-
-        
-            # TODO: figure out how to generalise the band plotting thing
-            # band = PredictionBand(freq_cont)
-            # for Snorm, alpha, freqpeak in sampler.results["samples"]:
-            #     band.add(chosen_model(freq_cont, Snorm, alpha, freqpeak))
-
-            # fitfuncts.plot_epochsed(
-            #     f"{save_dir}/{tar}_{epoch_nm}_{model_nm}",
-            #     freq,
-            #     src_flux,
-            #     err_src_flux,
-            #     band,
-            #     color,
-            #     tar,
-            # )
-
             sampler = open(
                 f"/data/ATCA/analysis/{target}/{epoch_nm}/{model}/run1/info/results.json"
+            )
+        
+        if os.path.exists(f"{save_dir}/{target}/seds/{target}_{epoch}_{model}_sed.png")==False:
+            sequence, final = ultranest.integrator.read_file(f"{save_dir}{target}/{epoch_nm}/{model}/run1/", len(labels), check_insertion_order=False)
+
+            # TODO: figure out how to generalise the band plotting thing
+            band = PredictionBand(freq_cont)
+            for params in final["samples"]:
+                band.add(model_funct(freq_cont, *params))
+
+            fitfuncts.plot_epochsed(
+                f"{save_dir}/{target}/seds/{target}_{epoch_nm}_{model}",
+                freq,
+                src_flux,
+                err_src_flux,
+                band,
+                color,
+                target,
             )
 
         results = json.load(sampler)

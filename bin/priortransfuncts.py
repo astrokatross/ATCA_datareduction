@@ -23,6 +23,9 @@ def singinhomobremss(cube):
 
 def internalbremss(cube):
     params = cube.copy()
+    params[0] = 10 ** (cube[0] * 3 - 1)
+    params[1] = cube[1] * 20 - 10
+    params[2] = cube[2] * 0.5
     return params
 
 
@@ -36,11 +39,20 @@ def singSSA(cube):
 
 def singhomobremsscurve(cube):
     params = cube.copy()
+    params[0] = 10 ** (cube[0] * 3 - 1)
+    params[1] = cube[1] * 20 - 10
+    params[2] = cube[2] * 0.5
+    params[3] = cube[3]*4 - 2
     return params 
 
 
 def singinhomobremsscurve(cube):
     params = cube.copy()
+    params[0] = 10 ** (cube[0] * 3 - 1)
+    params[1] = cube[1] * 20 - 10
+    params[2] = cube[2] * 2 - 1
+    params[3] = cube[3] * 0.5
+    params[3] = cube[3]*4 - 2
     return params 
 
 

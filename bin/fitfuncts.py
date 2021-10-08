@@ -370,8 +370,8 @@ def plot_paramswithtime(
     params = []
     errlo_params = []
     errup_params = []
-    months = [0, 1, 4, 5, 7, 10]
-    for epoch in ["2013", "2014", "Apr20", "May20", "July20", "Oct20"]:
+    months = [-5, -4, 0, 1, 4, 5, 7, 10]
+    for epoch in ["2013", "2014", "Jan20", "Mar20", "Apr20", "May20", "July20", "Oct20"]:
         sampler = open(
             f"/data/ATCA/analysis/{target}/{epoch}/{model}/run1/info/results.json"
         )
@@ -392,7 +392,7 @@ def plot_paramswithtime(
         f = CF.timeseries()
         name = paramnames[i]
         f.plot_params(months, paramsT[i], err_params=errloT[i], s=75)
-        f.format(xticksnames==["2013", "2014", "Apr20", "May20", "July20", "Oct20"],xticksnames=[0, 1, 4, 5, 7, 10])
+        f.format()
         f.title(f"{target} {name}")
         f.save(f"{directory}_{name}_{model}", ext="png")
     return
