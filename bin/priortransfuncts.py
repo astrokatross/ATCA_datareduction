@@ -61,7 +61,7 @@ def singinhomobremssbreakexp(cube):
     params[0] = 10 ** (cube[0] * 3 - 1)
     params[1] = cube[1] * 20 - 10
     params[2] = cube[2] * 2 - 1
-    params[3] = cube[3] * 0.5
+    params[3] = cube[3] * 0.3
     params[4] = ((10 ** (cube[4] * 2))) * 2
     return params
 

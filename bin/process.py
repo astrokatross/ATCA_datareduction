@@ -367,7 +367,7 @@ def imgmfs_ms(src_dir, msname, targetms, epoch, ATCA_band, n_spw, tar):
     robust = 0.5
     interactive = True
     gain = 0.01
-    if tar == "J215436":
+    if epoch == "2021-10-15":
         uvrange = "<1000"
         cell = "10arcsec"
         imsize = 240
@@ -468,7 +468,7 @@ def img_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar):
     interactive = False
     gain = 0.01
     threshold = "5e-3Jy"
-    if tar == "J215436":
+    if epoch == "2021-10-15":
         uvrange = "<1000"
         cell = "10arcsec"
         imsize = 240
@@ -583,7 +583,7 @@ def slefcal_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar):
         minsnr = 3.0
         minblperant = 3
         cell = "0.2arcsec"
-    if tar == "J215436":
+    if epoch == "2021-10-15":
         uvrange = "<1000"
         cell = "10arcsec"
         imsize = 240
@@ -866,10 +866,14 @@ def pbcor_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar):
     return
 
 
-def measureflux_ms(src_dir, targetms, tar_ms, epoch, ATCA_band, sourcepar, n_spw, tar, calibrator):
+def measureflux_ms(
+    src_dir, targetms, tar_ms, epoch, ATCA_band, sourcepar, n_spw, tar, calibrator, timerange="",
+):
     os.system(f"rm -r {tar_ms}")
-    if calibrator == "TARGET": 
-        split(vis=targetms, datacolumn="corrected", field=tar, outputvis=tar_ms)#, nspw=n_spw)
+    if calibrator == "TARGET":
+        split(
+            vis=targetms, datacolumn="corrected", field=tar, outputvis=tar_ms
+        )  # , nspw=n_spw)
     else:
         mstransform(
             vis=targetms,
@@ -896,7 +900,7 @@ def measureflux_ms(src_dir, targetms, tar_ms, epoch, ATCA_band, sourcepar, n_spw
     for i in range(n_spw):
         spw = str(i)
         # If things look like theyre not working, then check the source position! Chances are it can't find the source too far away from the phase centre
-        outfile = f"{src_dir}/casa_files/{tar}_{ATCA_band}_{epoch}_{spw}.cl"
+        outfile = f"{src_dir}/casa_files/{tar}_{ATCA_band}_{epoch}_{spw}{timerange}.cl"
         os.system(f"rm -r {outfile}")
         uvmodelfit(
             vis=tar_ms,
@@ -908,6 +912,7 @@ def measureflux_ms(src_dir, targetms, tar_ms, epoch, ATCA_band, sourcepar, n_spw
             uvrange=uvrange,
             field="0",
             selectdata=True,
+            timerange=timerange,
         )
         tbl = table(outfile)
         flux = tbl.getcell("Flux", 0)[0].astype("float64")
@@ -915,7 +920,7 @@ def measureflux_ms(src_dir, targetms, tar_ms, epoch, ATCA_band, sourcepar, n_spw
         print(flux)
     if ATCA_band == "C":
         np.savetxt(
-            f"{src_dir}/{tar}_{epoch}_{ATCA_band}.csv",
+            f"{src_dir}/{tar}_{epoch}_{ATCA_band}{timerange}.csv",
             int_flux_c,
             delimiter=",",
             header="S_Cband",
@@ -923,7 +928,7 @@ def measureflux_ms(src_dir, targetms, tar_ms, epoch, ATCA_band, sourcepar, n_spw
         print(int_flux_c)
     elif ATCA_band == "X":
         np.savetxt(
-            f"{src_dir}/{tar}_{epoch}_{ATCA_band}.csv",
+            f"{src_dir}/{tar}_{epoch}_{ATCA_band}{timerange}.csv",
             int_flux_c,
             delimiter=",",
             header="S_Xband",
@@ -933,7 +938,7 @@ def measureflux_ms(src_dir, targetms, tar_ms, epoch, ATCA_band, sourcepar, n_spw
         # int_flux_l = np.array(int_flux_c[::-1])
         int_flux_l = int_flux_c
         np.savetxt(
-            f"{src_dir}/{tar}_{epoch}_{ATCA_band}.csv",
+            f"{src_dir}/{tar}_{epoch}_{ATCA_band}{timerange}.csv",
             int_flux_l,
             header="S_Lband",
             delimiter=",",

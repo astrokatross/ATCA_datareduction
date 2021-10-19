@@ -2,25 +2,18 @@
 # This script fits the entire MWA and ATCA seds
 # By K.Ross 29/09/21
 
-from typing_extensions import ParamSpecArgs
 import pandas as pd
-import scipy.optimize as opt
 import numpy as np
 import CFigTools.CustomFigure as CF
 import gpscssmodels
-import emcee
-import corner
 import matplotlib.pyplot as plt
-from multiprocessing import Pool
-import time
 import ultranest
-from ultranest.plot import PredictionBand
 import json
 import cmasher as cmr
 
 freq_cont = np.linspace(0.01, 15, num=10000)
-epochs = ["epoch1", "epoch2", "epoch3", "epoch4", "epoch5", "epoch6"]
-epoch_nms = ("2013", "2014", "Jan20", "Mar20", "Apr20", "May20", "July20", "Oct20")
+epochs = ["epoch1", "epoch2", "epoch3", "epoch4", "epoch5", "epoch6", "2021-10-15"]
+epoch_nms = ("2013", "2014", "Jan20", "Mar20", "Apr20", "May20", "July20", "Oct20", "Oct21")
 channel = ("69", "93", "121", "145", "169")
 subchans_dict = {
     "69": ["072-080", "080-088", "088-095", "095-103"],
@@ -99,6 +92,10 @@ def read_mwa_fluxes(directory, tarcomp, name, epoch):
     for i in range(len(channel)):
         subchans = subchans_dict[channel[i]]
         chan = channel[i]
+        if epoch == "epoch3":
+            percentage = 0.05
+        else:
+            percentage = 0.02
         for subchan in subchans:
             try:
                 src_mwa_pd = pd.read_csv(
@@ -106,10 +103,11 @@ def read_mwa_fluxes(directory, tarcomp, name, epoch):
                 )
                 mask = src_mwa_pd["Name"] == name
                 src_pd = src_mwa_pd[mask]
-                if src_pd.empty == False:
+                if src_pd.empty is False:
                     mwa_flux_chan = np.squeeze(src_pd["int_flux"].values)
                     mwa_errs_chan = np.squeeze(
-                        np.sqrt(src_pd["local_rms"]) ** 2 + (0.02 * mwa_flux_chan) ** 2
+                        np.sqrt(src_pd["local_rms"]) ** 2
+                        + (percentage * mwa_flux_chan) ** 2
                     )
                     mwa_flux.append(mwa_flux_chan)
                     mwa_errs.append(mwa_errs_chan)
@@ -137,9 +135,10 @@ def read_atca_fluxes(directory, tar_dir, tar):
         [np.nan] * 17,
         [np.nan] * 17,
         [np.nan] * 17,
+        [np.nan] * 17,
     ]
-    epochs = ("epoch1", "epoch2", "epoch3", "epoch4", "epoch5", "epoch6")
-    for i in range(0, 6):
+    epochs = ("epoch1", "epoch2", "epoch3", "epoch4", "epoch5", "epoch6", "2021-10-15")
+    for i in range(0, 7):
         epoch = epochs[i]
         try:
             atca_Lband_pd = pd.read_csv(f"{directory}/{tar_dir}/{tar}_{epoch}_L.csv")
@@ -199,6 +198,7 @@ def plot_sed(save_dir, data_dir, freq, gleam_tar, tar, colors):
     src_epoch4, err_src_epoch4 = create_epochcat(data_dir, tar, gleam_tar, 3)
     src_epoch5, err_src_epoch5 = create_epochcat(data_dir, tar, gleam_tar, 4)
     src_epoch6, err_src_epoch6 = create_epochcat(data_dir, tar, gleam_tar, 5)
+    src_epoch7, err_src_epoch7 = create_epochcat(data_dir, tar, gleam_tar, 6)
     # plotting SED
     f = CF.sed_fig()
     f.plot_spectrum(
@@ -274,11 +274,22 @@ def plot_sed(save_dir, data_dir, freq, gleam_tar, tar, colors):
         marker_color=colors[7],
         s=75,
     )
+    f.plot_spectrum(
+        freq,
+        src_epoch7,
+        err_src_epoch7,
+        marker="o",
+        label=epoch_nms[8],
+        marker_color=colors[8],
+        s=75,
+    )
     # f.plt_mcmcfits(sampler, chosen_model, freq_cont, color=colors[5])
     f.legend(loc="lower center")
     f.title(gleam_tar)
     f.format(xunit="GHz")
     f.save(f"{save_dir}/{tar}_sed", ext="png")
+    plt.clf()
+    plt.close
     return
 
 
@@ -321,8 +332,6 @@ def create_lnlike(freq, int_flux, err_flux, model):
         return likelihood
 
     return lnlike
-
-
 
 
 def run_ultranest_mcmc(
@@ -370,8 +379,8 @@ def plot_paramswithtime(
     params = []
     errlo_params = []
     errup_params = []
-    months = [-5, -4, 0, 1, 4, 5, 7, 10]
-    for epoch in ["2013", "2014", "Jan20", "Mar20", "Apr20", "May20", "July20", "Oct20"]:
+    months = [-5, -4, 0, 1, 5, 7, 10]
+    for epoch in ["2013", "2014", "Jan20", "Mar20", "May20", "July20", "Oct20"]:
         sampler = open(
             f"/data/ATCA/analysis/{target}/{epoch}/{model}/run1/info/results.json"
         )
@@ -387,7 +396,7 @@ def plot_paramswithtime(
         errup_params.append(errup)
     paramsT = np.transpose(params)
     errloT = np.transpose(errlo_params)
-    errupT = np.transpose(errup_params)
+    # errupT = np.transpose(errup_params)
     for i in range(len(paramnames)):
         f = CF.timeseries()
         name = paramnames[i]
@@ -395,4 +404,30 @@ def plot_paramswithtime(
         f.format()
         f.title(f"{target} {name}")
         f.save(f"{directory}_{name}_{model}", ext="png")
+    return
+
+
+def plot_logzvsmodel(directory, logz, epoch_nms, model_nms):
+    num_models = np.arange(np.shape(logz)[1])
+    colors = cmr.take_cmap_colors(
+        "cmr.bubblegum", len(num_models), cmap_range=(0.15, 0.85), return_fmt="hex"
+    )
+    print(num_models)
+    # plot_logz = np.arange(np.shape(logz)[1])
+    for i in range(len(logz)):
+        epoch_logz = logz[i]
+        max_logz = epoch_logz[5]
+        fig = plt.figure(figsize=(10, 8))
+        model_logz = np.exp(max_logz - epoch_logz)
+        # model_logz[0] = np.nan
+        print(model_logz)
+        # plot_logz = model_logz
+        # print(plot_logz)
+        for j in range(5, len(num_models)):
+            plt.scatter(
+                num_models[j], model_logz[j], label=model_nms[j], color=colors[j]
+            )
+        plt.legend()
+        plt.title(f"Model Comparison of Likelihood {epoch_nms[i]}")
+        plt.savefig(f"{directory}{epoch_nms[i]}_logz.png")
     return

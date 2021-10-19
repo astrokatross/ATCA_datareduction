@@ -469,7 +469,7 @@ quadplot_para_yr2 = ["norm_quad_yr2", "alpha_quad_yr2", "quad_curve_yr2"]
 source_dict = {
     "J001513": ["GLEAM J001513-472706", "2327-459", "GLEAM J002130-465755", "J002130"],
     "J015445": ["GLEAM J015445-232950", "0237-233", "GLEAM J015010-225841", "J015010"],
-    "J020507": ["GLEAM J020507-110922", "0238-084", "GLEAM J020510-113515", "J020510"],
+    "J020507": ["GLEAM J020507-110922", "0238-084", "GLEAM J020452-105807", "J020452"],
     "J021246": ["GLEAM J021246-305454", "0237-233", "GLEAM J021622-300933", "J021622"],
     "J022744": ["GLEAM J022744-062106", "0238-084", "GLEAM J023253-064552", "J023253"],
     "J024838": ["GLEAM J024838-321336", "0237-233", "GLEAM J025040-313523", "J025040"],
@@ -1034,7 +1034,9 @@ def plt_secondary(directory, tar, save_fig=True):
 
 
 def plt_nearby(directory, tar, MWA=True, extra_surveys=True, save_fig=True):
-    colours = ("C3", "mediumseagreen", "C9", "C4", "C1", "C8")
+    colors = cmr.take_cmap_colors(
+    "cmr.rainforest", 8, cmap_range=(0.15, 0.85), return_fmt="hex"
+)
     epoch_nms = ("Jan20", "Mar20", "Apr20", "May20", "July20", "Oct20")
     name = source_dict[tar][3]
     secnm = source_dict[tar][2]
@@ -1048,105 +1050,105 @@ def plt_nearby(directory, tar, MWA=True, extra_surveys=True, save_fig=True):
     gleam_err = xtra_values[1]
     mwa_2013_err = np.concatenate((gleam_err, mwa_flux[2]))
     f = CF.sed_fig()
-    f.plot_spectrum(
-        freq_mwa[4:20],
-        mwa_flux[0],
-        mwa_flux[2],
-        marker="o",
-        label="2013",
-        marker_color="C6",
-    )
-    f.plot_spectrum(
-        freq_mwa[4:20],
-        mwa_flux[1],
-        mwa_flux[3],
-        marker="o",
-        label="2014",
-        marker_color="mediumblue",
-    )
-    f.display_model(
-        freq_cont,
-        model_vals[0],
-        color="C6",
-        label=None,
-        model_min=None,
-        model_max=None,
-        alpha_patch=0.2,
-    )
-    f.display_model(
-        freq_cont,
-        model_vals[1],
-        color="mediumblue",
-        label=None,
-        model_min=None,
-        model_max=None,
-        alpha_patch=0.2,
-    )
+    # f.plot_spectrum(
+    #     freq_mwa[4:20],
+    #     mwa_flux[0],
+    #     mwa_flux[2],
+    #     marker="o",
+    #     label="2013",
+    #     marker_color=colors[0],
+    # )
+    # f.plot_spectrum(
+    #     freq_mwa[4:20],
+    #     mwa_flux[1],
+    #     mwa_flux[3],
+    #     marker="o",
+    #     label="2014",
+    #     marker_color=colors[1],
+    # )
+    # f.display_model(
+    #     freq_cont,
+    #     model_vals[0],
+    #     color="C6",
+    #     label=None,
+    #     model_min=None,
+    #     model_max=None,
+    #     alpha_patch=0.2,
+    # )
+    # f.display_model(
+    #     freq_cont,
+    #     model_vals[1],
+    #     color="mediumblue",
+    #     label=None,
+    #     model_min=None,
+    #     model_max=None,
+    #     alpha_patch=0.2,
+    # )
     f.plot_spectrum(
         freq_mwa,
         mwa_fluxes_e3,
         mwa_errors_e3,
         marker="o",
         label=epoch_nms[2],
-        marker_color=colours[2],
+        marker_color=colors[2],
     )
-    f.plot_spectrum(
-        freq_mwa,
-        mwa_fluxes_e4,
-        mwa_errors_e4,
-        marker="o",
-        label=epoch_nms[3],
-        marker_color=colours[3],
-    )
-    f.plot_spectrum(
-        freq_mwa,
-        mwa_fluxes_e5,
-        mwa_errors_e5,
-        marker="o",
-        label=epoch_nms[4],
-        marker_color=colours[4],
-    )
+    # f.plot_spectrum(
+    #     freq_mwa,
+    #     mwa_fluxes_e4,
+    #     mwa_errors_e4,
+    #     marker="o",
+    #     label=epoch_nms[3],
+    #     marker_color=colors[3],
+    # )
+    # f.plot_spectrum(
+    #     freq_mwa,
+    #     mwa_fluxes_e5,
+    #     mwa_errors_e5,
+    #     marker="o",
+    #     label=epoch_nms[4],
+    #     marker_color=colors[4],
+    # )
     f.plot_spectrum(
         freq_mwa,
         mwa_fluxes_e6,
         mwa_errors_e6,
         marker="o",
         label=epoch_nms[5],
-        marker_color=colours[5],
+        marker_color=colors[5],
     )
-    f.plot_residuals(
-        freq_mwa,
-        mwa_2013,
-        mwa_fluxes_e3,
-        mwa_2013_err,
-        mwa_errors_e3,
-        color=colours[2],
-    )
-    f.plot_residuals(
-        freq_mwa,
-        mwa_2013,
-        mwa_fluxes_e4,
-        mwa_2013_err,
-        mwa_errors_e4,
-        color=colours[3],
-    )
-    f.plot_residuals(
-        freq_mwa,
-        mwa_2013,
-        mwa_fluxes_e5,
-        mwa_2013_err,
-        mwa_errors_e5,
-        color=colours[4],
-    )
-    f.plot_residuals(
-        freq_mwa,
-        mwa_2013,
-        mwa_fluxes_e6,
-        mwa_2013_err,
-        mwa_errors_e6,
-        color=colours[5],
-    )
-    f.format(xunit="GHz")
+    # f.plot_residuals(
+    #     freq_mwa,
+    #     mwa_2013,
+    #     mwa_fluxes_e3,
+    #     mwa_2013_err,
+    #     mwa_errors_e3,
+    #     color=colors[2],
+    # )
+    # f.plot_residuals(
+    #     freq_mwa,
+    #     mwa_2013,
+    #     mwa_fluxes_e4,
+    #     mwa_2013_err,
+    #     mwa_errors_e4,
+    #     color=colors[3],
+    # )
+    # f.plot_residuals(
+    #     freq_mwa,
+    #     mwa_2013,
+    #     mwa_fluxes_e5,
+    #     mwa_2013_err,
+    #     mwa_errors_e5,
+    #     color=colors[4],
+    # )
+    # f.plot_residuals(
+    #     freq_mwa,
+    #     mwa_2013,
+    #     mwa_fluxes_e6,
+    #     mwa_2013_err,
+    #     mwa_errors_e6,
+    #     color=colors[5],
+    # )
+    f.format(xunit="GHz",xlim=[0.06, 0.3], xlimtype="absolute")
     f.title(secnm)
     f.legend(0, 0)
     if save_fig is True:

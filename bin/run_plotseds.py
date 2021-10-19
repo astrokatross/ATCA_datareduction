@@ -5,7 +5,7 @@
 # By K.Ross 25/5/21
 
 # Importing relevant packages
-# import plotfuncts
+import plotfuncts
 import matplotlib.pyplot as plt
 import os
 import numpy as np
@@ -79,7 +79,8 @@ epoch = 3
 epoch_nm = epoch_nms[epoch]
 model_nm = "singhomobremss"
 labels = ["Snorm", "alpha", "freqpeak"]
-
+directory = "/data/ATCA/ATCA_datareduction/"
+tarname = "J020507"
 
 # directory = str(os.environ["PROJECT"])
 # tarname = str(os.environ["TARGET"])
@@ -87,7 +88,7 @@ labels = ["Snorm", "alpha", "freqpeak"]
 
 # plotfuncts.plt_sed(directory, tarname)
 # plotfuncts.plt_secondary(directory, tarname)
-# plotfuncts.plt_nearby(directory, tarname)
+plotfuncts.plt_nearby(directory, tarname)
 
 # if calibrator == "PRI":
 #     plotfuncts.plt_secondary(directory, tarname)
