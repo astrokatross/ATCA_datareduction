@@ -61,7 +61,7 @@ frequency = np.array(
         10.269,
     ]
 )
-epoch_nms = ("2013", "2014", "Jan20", "Mar20", "May20", "July20", "Oct20", "Apr20")
+epoch_nms = ("2013", "2014", "Jan20", "Mar20", "May20", "July20", "Oct20")
 model_params_dict = {
     "singhomobremss": [
         gpscssmodels.singhomobremss,
@@ -139,8 +139,11 @@ model_params_dict = {
 # Source/run information
 save_dir = "/data/ATCA/analysis/"
 data_dir = "/data/ATCA/ATCA_datareduction/"
-gleam_tar = "GLEAM J001513-472706"
-target = "J001513"
+gleam_tar = "GLEAM J224408-202719"
+target = "J224408"
+model = "singinhomobremssbreakexp"
+labels = model_params_dict[model][2:]
+model_funct = model_params_dict[model][0]
 fit_models = [
     "singSSA",
     "singhomobremss",
@@ -152,19 +155,21 @@ fit_models = [
     "singhomobremssbreakexp",
     "singinhomobremssbreakexp",
 ]
-epochs = [0, 1, 2, 3, 4, 5, 6, 7]
+epochs = [0, 1, 2, 3, 4, 5, 6]
 # epoch_nms = epoch_nms_all[epochs]
-
 fitfuncts.plot_sed(
-    f"{save_dir}/{target}", data_dir, frequency, gleam_tar, target, colors
+    f"{save_dir}/SEDs", data_dir, frequency, gleam_tar, target, colors, model_params_dict[model], model
 )
-# src_epoch1, err_src_epoch1 = fitfuncts.create_epochcat(data_dir, target, gleam_tar, 0)
-# src_epoch2, err_src_epoch2 = fitfuncts.create_epochcat(data_dir, target, gleam_tar, 1)
-# src_epoch3, err_src_epoch3 = fitfuncts.create_epochcat(data_dir, target, gleam_tar, 2)
-# src_epoch4, err_src_epoch4 = fitfuncts.create_epochcat(data_dir, target, gleam_tar, 3)
-# src_epoch5, err_src_epoch5 = fitfuncts.create_epochcat(data_dir, target, gleam_tar, 4)
-# src_epoch6, err_src_epoch6 = fitfuncts.create_epochcat(data_dir, target, gleam_tar, 5)
-
+# fitfuncts.plot_epochsed(
+#     f"{save_dir}/SEDs/{target}_models",
+#     frequency,
+#     src_flux,
+#     err_src_flux,
+#     model_params_dict[model],
+#     colors,
+#     target,
+#     model,
+# )
 # logz = np.zeros((len(epochs), len(fit_models)))
 # for i in range(len(fit_models)):
 #     model = fit_models[i]
@@ -182,15 +187,15 @@ fitfuncts.plot_sed(
 #         print(f"Now fitting for epoch {epoch_nm}")
 #         # Reading in the flux for this epoch (note there accommodations for epochs that don't have atca)
 #         if epoch == 0:
-#             (
-#                 mwa_flux_yr1,
-#                 err_mwa_flux_yr1,
-#                 mwa_flux_yr2,
-#                 err_mwa_flux_yr2,
-#                 fluxes_extra,
-#             ) = fitfuncts.read_gleam_fluxes("/data/MWA", gleam_tar)
-#             src_flux = np.hstack((mwa_flux_yr1, src_epoch4[20:37]))
-#             err_src_flux = np.hstack((err_mwa_flux_yr1, err_src_epoch4[20:37]))
+# (
+#     mwa_flux_yr1,
+#     err_mwa_flux_yr1,
+#     mwa_flux_yr2,
+#     err_mwa_flux_yr2,
+#     fluxes_extra,
+# ) = fitfuncts.read_gleam_fluxes("/data/MWA", gleam_tar)
+# src_flux = np.hstack((mwa_flux_yr1, src_epoch4[20:37]))
+# err_src_flux = np.hstack((err_mwa_flux_yr1, err_src_epoch4[20:37]))
 #         elif epoch == 1:
 #             (
 #                 mwa_flux_yr1,
@@ -269,25 +274,25 @@ fitfuncts.plot_sed(
 #             )
 #             is False
 #         ):
-#             sequence, final = ultranest.integrator.read_file(
-#                 f"{save_dir}{target}/{epoch_nm}/{model}/run1/",
-#                 len(labels),
-#                 check_insertion_order=False,
-#             )
+# sequence, final = ultranest.integrator.read_file(
+#     f"{save_dir}{target}/{epoch_nm}/{model}/run1/",
+#     len(labels),
+#     check_insertion_order=False,
+# )
 
-#             band = PredictionBand(freq_cont)
-#             for params in final["samples"]:
-#                 band.add(model_funct(freq_cont, *params))
+# band = PredictionBand(freq_cont)
+# for params in final["samples"]:
+#     band.add(model_funct(freq_cont, *params))
 
-#             fitfuncts.plot_epochsed(
-#                 f"{save_dir}/{target}/seds/{target}_{epoch_nm}_{model}",
-#                 freq,
-#                 src_flux,
-#                 err_src_flux,
-#                 band,
-#                 color,
-#                 target,
-#             )
+# fitfuncts.plot_epochsed(
+#     f"{save_dir}/{target}/seds/{target}_{epoch_nm}_{model}",
+#     freq,
+#     src_flux,
+#     err_src_flux,
+#     band,
+#     color,
+#     target,
+# )
 
 #         results = json.load(sampler)
 #         maxlike_params.append(results["maximum_likelihood"]["point"])

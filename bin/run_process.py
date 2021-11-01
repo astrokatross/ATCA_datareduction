@@ -17,7 +17,7 @@ print(f"Target: {tar}\nEpoch: {epoch}\nATCA band: {ATCA_band}")
 
 # Setting sourcepar dictionary to measrue flux
 source_dict = {
-    "J001513": ["j2357-4838", (0.1, 12.7, -0.5), (0.5, 0, 0)],
+    "J001513": ["j2357-4838", (0.1, 0, 0), (0.5, 0, 0)],
     "J015445": ["0237-233", (0.15, 14, -2.8), (0.5, 0, 0)],
     "J020507": ["0159-117", (0.3, 2.6, 0.7), (0.5, 0, 0)],
     "J021246": ["0237-233", (0.15, 12.9, -5.2), (0.5, 0, 0)],
@@ -54,11 +54,11 @@ targetms = f"{data_dir}data/{epoch}_{ATCA_band}_{tar}_img.ms"
 tar_ms = f"{data_dir}data/{epoch}_{ATCA_band}_{tar}_selfcal.ms"
 
 if ATCA_band == "L":
-    n_spw = 8
+    n_spw = 1
     pri = "1934_cal_l"
     visname = f"{data_dir}data/{epoch}_{ATCA_band}.ms"
 elif ATCA_band == "C":
-    n_spw = 5
+    n_spw = 1
     pri = "1934_cal_cx"
     # msname = f"{data_dir}data/{epoch}_{ATCA_band}_{tar}_second.ms"
 elif ATCA_band == "X":
@@ -73,7 +73,7 @@ elif ATCA_band == "X":
     # if (tar in ["J001513", "J224408", "J223933"]) and (epoch == "epoch2"):
 
     # visname = f"{data_dir}data/{epoch}_casa_xycorr.ms"
-    n_spw = 4
+    n_spw = 1
 
 if calibrator == "SEC":
     msname = f"{data_dir}data/{epoch}_{ATCA_band}_{sec}.ms"
@@ -94,31 +94,31 @@ print("Here we go! Time to analyse some ATCA data!")
 # process.flag_ms(visname)
 
 # Split to make its own ms
-process.split_ms(
-    src_dir,
-    img_dir,
-    visname,
-    msname,
-    epoch,
-    ATCA_band,
-    pri,
-    sec,
-    tar,
-    n_spw,
-)
+# process.split_ms(
+#     src_dir,
+#     img_dir,
+#     visname,
+#     msname,
+#     epoch,
+#     ATCA_band,
+#     pri,
+#     sec,
+#     tar,
+#     n_spw,
+# )
 
 # Calibrate, and apply cal ms using primary and secondary
-process.calibrate_ms(src_dir, msname, epoch, ATCA_band, ref, pri, sec, tar)
-process.applycal_ms(src_dir, msname, epoch, ATCA_band, pri, sec, tar)
+# process.calibrate_ms(src_dir, msname, epoch, ATCA_band, ref, pri, sec, tar)
+# process.applycal_ms(src_dir, msname, epoch, ATCA_band, pri, sec, tar)
 
-# Post cal inspection and flagging
-process.flagcal_ms(img_dir, msname, epoch, ATCA_band, pri, sec)
+# # Post cal inspection and flagging
+# process.flagcal_ms(img_dir, msname, epoch, ATCA_band, pri, sec)
 
 # Imaging of target
 if calibrator == "SEC":
-    # process.imgmfs_ms(src_dir, msname, targetms, epoch, ATCA_band, n_spw, sec)
-    # process.img_ms(src_dir, targetms, epoch, ATCA_band, n_spw, sec)
-    # process.slefcal_ms(src_dir, targetms, epoch, ATCA_band, n_spw, sec)
+    process.imgmfs_ms(src_dir, msname, targetms, epoch, ATCA_band, n_spw, sec)
+    process.img_ms(src_dir, targetms, epoch, ATCA_band, n_spw, sec)
+    process.slefcal_ms(src_dir, targetms, epoch, ATCA_band, n_spw, sec)
     process.measureflux_ms(
         src_dir, msname, tar_ms, epoch, ATCA_band, sourcepar, n_spw, sec, calibrator
     )
@@ -131,10 +131,10 @@ elif calibrator == "PRI":
     )
     # print("Skipping for tests")
 else:
-    process.flagcaltar_ms(src_dir, img_dir, msname, epoch, ATCA_band, pri, sec, tar)
-    process.imgmfs_ms(src_dir, msname, targetms, epoch, ATCA_band, n_spw, tar)
-    process.img_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar)
-    process.slefcal_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar)
+    # process.flagcaltar_ms(src_dir, img_dir, msname, epoch, ATCA_band, pri, sec, tar)
+    # process.imgmfs_ms(src_dir, msname, targetms, epoch, ATCA_band, n_spw, tar)
+    # process.img_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar)
+    # process.slefcal_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar)
     process.measureflux_ms(
         src_dir, targetms, tar_ms, epoch, ATCA_band, sourcepar, n_spw, tar, calibrator,
     )

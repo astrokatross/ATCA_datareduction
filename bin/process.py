@@ -369,8 +369,8 @@ def imgmfs_ms(src_dir, msname, targetms, epoch, ATCA_band, n_spw, tar):
     gain = 0.01
     if epoch == "2021-10-15":
         uvrange = "<1000"
-        cell = "10arcsec"
-        imsize = 240
+        cell = "1arcsec"
+        imsize = 1152
     else:
         uvrange = ""
     print(uvrange)
@@ -470,8 +470,8 @@ def img_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar):
     threshold = "5e-3Jy"
     if epoch == "2021-10-15":
         uvrange = "<1000"
-        cell = "10arcsec"
-        imsize = 240
+        cell = "1arcsec"
+        imsize = 1152
     else:
         uvrange = ""
     flagmanager(vis=targetms, mode="save", versionname="preself")
@@ -584,9 +584,10 @@ def slefcal_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar):
         minblperant = 3
         cell = "0.2arcsec"
     if epoch == "2021-10-15":
+        print(epoch)
         uvrange = "<1000"
-        cell = "10arcsec"
-        imsize = 240
+        cell = "1arcsec"
+        imsize = 1152
     else:
         uvrange = ""
     stokes = "I"

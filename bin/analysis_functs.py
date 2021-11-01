@@ -49,7 +49,7 @@ def plot_S_v(directory, target, epochs, model_nm, model):
     colors = cmr.take_cmap_colors(
         "cmr.bubblegum", len(S_v[0]), cmap_range=(0.15, 0.85), return_fmt="hex"
     )
-    num_epochs = np.array([-10, -5, 1, 3, 5, 7, 10])
+    num_epochs = np.array([-10, -5, 1, 3, 4, 5, 7, 10])
     fig = plt.figure(1, figsize=(40,18))
     gs = fig.add_gridspec(5, hspace=0)
     axes = gs.subplots(sharex=True)
