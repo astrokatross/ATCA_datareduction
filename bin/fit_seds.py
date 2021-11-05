@@ -15,9 +15,9 @@ import os
 import analysis_functs
 
 
-num_colors = 9
+num_colors = 8
 colors = cmr.take_cmap_colors(
-    "cmr.rainforest", num_colors, cmap_range=(0.15, 0.85), return_fmt="hex"
+    "cmr.gothic", num_colors, cmap_range=(0.15, 0.8), return_fmt="hex"
 )
 freq_cont = np.linspace(0.01, 15, num=10000)
 frequency = np.array(
@@ -61,7 +61,7 @@ frequency = np.array(
         10.269,
     ]
 )
-epoch_nms = ("2013", "2014", "Jan20", "Mar20", "May20", "July20", "Oct20")
+epoch_nms_all = ["2013", "2014", "Jan20", "Mar20", "Apr20", "May20", "July20", "Oct20"]
 model_params_dict = {
     "singhomobremss": [
         gpscssmodels.singhomobremss,
@@ -139,8 +139,8 @@ model_params_dict = {
 # Source/run information
 save_dir = "/data/ATCA/analysis/"
 data_dir = "/data/ATCA/ATCA_datareduction/"
-gleam_tar = "GLEAM J224408-202719"
-target = "J224408"
+gleam_tar = "GLEAM J022744-062106"
+target = "J022744"
 model = "singinhomobremssbreakexp"
 labels = model_params_dict[model][2:]
 model_funct = model_params_dict[model][0]
@@ -155,152 +155,155 @@ fit_models = [
     "singhomobremssbreakexp",
     "singinhomobremssbreakexp",
 ]
-epochs = [0, 1, 2, 3, 4, 5, 6]
-# epoch_nms = epoch_nms_all[epochs]
+
 fitfuncts.plot_sed(
     f"{save_dir}/SEDs", data_dir, frequency, gleam_tar, target, colors, model_params_dict[model], model
 )
-# fitfuncts.plot_epochsed(
-#     f"{save_dir}/SEDs/{target}_models",
-#     frequency,
-#     src_flux,
-#     err_src_flux,
-#     model_params_dict[model],
-#     colors,
-#     target,
-#     model,
-# )
-# logz = np.zeros((len(epochs), len(fit_models)))
-# for i in range(len(fit_models)):
-#     model = fit_models[i]
-#     model_funct = model_params_dict[model][0]
-#     model_trans = model_params_dict[model][1]
-#     labels = model_params_dict[model][2:]
 
-#     maxlike_params = []
-#     err_maxlike_params = []
-#     model_logz = []
-#     for j in range(len(epochs)):
-#         epoch = epochs[j]
-#         epoch_nm = epoch_nms[epoch]
-#         color = colors[epoch]
-#         print(f"Now fitting for epoch {epoch_nm}")
-#         # Reading in the flux for this epoch (note there accommodations for epochs that don't have atca)
-#         if epoch == 0:
-# (
-#     mwa_flux_yr1,
-#     err_mwa_flux_yr1,
-#     mwa_flux_yr2,
-#     err_mwa_flux_yr2,
-#     fluxes_extra,
-# ) = fitfuncts.read_gleam_fluxes("/data/MWA", gleam_tar)
-# src_flux = np.hstack((mwa_flux_yr1, src_epoch4[20:37]))
-# err_src_flux = np.hstack((err_mwa_flux_yr1, err_src_epoch4[20:37]))
-#         elif epoch == 1:
-#             (
-#                 mwa_flux_yr1,
-#                 err_mwa_flux_yr1,
-#                 mwa_flux_yr2,
-#                 err_mwa_flux_yr2,
-#                 fluxes_extra,
-#             ) = fitfuncts.read_gleam_fluxes("/data/MWA", gleam_tar)
-#             src_flux = np.hstack((mwa_flux_yr2, src_epoch4[20:37]))
-#             err_src_flux = np.hstack((err_mwa_flux_yr2, err_src_epoch4[20:37]))
-#         elif epoch == 2:
-#             (
-#                 mwa_flux_yr1,
-#                 err_mwa_flux_yr1,
-#                 mwa_flux_yr2,
-#                 err_mwa_flux_yr2,
-#                 fluxes_extra,
-#             ) = fitfuncts.read_gleam_fluxes("/data/MWA", gleam_tar)
-#             src_flux = np.hstack((mwa_flux_yr1, src_epoch1[20:37]))
-#             err_src_flux = np.hstack((err_mwa_flux_yr1, err_src_epoch1[20:37]))
-#         elif epoch == 3:
-#             (
-#                 mwa_flux_yr1,
-#                 err_mwa_flux_yr1,
-#                 mwa_flux_yr2,
-#                 err_mwa_flux_yr2,
-#                 fluxes_extra,
-#             ) = fitfuncts.read_gleam_fluxes("/data/MWA", gleam_tar)
-#             src_flux = np.hstack((mwa_flux_yr1, src_epoch2[20:37]))
-#             err_src_flux = np.hstack((err_mwa_flux_yr1, err_src_epoch2[20:37]))
-#         elif epoch == 6:
-#             src_flux = np.hstack((src_epoch5[0:20], src_epoch4[20:37]))
-#             err_src_flux = np.hstack((err_src_epoch5[0:20], err_src_epoch4[20:37]))
-#         elif epoch == 7:
-#             src_flux = np.hstack((src_epoch6[0:20], src_epoch4[20:37]))
-#             err_src_flux = np.hstack((err_src_epoch6[0:20], err_src_epoch4[20:37]))
-#         elif epoch == 4:
-#             src_flux = src_epoch3
-#             err_src_flux = err_src_epoch3
-#         elif epoch == 5:
-#             src_flux = src_epoch4
-#             err_src_flux = err_src_epoch4
+epochs = [0, 1, 2, 3, 4, 5, 6, 7]
+epoch_nms = epoch_nms_all
+src_epoch1, err_src_epoch1 = fitfuncts.create_epochcat(data_dir, target, gleam_tar, 0)
+src_epoch2, err_src_epoch2 = fitfuncts.create_epochcat(data_dir, target, gleam_tar, 1)
+src_epoch3, err_src_epoch3 = fitfuncts.create_epochcat(data_dir, target, gleam_tar, 2)
+src_epoch4, err_src_epoch4 = fitfuncts.create_epochcat(data_dir, target, gleam_tar, 3)
+src_epoch5, err_src_epoch5 = fitfuncts.create_epochcat(data_dir, target, gleam_tar, 4)
+src_epoch6, err_src_epoch6 = fitfuncts.create_epochcat(data_dir, target, gleam_tar, 5)
+src_epoch7, err_src_epoch7 = fitfuncts.create_epochcat(data_dir, target, gleam_tar, 6)
 
-#         # Making sure there's no nan's in flux
-#         mask = np.where(~np.isnan(src_flux))
-#         src_flux = src_flux[mask]
-#         err_src_flux = err_src_flux[mask]
-#         freq = frequency[mask]
+logz = np.zeros((len(epochs), len(fit_models)))
+for i in range(len(fit_models)):
+    model = fit_models[i]
+    model_funct = model_params_dict[model][0]
+    model_trans = model_params_dict[model][1]
+    labels = model_params_dict[model][2:]
 
-#         try:
-#             sampler = open(
-#                 f"{save_dir}{target}/{epoch_nm}/{model}/run1/info/results.json"
-#             )
-#             print("Found results of run, continuing with analysis")
-#         except:
-#             sampler = fitfuncts.run_ultranest_mcmc(
-#                 f"{save_dir}{target}/{epoch_nm}/{model}",
-#                 labels,
-#                 freq,
-#                 src_flux,
-#                 err_src_flux,
-#                 model_funct,
-#                 model_trans,
-#             )
-#             sampler.run(max_iters=50000)
-#             print(f"Finished fitting for {model}")
-#             sampler.store_tree()
-#             sampler.plot()
-#             sampler = open(
-#                 f"/data/ATCA/analysis/{target}/{epoch_nm}/{model}/run1/info/results.json"
-#             )
+    maxlike_params = []
+    err_maxlike_params = []
+    model_logz = []
+    for j in range(len(epochs)):
+        epoch = epochs[j]
+        epoch_nm = epoch_nms[epoch]
+        color = colors[epoch]
+        print(f"Now fitting for epoch {epoch_nm}")
+        # Reading in the flux for this epoch (note there accommodations for epochs that don't have atca)
+        if epoch == 0:
+            (
+                mwa_flux_yr1,
+                err_mwa_flux_yr1,
+                mwa_flux_yr2,
+                err_mwa_flux_yr2,
+                fluxes_extra,
+            ) = fitfuncts.read_gleam_fluxes("/data/MWA", gleam_tar)
+            src_flux = np.hstack((mwa_flux_yr1, src_epoch4[20:37]))
+            err_src_flux = np.hstack((err_mwa_flux_yr1, err_src_epoch4[20:37]))
+        elif epoch == 1:
+            (
+                mwa_flux_yr1,
+                err_mwa_flux_yr1,
+                mwa_flux_yr2,
+                err_mwa_flux_yr2,
+                fluxes_extra,
+            ) = fitfuncts.read_gleam_fluxes("/data/MWA", gleam_tar)
+            src_flux = np.hstack((mwa_flux_yr2, src_epoch4[20:37]))
+            err_src_flux = np.hstack((err_mwa_flux_yr2, err_src_epoch4[20:37]))
+        elif epoch == 2:
+            (
+                mwa_flux_yr1,
+                err_mwa_flux_yr1,
+                mwa_flux_yr2,
+                err_mwa_flux_yr2,
+                fluxes_extra,
+            ) = fitfuncts.read_gleam_fluxes("/data/MWA", gleam_tar)
+            src_flux = np.hstack((mwa_flux_yr1, src_epoch1[20:37]))
+            err_src_flux = np.hstack((err_mwa_flux_yr1, err_src_epoch1[20:37]))
+        elif epoch == 3:
+            (
+                mwa_flux_yr1,
+                err_mwa_flux_yr1,
+                mwa_flux_yr2,
+                err_mwa_flux_yr2,
+                fluxes_extra,
+            ) = fitfuncts.read_gleam_fluxes("/data/MWA", gleam_tar)
+            src_flux = np.hstack((mwa_flux_yr1, src_epoch2[20:37]))
+            err_src_flux = np.hstack((err_mwa_flux_yr1, err_src_epoch2[20:37]))
+        elif epoch == 6:
+            src_flux = np.hstack((src_epoch5[0:20], src_epoch4[20:37]))
+            err_src_flux = np.hstack((err_src_epoch5[0:20], err_src_epoch4[20:37]))
+        elif epoch == 7:
+            src_flux = np.hstack((src_epoch6[0:20], src_epoch4[20:37]))
+            err_src_flux = np.hstack((err_src_epoch6[0:20], err_src_epoch4[20:37]))
+        elif epoch == 4:
+            src_flux = src_epoch3
+            err_src_flux = err_src_epoch3
+        elif epoch == 5:
+            src_flux = src_epoch4
+            err_src_flux = err_src_epoch4
 
-#         if (
-#             os.path.exists(
-#                 f"{save_dir}/{target}/seds/{target}_{epoch_nm}_{model}_sed.png"
-#             )
-#             is False
-#         ):
-# sequence, final = ultranest.integrator.read_file(
-#     f"{save_dir}{target}/{epoch_nm}/{model}/run1/",
-#     len(labels),
-#     check_insertion_order=False,
-# )
+        # Making sure there's no nan's in flux
+        mask = np.where(~np.isnan(src_flux))
+        src_flux = src_flux[mask]
+        err_src_flux = err_src_flux[mask]
+        freq = frequency[mask]
 
-# band = PredictionBand(freq_cont)
-# for params in final["samples"]:
-#     band.add(model_funct(freq_cont, *params))
+        try:
+            sampler = open(
+                f"{save_dir}{target}/{epoch_nm}/{model}/run1/info/results.json"
+            )
+            print("Found results of run, continuing with analysis")
+        except:
+            sampler = fitfuncts.run_ultranest_mcmc(
+                f"{save_dir}{target}/{epoch_nm}/{model}",
+                labels,
+                freq,
+                src_flux,
+                err_src_flux,
+                model_funct,
+                model_trans,
+            )
+            sampler.run(max_iters=50000)
+            print(f"Finished fitting for {model}")
+            sampler.store_tree()
+            sampler.plot()
+            sampler = open(
+                f"/data/ATCA/analysis/{target}/{epoch_nm}/{model}/run1/info/results.json"
+            )
 
-# fitfuncts.plot_epochsed(
-#     f"{save_dir}/{target}/seds/{target}_{epoch_nm}_{model}",
-#     freq,
-#     src_flux,
-#     err_src_flux,
-#     band,
-#     color,
-#     target,
-# )
+        if (
+            os.path.exists(
+                f"{save_dir}/{target}/seds/{target}_{epoch_nm}_{model}_sed.png"
+            )
+            is False
+        ):
+            sequence, final = ultranest.integrator.read_file(
+                f"{save_dir}{target}/{epoch_nm}/{model}/run1/",
+                len(labels),
+                check_insertion_order=False,
+            )
 
-#         results = json.load(sampler)
-#         maxlike_params.append(results["maximum_likelihood"]["point"])
-#         err_maxlike_params.append(results["posterior"]["stdev"])
-#         logz[j][i] = results["logz"]
-#     fitfuncts.plot_paramswithtime(
-#         f"{save_dir}/{target}/{target}", target, model, labels
-#     )
+            band = PredictionBand(freq_cont)
+            for params in final["samples"]:
+                band.add(model_funct(freq_cont, *params))
+
+            fitfuncts.plot_epochsed(
+                f"{save_dir}/{target}/seds/{target}_{epoch_nm}_{model}",
+                freq,
+                src_flux,
+                err_src_flux,
+                band,
+                color,
+                target,
+                model,
+                epoch,
+            )
+
+        results = json.load(sampler)
+        maxlike_params.append(results["maximum_likelihood"]["point"])
+        err_maxlike_params.append(results["posterior"]["stdev"])
+        logz[j][i] = results["logz"]
+
+    fitfuncts.plot_paramswithtime(
+        f"{save_dir}/{target}/{target}", target, model, labels
+    )
 
 #     # # homoFFA inhomoFFA
 #     # K_homoinhomo = fitfuncts.model_comparison(

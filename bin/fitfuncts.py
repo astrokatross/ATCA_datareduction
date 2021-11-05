@@ -23,7 +23,7 @@ epoch_nms = (
     "May20",
     "July20",
     "Oct20",
-    # "Oct21",
+    "Oct21",
 )
 channel = ("69", "93", "121", "145", "169")
 subchans_dict = {
@@ -212,80 +212,78 @@ def plot_sed(save_dir, data_dir, freq, gleam_tar, tar, colors, model_info, model
     src_epoch7, err_src_epoch7 = create_epochcat(data_dir, tar, gleam_tar, 6)
     # plotting SED
     f = CF.sed_fig()
-    # f.plot_spectrum(
-    #     freq,
-    #     mwa_flux_yr1,
-    #     err_mwa_flux_yr1,
-    #     marker="o",
-    #     label=epoch_nms[0],
-    #     marker_color=colors[0],
-    #     s=75,
-    # )
-    # f.plot_spectrum(
-    #     freq,
-    #     mwa_flux_yr2,
-    #     err_mwa_flux_yr2,
-    #     marker="o",
-    #     label=epoch_nms[1],
-    #     marker_color=colors[1],
-    #     s=75,
-    # )
+    f.plot_spectrum(
+        freq,
+        mwa_flux_yr1,
+        err_mwa_flux_yr1,
+        marker="o",
+        label=epoch_nms[0],
+        marker_color=colors[0],
+        # alpha=0,
+        s=75,
+    )
+    f.plot_spectrum(
+        freq,
+        mwa_flux_yr2,
+        err_mwa_flux_yr2,
+        marker="o",
+        label=epoch_nms[1],
+        marker_color=colors[1],
+        # alpha=0,
+        s=75,
+    )
 
-    # f.plot_spectrum(
-    #     freq,
-    #     src_epoch1,
-    #     err_src_epoch1,
-    #     marker="o",
-    #     label=epoch_nms[2],
-    #     marker_color=colors[2],
-    #     s=75,
-    # )
-    # f.plot_spectrum(
-    #     freq,
-    #     src_epoch2,
-    #     err_src_epoch2,
-    #     marker="o",
-    #     label=epoch_nms[3],
-    #     marker_color=colors[3],
-    #     s=75,
-    # )
-    # f.plot_spectrum(
-    #     freq,
-    #     src_epoch3,
-    #     err_src_epoch3,
-    #     marker="o",
-    #     label=epoch_nms[4],
-    #     marker_color=colors[4],
-    #     s=75,
-    # )
+    f.plot_spectrum(
+        freq,
+        src_epoch1,
+        err_src_epoch1,
+        marker="o",
+        label=epoch_nms[2],
+        marker_color=colors[2],
+        # alpha=0.5,
+        s=75,
+    )
+    f.plot_spectrum(
+        freq,
+        src_epoch2,
+        err_src_epoch2,
+        marker="o",
+        label=epoch_nms[3],
+        marker_color=colors[3],
+        # alpha=0,
+        s=75,
+    )
+    f.plot_spectrum(
+        freq,
+        src_epoch3,
+        err_src_epoch3,
+        marker="o",
+        label=epoch_nms[4],
+        marker_color=colors[4],
+        # alpha=0,
+        s=75,
+    )
     f.plot_spectrum(
         freq,
         src_epoch4,
         err_src_epoch4,
         marker="o",
-        # label=epoch_nms[5],
+        label=epoch_nms[5],
         marker_color=colors[5],
-        alpha=0,
+        # alpha=0,
         s=75,
     )
-    # f.plot_spectrum(
-    #     freq,
-    #     src_epoch5,
-    #     err_src_epoch5,
-    #     marker="o",
-    #     label=epoch_nms[6],
-    #     marker_color=colors[6],
-    #     s=75,
-    # )
-    # f.plot_spectrum(
-    #     freq,
-    #     src_epoch6,
-    #     err_src_epoch6,
-    #     marker="o",
-    #     label=epoch_nms[7],
-    #     marker_color=colors[7],
-    #     s=75,
-    # )
+    f.plot_spectrum(
+        freq,
+        src_epoch5,
+        err_src_epoch5,
+        marker="o",
+        label=epoch_nms[6],
+        marker_color=colors[6],
+        # alpha=0,
+        s=75,
+    )
+
     # f.plot_spectrum(
     #     freq,
     #     src_epoch7,
@@ -295,23 +293,59 @@ def plot_sed(save_dir, data_dir, freq, gleam_tar, tar, colors, model_info, model
     #     marker_color=colors[8],
     #     s=75,
     # )
+    # fit_models = [
+    #     "singSSA",
+    #     "singhomobremss",
+    #     "singinhomobremss",
+    #     "internalbremss",
+    #     "singhomobremsscurve",
+    #     "singSSAbreakexp",
+    #     # "singinhomobremsscurve",
+    #     "singhomobremssbreakexp",
+    #     "singinhomobremssbreakexp",
+    # ]
+#     model_colors = cmr.take_cmap_colors(
+#     "cmr.cosmic", len(fit_models), return_fmt="hex"
+# )
     for i in range(len(epoch_nms)):
         # if epoch_nms[i] == "Apr20":
         #     continue
         # else:
         try:
-            sampler = open(f"/data/ATCA/analysis/{tar}/{epoch_nms[i]}/{model}/run1/info/results.json")
+            sampler = open(
+                f"/data/ATCA/analysis/{tar}/{epoch_nms[i]}/{model}/run1/info/results.json"
+            )
             results = json.load(sampler)
             params = results["maximum_likelihood"]["point"]
             yvals = model_info[0](freq_cont, *params)
-            f.display_model(freq_cont, yvals, colors[i],lw=3)
+            f.display_model(freq_cont, yvals, colors[i], lw=1)
         except:
+            print("Couldn't find models?")
             continue
+    f.plot_spectrum(
+        freq,
+        src_epoch6,
+        err_src_epoch6,
+        marker="o",
+        label=epoch_nms[7],
+        marker_color=colors[7],
+        s=75,
+    )
+    # f.plot_spectrum(
+    #     freq[20:],
+    #     src_epoch4[20:],
+    #     err_src_epoch4[20:],
+    #     marker="o",
+    #     # label=epoch_nms[4],
+    #     marker_color="k",
+    #     # alpha=0,
+    #     s=75,
+    # )
     # f.plt_mcmcfits(sampler, chosen_model, freq_cont, color=colors[5])
-    # f.legend(loc="lower center")
-    f.title(gleam_tar)
+    f.legend(loc="lower center")
+    f.title(f"{gleam_tar}")
     f.format(xunit="GHz")
-    f.save(f"{save_dir}/{tar}_sed_models", ext="png")
+    f.save(f"{save_dir}/{tar}_sedmodels", ext="png")
     plt.clf()
     plt.close
     return
@@ -322,12 +356,12 @@ def plot_epochsed(
     freq,
     src_flux,
     err_src_flux,
-    model_info,
+    band,
     color,
     tar,
     model,
+    epoch,
 ):
-    model_funct = model_info[0]
     # src_flux, err_src_flux = create_epochcat(data_dir, tar, gleam_tar, epoch)
     # plotting SED
     f = CF.sed_fig()
@@ -336,7 +370,7 @@ def plot_epochsed(
         src_flux,
         err_src_flux,
         marker="o",
-        marker_color='k',
+        marker_color=color,
         s=75,
     )
     epochs = [
@@ -349,23 +383,29 @@ def plot_epochsed(
         "July20",
         "Oct20",
     ]
-    for i in range(len(epochs)):
-        sampler = open(f"/data/ATCA/analysis/{tar}/{epochs[i]}/{model}/run1/info/results.json")
-        # sequence, final = ultranest.integrator.read_file(
-        #     f"/data/ATCA/analysis/{tar}/{epochs[i]}/{model}/run1/",
-        #     len(model_info[2:]),
-        #     check_insertion_order=False,
-        # )
-        # band = PredictionBand(freq_cont)
-        # for params in final["samples"]:
-        #     band.add(model_funct(freq_cont, *params))
-        params = sampler["maximum_likelihood"]["point"]
-        yvals = model_funct(freq_cont, *params)
-        f.display_model(freq_cont, color[i])
+    # for i in range(len(epochs)):
+    # sampler = open(
+    #     f"/data/ATCA/analysis/{tar}/{epoch}/{model}/run1/info/results.json"
+    # )
+    # # sequence, final = ultranest.integrator.read_file(
+    # #     f"/data/ATCA/analysis/{tar}/{epochs[i]}/{model}/run1/",
+    # #     len(model_info[2:]),
+    # #     check_insertion_order=False,
+    # # )
+    # results = json.load(sampler)
+    # # params = results["maximum_likelihood"]["point"]
+    # # yvals = model_funct(freq_cont, *params)
+    # # f.display_model(freq_cont, yvals, color)
+    # band = PredictionBand(freq_cont)
+    # for params in final["samples"]:
+    #     band.add(model_funct(freq_cont, *params))
+    band.line(color=color)
+    band.shade(color=color, alpha=0.3)
+    band.shade(color=color, q=0.01, alpha=0.1)
     # f.plt_mcmcfits(sampler, chosen_model, freq_cont, color=colors[epoch + 2])
     # f.legend(loc="lower center")
     f.title(f"{tar}")
-    # f.format(xunit="GHz")
+    f.format(xunit="GHz")
     f.save(f"{save_dir}_sed", ext="png")
     return
 
