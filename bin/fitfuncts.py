@@ -23,7 +23,6 @@ epoch_nms = (
     "May20",
     "July20",
     "Oct20",
-    "Oct21",
 )
 channel = ("69", "93", "121", "145", "169")
 subchans_dict = {
@@ -74,6 +73,21 @@ for ext in exts:
     mwa_yr2_errors.append(f"local_rms_{ext}_yr2")
 
 
+def read_extra_fluxes(directory, gleam_tar):
+    master_pop_pd = pd.read_csv(f"{directory}/master_pop_extended.csv")
+    mask = master_pop_pd["Name"] == gleam_tar
+    src_pd = master_pop_pd[mask]
+    fluxes_extra = np.squeeze(src_pd[xtra_fluxes].values)
+    fluxes_extra[0] = fluxes_extra[0]*0.001
+    fluxes_extra[2] = fluxes_extra[2]*0.001
+    fluxes_extra[3] = fluxes_extra[3]*0.001
+    fluxes_extra[5] = fluxes_extra[5]*0.001
+    fluxes_extra[6] = fluxes_extra[6]*0.001
+    fluxes_extra[7] = fluxes_extra[7]*0.001
+    fluxes_extra[8] = fluxes_extra[8]*0.001
+    return fluxes_extra
+
+
 def read_gleam_fluxes(directory, name):
     master_pop_pd = pd.read_csv(f"{directory}/master_pop_extended.csv")
     mask = master_pop_pd["Name"] == name
@@ -93,7 +107,13 @@ def read_gleam_fluxes(directory, name):
     err_mwa_flux_yr2 = np.hstack((buffer, err_mwa_flux_yr2))
 
     fluxes_extra = np.squeeze(src_pd[xtra_fluxes].values)
-
+    fluxes_extra[0] = fluxes_extra[0]*0.001
+    fluxes_extra[2] = fluxes_extra[2]*0.001
+    fluxes_extra[3] = fluxes_extra[3]*0.001
+    fluxes_extra[5] = fluxes_extra[5]*0.001
+    fluxes_extra[6] = fluxes_extra[6]*0.001
+    fluxes_extra[7] = fluxes_extra[7]*0.001
+    fluxes_extra[8] = fluxes_extra[8]*0.001
     return mwa_flux_yr1, err_mwa_flux_yr1, mwa_flux_yr2, err_mwa_flux_yr2, fluxes_extra
 
 
@@ -148,207 +168,221 @@ def read_atca_fluxes(directory, tar_dir, tar):
         [np.nan] * 17,
         [np.nan] * 17,
     ]
+    err_atca_fluxes = [
+        [np.nan] * 17,
+        [np.nan] * 17,
+        [np.nan] * 17,
+        [np.nan] * 17,
+        [np.nan] * 17,
+        [np.nan] * 17,
+        [np.nan] * 17,
+    ]
     epochs = ("epoch1", "epoch2", "epoch3", "epoch4", "epoch5", "epoch6", "2021-10-15")
     for i in range(0, 7):
         epoch = epochs[i]
         try:
             atca_Lband_pd = pd.read_csv(f"{directory}/{tar_dir}/{tar}_{epoch}_L.csv")
             atca_Lband_epoch = np.array(atca_Lband_pd["# S_Lband"])
+            err_atca_Lband_epoch = np.array(np.sqrt((0.05*atca_Lband_epoch)**2 + (0.0005**2)))
         except FileNotFoundError:
             # print(f"No L-Band for {epoch}")
             atca_Lband_epoch = [[np.nan] * 8]
+            err_atca_Lband_epoch = [[np.nan] * 8]
 
         try:
             atca_Cband_pd = pd.read_csv(f"{directory}/{tar_dir}/{tar}_{epoch}_C.csv")
             atca_Cband_epoch = np.array(atca_Cband_pd["# S_Cband"])
+            # print(atca_Cband_epoch)
+            err_atca_Cband_epoch = np.array(np.sqrt((0.05*atca_Cband_epoch)**2 + (0.0004**2)))
+            # print(err_atca_Cband_epoch)
         except FileNotFoundError:
             # print(f"No C-Band for {epoch}")
             atca_Cband_epoch = [[np.nan] * 5]
+            err_atca_Cband_epoch = [[np.nan] * 5]
 
         try:
             atca_Xband_pd = pd.read_csv(f"{directory}/{tar_dir}/{tar}_{epoch}_X.csv")
             atca_Xband_epoch = np.array(atca_Xband_pd["# S_Xband"])
+            err_atca_Xband_epoch = np.array(np.sqrt((0.05*atca_Xband_epoch)**2 + (0.0003**2)))
         except FileNotFoundError:
             # print(f"No X-Band for {epoch}")
             atca_Xband_epoch = [[np.nan] * 4]
+            err_atca_Xband_epoch = [[np.nan] * 4]
 
         atca_epoch = np.concatenate(
             (atca_Lband_epoch, atca_Cband_epoch, atca_Xband_epoch), axis=None
         )
+        err_atca_epoch = np.concatenate(
+            (err_atca_Lband_epoch, err_atca_Cband_epoch, err_atca_Xband_epoch), axis=None
+        )
         atca_epoch[np.where(atca_epoch < 0.0)] = np.nan
         atca_fluxes[i] = atca_epoch
-    return atca_fluxes
+        err_atca_fluxes[i] = err_atca_epoch
+    return atca_fluxes, err_atca_fluxes
 
 
 def create_epochcat(directory, tar, gleam_tar, epoch):
     mwa_flux, err_mwa = read_mwa_fluxes("/data/MWA", tar, gleam_tar, epochs[epoch])
-    atca_flux_all = read_atca_fluxes(directory, tar, tar)
-    atca_flux = atca_flux_all[epoch]
+    atca_flux_all, err_atca_flux_all = read_atca_fluxes(directory, tar, tar)
+    atca_flux = np.array(atca_flux_all[epoch])
+    err_atca_flux = err_atca_flux_all[epoch]
     src_flux = np.hstack((mwa_flux, atca_flux))
-    src_errs = np.hstack((err_mwa, atca_flux * 0.05))
+    src_errs = np.hstack((err_mwa, err_atca_flux))
     return src_flux, src_errs
 
 
-def plot_sed(save_dir, data_dir, freq, gleam_tar, tar, colors, model_info, model):
+def createfitflux(data_dir, gleam_target):
+    target = gleam_target.strip("GLEAM ")[0:7]
+    frequency = np.array(
+        [
+            0.076,
+            0.084,
+            0.092,
+            0.099,
+            0.107,
+            0.115,
+            0.122,
+            0.130,
+            0.143,
+            0.151,
+            0.158,
+            0.166,
+            0.174,
+            0.181,
+            0.189,
+            0.197,
+            0.204,
+            0.212,
+            0.220,
+            0.227,
+            1.33,
+            1.407,
+            1.638,
+            1.869,
+            2.1,
+            2.331,
+            2.562,
+            2.793,
+            4.71,
+            5.090,
+            5.500,
+            5.910,
+            6.320,
+            8.732,
+            9.245,
+            9.758,
+            10.269,
+        ]
+    )
+    src_epoch1, err_src_epoch1 = create_epochcat(data_dir, target, gleam_target, 0)
+    src_epoch2, err_src_epoch2 = create_epochcat(data_dir, target, gleam_target, 1)
+    src_epoch3, err_src_epoch3 = create_epochcat(data_dir, target, gleam_target, 2)
+    src_epoch4, err_src_epoch4 = create_epochcat(data_dir, target, gleam_target, 3)
+    src_epoch5, err_src_epoch5 = create_epochcat(data_dir, target, gleam_target, 4)
+    src_epoch6, err_src_epoch6 = create_epochcat(data_dir, target, gleam_target, 5)
     (
         mwa_flux_yr1,
         err_mwa_flux_yr1,
         mwa_flux_yr2,
         err_mwa_flux_yr2,
-        fluxes_extra,
-    ) = read_gleam_fluxes("/data/MWA", gleam_tar)
-    atca_buffer = np.empty(17)
-    atca_buffer[:] = np.nan
+        extra_surveys,
+    ) = read_gleam_fluxes("/data/MWA", gleam_target)
+    fit_flux1 = np.hstack((mwa_flux_yr1, src_epoch4[20:37]))
+    fit_flux2 = np.hstack((mwa_flux_yr2, src_epoch4[20:37]))
+    fit_flux3 = np.hstack((mwa_flux_yr1, src_epoch1[20:37]))
+    fit_flux4 = np.hstack((mwa_flux_yr1, src_epoch2[20:37]))
+    fit_flux5 = src_epoch3
+    fit_flux6 = src_epoch4
+    fit_flux7 = np.hstack((src_epoch5[0:20], src_epoch4[20:37]))
+    fit_flux8 = np.hstack((src_epoch6[0:20], src_epoch4[20:37]))
+    err_fit_flux1 = np.hstack((err_mwa_flux_yr1, err_src_epoch4[20:37]))
+    err_fit_flux2 = np.hstack((err_mwa_flux_yr2, err_src_epoch4[20:37]))
+    err_fit_flux3 = np.hstack((err_mwa_flux_yr1, err_src_epoch1[20:37]))
+    err_fit_flux4 = np.hstack((err_mwa_flux_yr1, err_src_epoch2[20:37]))
+    err_fit_flux5 = err_src_epoch3
+    err_fit_flux6 = err_src_epoch4
+    err_fit_flux7 = np.hstack((err_src_epoch5[0:20], err_src_epoch4[20:37]))
+    err_fit_flux8 = np.hstack((err_src_epoch6[0:20], err_src_epoch4[20:37]))
+    fit_flux = np.stack(
+        (
+            fit_flux1,
+            fit_flux2,
+            fit_flux3,
+            fit_flux4,
+            fit_flux5,
+            fit_flux6,
+            fit_flux7,
+            fit_flux8,
+        )
+    )
+    err_fit_flux = np.stack(
+        (
+            err_fit_flux1,
+            err_fit_flux2,
+            err_fit_flux3,
+            err_fit_flux4,
+            err_fit_flux5,
+            err_fit_flux6,
+            err_fit_flux7,
+            err_fit_flux8,
+        )
+    )
+    fit_freq = []
+    fit_flux_mask = []
+    err_fit_flux_mask = []
+    for i in range(8):
+        mask = np.where(~np.isnan(fit_flux[i]))
+        fit_flux_mask.append(fit_flux[i][mask])
+        err_fit_flux_mask.append(err_fit_flux[i][mask])
+        fit_freq.append(frequency[mask])
+    return fit_flux_mask, err_fit_flux_mask, fit_freq
+
+
+def createsrcflux(data_dir, gleam_target):
+    target = gleam_target.strip("GLEAM ")[0:7]
+    src_epoch1, err_src_epoch1 = create_epochcat(data_dir, target, gleam_target, 0)
+    src_epoch2, err_src_epoch2 = create_epochcat(data_dir, target, gleam_target, 1)
+    src_epoch3, err_src_epoch3 = create_epochcat(data_dir, target, gleam_target, 2)
+    src_epoch4, err_src_epoch4 = create_epochcat(data_dir, target, gleam_target, 3)
+    src_epoch5, err_src_epoch5 = create_epochcat(data_dir, target, gleam_target, 4)
+    src_epoch6, err_src_epoch6 = create_epochcat(data_dir, target, gleam_target, 5)
+    (
+        mwa_flux_yr1,
+        err_mwa_flux_yr1,
+        mwa_flux_yr2,
+        err_mwa_flux_yr2,
+        extra_surveys,
+    ) = read_gleam_fluxes("/data/MWA", gleam_target)
+    atca_buffer = np.full(17, np.nan)
     mwa_flux_yr1 = np.hstack((mwa_flux_yr1, atca_buffer))
     err_mwa_flux_yr1 = np.hstack((err_mwa_flux_yr1, atca_buffer))
     mwa_flux_yr2 = np.hstack((mwa_flux_yr2, atca_buffer))
     err_mwa_flux_yr2 = np.hstack((err_mwa_flux_yr2, atca_buffer))
-    src_epoch1, err_src_epoch1 = create_epochcat(data_dir, tar, gleam_tar, 0)
-    src_epoch2, err_src_epoch2 = create_epochcat(data_dir, tar, gleam_tar, 1)
-    src_epoch3, err_src_epoch3 = create_epochcat(data_dir, tar, gleam_tar, 2)
-    src_epoch4, err_src_epoch4 = create_epochcat(data_dir, tar, gleam_tar, 3)
-    src_epoch5, err_src_epoch5 = create_epochcat(data_dir, tar, gleam_tar, 4)
-    src_epoch6, err_src_epoch6 = create_epochcat(data_dir, tar, gleam_tar, 5)
-    src_epoch7, err_src_epoch7 = create_epochcat(data_dir, tar, gleam_tar, 6)
-    # plotting SED
-    f = CF.sed_fig()
-    f.plot_spectrum(
-        freq,
-        mwa_flux_yr1,
-        err_mwa_flux_yr1,
-        marker="o",
-        label=epoch_nms[0],
-        marker_color=colors[0],
-        # alpha=0,
-        s=75,
+    src_flux = np.stack(
+        (
+            mwa_flux_yr1,
+            mwa_flux_yr2,
+            src_epoch1,
+            src_epoch2,
+            src_epoch3,
+            src_epoch4,
+            src_epoch5,
+            src_epoch6,
+        )
     )
-    f.plot_spectrum(
-        freq,
-        mwa_flux_yr2,
-        err_mwa_flux_yr2,
-        marker="o",
-        label=epoch_nms[1],
-        marker_color=colors[1],
-        # alpha=0,
-        s=75,
+    err_src_flux = np.stack(
+        (
+            err_mwa_flux_yr1,
+            err_mwa_flux_yr2,
+            err_src_epoch1,
+            err_src_epoch2,
+            err_src_epoch3,
+            err_src_epoch4,
+            err_src_epoch5,
+            err_src_epoch6,
+        )
     )
-
-    f.plot_spectrum(
-        freq,
-        src_epoch1,
-        err_src_epoch1,
-        marker="o",
-        label=epoch_nms[2],
-        marker_color=colors[2],
-        # alpha=0.5,
-        s=75,
-    )
-    f.plot_spectrum(
-        freq,
-        src_epoch2,
-        err_src_epoch2,
-        marker="o",
-        label=epoch_nms[3],
-        marker_color=colors[3],
-        # alpha=0,
-        s=75,
-    )
-    f.plot_spectrum(
-        freq,
-        src_epoch3,
-        err_src_epoch3,
-        marker="o",
-        label=epoch_nms[4],
-        marker_color=colors[4],
-        # alpha=0,
-        s=75,
-    )
-    f.plot_spectrum(
-        freq,
-        src_epoch4,
-        err_src_epoch4,
-        marker="o",
-        label=epoch_nms[5],
-        marker_color=colors[5],
-        # alpha=0,
-        s=75,
-    )
-    f.plot_spectrum(
-        freq,
-        src_epoch5,
-        err_src_epoch5,
-        marker="o",
-        label=epoch_nms[6],
-        marker_color=colors[6],
-        # alpha=0,
-        s=75,
-    )
-
-    # f.plot_spectrum(
-    #     freq,
-    #     src_epoch7,
-    #     err_src_epoch7,
-    #     marker="o",
-    #     label=epoch_nms[8],
-    #     marker_color=colors[8],
-    #     s=75,
-    # )
-    # fit_models = [
-    #     "singSSA",
-    #     "singhomobremss",
-    #     "singinhomobremss",
-    #     "internalbremss",
-    #     "singhomobremsscurve",
-    #     "singSSAbreakexp",
-    #     # "singinhomobremsscurve",
-    #     "singhomobremssbreakexp",
-    #     "singinhomobremssbreakexp",
-    # ]
-#     model_colors = cmr.take_cmap_colors(
-#     "cmr.cosmic", len(fit_models), return_fmt="hex"
-# )
-    for i in range(len(epoch_nms)):
-        # if epoch_nms[i] == "Apr20":
-        #     continue
-        # else:
-        try:
-            sampler = open(
-                f"/data/ATCA/analysis/{tar}/{epoch_nms[i]}/{model}/run1/info/results.json"
-            )
-            results = json.load(sampler)
-            params = results["maximum_likelihood"]["point"]
-            yvals = model_info[0](freq_cont, *params)
-            f.display_model(freq_cont, yvals, colors[i], lw=1)
-        except:
-            print("Couldn't find models?")
-            continue
-    f.plot_spectrum(
-        freq,
-        src_epoch6,
-        err_src_epoch6,
-        marker="o",
-        label=epoch_nms[7],
-        marker_color=colors[7],
-        s=75,
-    )
-    # f.plot_spectrum(
-    #     freq[20:],
-    #     src_epoch4[20:],
-    #     err_src_epoch4[20:],
-    #     marker="o",
-    #     # label=epoch_nms[4],
-    #     marker_color="k",
-    #     # alpha=0,
-    #     s=75,
-    # )
-    # f.plt_mcmcfits(sampler, chosen_model, freq_cont, color=colors[5])
-    f.legend(loc="lower center")
-    f.title(f"{gleam_tar}")
-    f.format(xunit="GHz")
-    f.save(f"{save_dir}/{tar}_sedmodels", ext="png")
-    plt.clf()
-    plt.close
-    return
+    return src_flux, err_src_flux
 
 
 def plot_epochsed(
@@ -373,37 +407,9 @@ def plot_epochsed(
         marker_color=color,
         s=75,
     )
-    epochs = [
-        "2013",
-        "2014",
-        "Jan20",
-        "Mar20",
-        "Apr20",
-        "May20",
-        "July20",
-        "Oct20",
-    ]
-    # for i in range(len(epochs)):
-    # sampler = open(
-    #     f"/data/ATCA/analysis/{tar}/{epoch}/{model}/run1/info/results.json"
-    # )
-    # # sequence, final = ultranest.integrator.read_file(
-    # #     f"/data/ATCA/analysis/{tar}/{epochs[i]}/{model}/run1/",
-    # #     len(model_info[2:]),
-    # #     check_insertion_order=False,
-    # # )
-    # results = json.load(sampler)
-    # # params = results["maximum_likelihood"]["point"]
-    # # yvals = model_funct(freq_cont, *params)
-    # # f.display_model(freq_cont, yvals, color)
-    # band = PredictionBand(freq_cont)
-    # for params in final["samples"]:
-    #     band.add(model_funct(freq_cont, *params))
     band.line(color=color)
     band.shade(color=color, alpha=0.3)
     band.shade(color=color, q=0.01, alpha=0.1)
-    # f.plt_mcmcfits(sampler, chosen_model, freq_cont, color=colors[epoch + 2])
-    # f.legend(loc="lower center")
     f.title(f"{tar}")
     f.format(xunit="GHz")
     f.save(f"{save_dir}_sed", ext="png")
@@ -444,78 +450,3 @@ def run_ultranest_mcmc(
         storage_backend="hdf5",
     )
     return sampler
-
-
-def model_comparison(bayes_name, model1_lnlike, model2_lnlike):
-    K_factor = np.exp(model2_lnlike - model1_lnlike)
-    print(f"{bayes_name} factor = {K_factor}")
-    print(
-        f"The first model {K_factor} times more probable than the second model for {bayes_name}"
-    )
-    return K_factor
-
-
-def plot_paramswithtime(
-    directory,
-    target,
-    model,
-    labels,
-    colors=cmr.take_cmap_colors(
-        "cmr.rainforest", 12, cmap_range=(0.15, 0.85), return_fmt="hex"
-    ),
-):
-    params = []
-    errlo_params = []
-    errup_params = []
-    months = [-5, -4, 0, 1, 5, 7, 10]
-    for epoch in ["2013", "2014", "Jan20", "Mar20", "May20", "July20", "Oct20"]:
-        sampler = open(
-            f"/data/ATCA/analysis/{target}/{epoch}/{model}/run1/info/results.json"
-        )
-        results = json.load(sampler)
-        paramnames = results["paramnames"]
-        parameters = np.array(results["maximum_likelihood"]["point"])
-        errlo_arr = np.array(results["posterior"]["errlo"])
-        errup_arr = np.array(results["maximum_likelihood"]["point"])
-        errlo = parameters - errlo_arr
-        errup = errup_arr - parameters
-        params.append(parameters)
-        errlo_params.append(errlo)
-        errup_params.append(errup)
-    paramsT = np.transpose(params)
-    errloT = np.transpose(errlo_params)
-    # errupT = np.transpose(errup_params)
-    for i in range(len(paramnames)):
-        f = CF.timeseries()
-        name = paramnames[i]
-        f.plot_params(months, paramsT[i], err_params=errloT[i], s=75)
-        f.format()
-        f.title(f"{target} {name}")
-        f.save(f"{directory}_{name}_{model}", ext="png")
-    return
-
-
-def plot_logzvsmodel(directory, logz, epoch_nms, model_nms):
-    num_models = np.arange(np.shape(logz)[1])
-    colors = cmr.take_cmap_colors(
-        "cmr.bubblegum", len(num_models), cmap_range=(0.15, 0.85), return_fmt="hex"
-    )
-    print(num_models)
-    # plot_logz = np.arange(np.shape(logz)[1])
-    for i in range(len(logz)):
-        epoch_logz = logz[i]
-        max_logz = epoch_logz[5]
-        fig = plt.figure(figsize=(10, 8))
-        model_logz = np.exp(max_logz - epoch_logz)
-        # model_logz[0] = np.nan
-        print(model_logz)
-        # plot_logz = model_logz
-        # print(plot_logz)
-        for j in range(5, len(num_models)):
-            plt.scatter(
-                num_models[j], model_logz[j], label=model_nms[j], color=colors[j]
-            )
-        plt.legend()
-        plt.title(f"Model Comparison of Likelihood {epoch_nms[i]}")
-        plt.savefig(f"{directory}{epoch_nms[i]}_logz.png")
-    return

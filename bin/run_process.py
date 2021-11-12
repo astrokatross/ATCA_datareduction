@@ -94,25 +94,25 @@ print("Here we go! Time to analyse some ATCA data!")
 # process.flag_ms(visname)
 
 # Split to make its own ms
-# process.split_ms(
-#     src_dir,
-#     img_dir,
-#     visname,
-#     msname,
-#     epoch,
-#     ATCA_band,
-#     pri,
-#     sec,
-#     tar,
-#     n_spw,
-# )
+process.split_ms(
+    src_dir,
+    img_dir,
+    visname,
+    msname,
+    epoch,
+    ATCA_band,
+    pri,
+    sec,
+    tar,
+    n_spw,
+)
 
 # Calibrate, and apply cal ms using primary and secondary
-# process.calibrate_ms(src_dir, msname, epoch, ATCA_band, ref, pri, sec, tar)
-# process.applycal_ms(src_dir, msname, epoch, ATCA_band, pri, sec, tar)
+process.calibrate_ms(src_dir, msname, epoch, ATCA_band, ref, pri, sec, tar)
+process.applycal_ms(src_dir, msname, epoch, ATCA_band, pri, sec, tar)
 
-# # Post cal inspection and flagging
-# process.flagcal_ms(img_dir, msname, epoch, ATCA_band, pri, sec)
+# Post cal inspection and flagging
+process.flagcal_ms(img_dir, msname, epoch, ATCA_band, pri, sec)
 
 # Imaging of target
 if calibrator == "SEC":
@@ -131,10 +131,10 @@ elif calibrator == "PRI":
     )
     # print("Skipping for tests")
 else:
-    # process.flagcaltar_ms(src_dir, img_dir, msname, epoch, ATCA_band, pri, sec, tar)
-    # process.imgmfs_ms(src_dir, msname, targetms, epoch, ATCA_band, n_spw, tar)
-    # process.img_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar)
-    # process.slefcal_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar)
+    process.flagcaltar_ms(src_dir, img_dir, msname, epoch, ATCA_band, pri, sec, tar)
+    process.imgmfs_ms(src_dir, msname, targetms, epoch, ATCA_band, n_spw, tar)
+    process.img_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar)
+    process.slefcal_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar)
     process.measureflux_ms(
         src_dir, targetms, tar_ms, epoch, ATCA_band, sourcepar, n_spw, tar, calibrator,
     )

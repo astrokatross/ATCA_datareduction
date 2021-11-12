@@ -33,9 +33,9 @@ def quad(freq, a, b, c):  # defining quadratic
 
 
 def singhomobremss(
-    freq, S_norm, alpha, freq_peak
+    freq, S_norm, alpha, peak_frequency
 ):  # nonthermal power law spectrum absorbed by a homogeneous free-free absorbing screen.
-    return S_norm * (freq ** (-alpha)) * np.exp(-((freq / freq_peak) ** (-2.1)))
+    return S_norm * (freq ** (-alpha)) * np.exp(-((freq / peak_frequency) ** (-2.1)))
 
 
 def doubhomobremss(
@@ -61,13 +61,13 @@ def doubhomobremsscurve(
 
 
 def singinhomobremss(
-    freq, S_norm, alpha, p, freq_peak
+    freq, S_norm, alpha, p, peak_frequency
 ):  # Single inhomogeneous free-free emission model
     return (
         S_norm
         * (p + 1)
-        * ((freq / freq_peak) ** (2.1 * (p + 1) - alpha))
-        * special.gammainc((p + 1), ((freq / freq_peak) ** (-2.1)))
+        * ((freq / peak_frequency) ** (2.1 * (p + 1) - alpha))
+        * special.gammainc((p + 1), ((freq / peak_frequency) ** (-2.1)))
         * special.gamma(p + 1)
     )
 
@@ -99,12 +99,12 @@ def internalbremss(freq, S_norm, alpha, freq_peak):  # Internal free-free model
     )
 
 
-def singSSA(freq, S_norm, beta, peak_freq):  # Single SSA model
+def singSSA(freq, S_norm, beta, peak_frequency):  # Single SSA model
     return (
         S_norm
-        * ((freq / peak_freq) ** (-(beta - 1) / 2))
-        * (1 - np.exp(-((freq / peak_freq) ** (-(beta + 4) / 2))))
-        / ((freq / peak_freq) ** (-(beta + 4) / 2))
+        * ((freq / peak_frequency) ** (-(beta - 1) / 2))
+        * (1 - np.exp(-((freq / peak_frequency) ** (-(beta + 4) / 2))))
+        / ((freq / peak_frequency) ** (-(beta + 4) / 2))
     )
 
 
@@ -276,30 +276,30 @@ def powlawexp(freq, S_norm, alpha, breakfreq):  # Exponential break
 
 
 def singinhomobremssbreakexp(
-    freq, S_norm, alpha, p, freq_peak, breakfreq
+    freq, S_norm, alpha, p, peak_frequency, breakfreq
 ):  # Single inhomogeneous free-free emission model with exponential break
     return (
         S_norm
         * (p + 1)
         * (
-            np.power((freq / freq_peak), (2.1 * (p + 1)))
+            np.power((freq / peak_frequency), (2.1 * (p + 1)))
             * np.power(freq, -alpha)
-            * np.power(freq_peak, alpha)
+            * np.power(peak_frequency, alpha)
             * np.exp(-freq / breakfreq)
-            * special.gammainc((p + 1), (freq / freq_peak) ** (-2.1))
+            * special.gammainc((p + 1), (freq / peak_frequency) ** (-2.1))
         )
         * special.gamma(p + 1)
     )
 
 
 def singhomobremssbreakexp(
-    freq, S_norm, alpha, freq_peak, breakfreq
+    freq, S_norm, alpha, peak_frequency, breakfreq
 ):  # nonthermal power law spectrum absorbed by a homogeneous free-free absorbing screen with exponential break.
     return (
         S_norm
         * (freq ** (-alpha))
         * np.exp(-freq / breakfreq)
-        * np.exp(-((freq / freq_peak) ** (-2.1)))
+        * np.exp(-((freq / peak_frequency) ** (-2.1)))
     )
 
 
@@ -313,13 +313,13 @@ def doubhomobremssbreakexp(
     )
 
 
-def singSSAbreakexp(freq, S_norm, beta, peak_freq, breakfreq):  # with exponential break
+def singSSAbreakexp(freq, S_norm, beta, peak_frequency, breakfreq):  # with exponential break
     return (
         S_norm
-        * ((freq / peak_freq) ** (-(beta - 1) / 2))
+        * ((freq / peak_frequency) ** (-(beta - 1) / 2))
         * np.exp(-freq / breakfreq)
-        * (1 - np.exp(-((freq / peak_freq) ** (-(beta + 4) / 2))))
-        / ((freq / peak_freq) ** (-(beta + 4) / 2))
+        * (1 - np.exp(-((freq / peak_frequency) ** (-(beta + 4) / 2))))
+        / ((freq / peak_frequency) ** (-(beta + 4) / 2))
     )
 
 

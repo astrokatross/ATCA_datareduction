@@ -17,7 +17,8 @@ bin/.vscode/settings.json
 j*
 bin/run*py
 bin/plotfuncts.py
-
+bin/*ipynb
+bin/*ipynb_checkpoints
 bin/Untitled.ipynb
 bin/Untitled1.ipynb
 bin/Untitled.ipynb
