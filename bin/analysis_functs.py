@@ -317,7 +317,7 @@ def calc_secbayes(avg_logz):
 
 def read_timeranges(start_times, end_times):
     timeranges = []
-    for i in range(start_times):
+    for i in range(len(start_times)):
         start_time = datetime.datetime.strptime(start_times[i], "%H:%M:%S")
         end_time = datetime.datetime.strptime(end_times[i], "%H:%M:%S")
         new_time = start_time
@@ -327,7 +327,6 @@ def read_timeranges(start_times, end_times):
             new_time = (new_time + datetime.timedelta(0,30))
             current_str = new_time.strftime("%H:%M:%S")
             timeranges.append(current_str)
-
     return timeranges
 
 
@@ -336,12 +335,14 @@ def plt_peakftime(
     nu_p,
     err_nu_p,
     plot_title,
-    ext="png",
+    ext="pdf",
     colors=cmr.take_cmap_colors(
         "cmr.gothic", 8, cmap_range=(0.15, 0.8), return_fmt="hex"
     ),
 ):
-    fig = plt.figure(1, figsize=(20, 10), facecolor="white")
+    figsize = (20, 10)
+    # fig = plt.figure(1, figsize=figsize, facecolor="white")
+    fig = plt.figure(figsize=figsize)
     gs = fig.add_gridspec(1, 2, wspace=0.05, width_ratios=[1, 3])
     ax = gs.subplots()
     fig.suptitle(plot_title, fontsize=40)
@@ -408,19 +409,21 @@ def plt_peakftime(
     ax[0].set_xlim([-6, -3])
     ax[1].set_xlim([0, 12])
     plt.tight_layout()
+    
     plt.savefig(f"{save_dir}_peakfreqvstime.{ext}", overwrite=True)
     plt.clf()
     plt.close()
     return
 
 
-def read_lightcurveflux(data_dir, timeranges):
+def read_lightcurveflux(data_dir, outfile_dir, timeranges):
     fluxes = []
     err_fluxes = []
     for i in range(len(timeranges)):
         timerange = f"{timeranges[i]}+00:00:30"
-        outfile = f"{data_dir}{timerange}.cl"
+        outfile = f"{outfile_dir}_{timerange}.cl"
         tar_ms = f"{data_dir}_selfcaltime.ms"
+        print(tar_ms)
         if (os.path.exists(outfile)) is False:
             uvmodelfit(
                 vis=tar_ms,
@@ -442,8 +445,10 @@ def read_lightcurveflux(data_dir, timeranges):
             err = np.sqrt((flux * 0.05) ** 2 + (0.002 ** 2))
             fluxes.append(flux)
             err_fluxes.append(err)
-
-    return fluxes, err_fluxes
+    mod = round(np.std(fluxes)/np.median(fluxes), -int(math.floor(math.log10(abs(np.std(fluxes)/np.median(fluxes))))))
+    err_fluxes = (err_fluxes/np.median(fluxes))
+    fluxes = (fluxes/np.median(fluxes)) - 1
+    return fluxes, err_fluxes, mod
 
 
 def plt_lightcurve(
@@ -454,7 +459,9 @@ def plt_lightcurve(
     src2_fluxes,
     err_src1_fluxes,
     err_src2_fluxes,
-    ext="png",
+    mod_src1,
+    mod_src2,
+    ext="pdf",
     src1_nm="J001513",
     src2_nm="J020507",
 ):
@@ -468,39 +475,12 @@ def plt_lightcurve(
     err_src2_fluxes_c = err_src2_fluxes[0]
     err_src2_fluxes_x = err_src2_fluxes[1]
 
-    mod_src1_c = round(
-        np.std(src1_fluxes_c) / np.median(src1_fluxes_c),
-        -int(
-            math.floor(
-                math.log10(abs(np.std(src1_fluxes_c) / np.median(src1_fluxes_c)))
-            )
-        ),
-    )
-    mod_src1_x = round(
-        np.std(src1_fluxes_x) / np.median(src1_fluxes_x),
-        -int(
-            math.floor(
-                math.log10(abs(np.std(src1_fluxes_x) / np.median(src1_fluxes_x)))
-            )
-        ),
-    )
-    mod_src2_c = round(
-        np.std(src2_fluxes_c) / np.median(src2_fluxes_c),
-        -int(
-            math.floor(
-                math.log10(abs(np.std(src2_fluxes_c) / np.median(src2_fluxes_c)))
-            )
-        ),
-    )
-    mod_src2_x = round(
-        np.std(src2_fluxes_x) / np.median(src2_fluxes_x),
-        -int(
-            math.floor(
-                math.log10(abs(np.std(src2_fluxes_x) / np.median(src2_fluxes_x)))
-            )
-        ),
-    )
-    fig = plt.figure(1, figsize=(15, 10), facecolor="white")
+    mod_src1_c = mod_src1[0]
+    mod_src1_x = mod_src1[1]
+    mod_src2_c = mod_src2[0]
+    mod_src2_x = mod_src2[1]
+    
+    fig = plt.figure(figsize=(15, 10))
     gs = fig.add_gridspec(2, 2, hspace=0, wspace=0.05)
     ax = gs.subplots(sharey=True)
     fig.suptitle("Light Curves 2021-10-15", fontsize=40)
@@ -508,10 +488,10 @@ def plt_lightcurve(
     axc = ax[0]
     axx = ax[1]
     axc[0].errorbar(
-        scan_times_src1[0:20],
+        scan_times_src1[0],
         src1_fluxes_c[0:20],
         yerr=err_src1_fluxes_c[0:20],
-        color="C6",
+        color="C4",
         label=f"{src1_nm}, $m=$ {mod_src1_c}",
         linestyle="None",
         marker="o",
@@ -519,10 +499,10 @@ def plt_lightcurve(
     )
 
     axc[1].errorbar(
-        scan_times_src1[20:40],
+        scan_times_src1[1],
         src1_fluxes_c[20:40],
         yerr=err_src1_fluxes_c[20:40],
-        color="C6",
+        color="C4",
         label=f"{src1_nm}, $m=$ {mod_src1_c}",
         linestyle="None",
         marker="o",
@@ -530,10 +510,10 @@ def plt_lightcurve(
     )
 
     axx[0].errorbar(
-        scan_times_src1[0:20],
+        scan_times_src1[0],
         src1_fluxes_x[0:20],
         yerr=err_src1_fluxes_x[20:40],
-        color="C6",
+        color="C4",
         label=f"{src1_nm}, $m=$ {mod_src1_x}",
         linestyle="None",
         marker="o",
@@ -541,10 +521,10 @@ def plt_lightcurve(
     )
 
     axx[1].errorbar(
-        scan_times_src1[20:40],
+        scan_times_src1[1],
         src1_fluxes_x[20:40],
         yerr=err_src1_fluxes_x[0:20],
-        color="C6",
+        color="C4",
         label=f"{src1_nm}, $m=$ {mod_src1_x}",
         linestyle="None",
         marker="o",
@@ -552,7 +532,7 @@ def plt_lightcurve(
     )
 
     axc[0].errorbar(
-        scan_times_src2[0:20],
+        scan_times_src2[0],
         src2_fluxes_c[0:20],
         yerr=err_src2_fluxes_c[0:20],
         color="C6",
@@ -563,7 +543,7 @@ def plt_lightcurve(
     )
 
     axc[1].errorbar(
-        scan_times_src2[20:40],
+        scan_times_src2[1],
         src2_fluxes_c[20:40],
         yerr=err_src2_fluxes_c[20:40],
         color="C6",
@@ -574,7 +554,7 @@ def plt_lightcurve(
     )
 
     axx[0].errorbar(
-        scan_times_src2[0:20],
+        scan_times_src2[0],
         src2_fluxes_x[0:20],
         yerr=err_src2_fluxes_x[20:40],
         color="C6",
@@ -585,7 +565,7 @@ def plt_lightcurve(
     )
 
     axx[1].errorbar(
-        scan_times_src2[20:40],
+        scan_times_src2[1],
         src2_fluxes_x[20:40],
         yerr=err_src2_fluxes_x[0:20],
         color="C6",
@@ -597,7 +577,7 @@ def plt_lightcurve(
 
     axc[0].set_ylabel(r"$S_{5.5\mathrm{GHz}}$ Offset (\%)", fontsize=30)
     axx[0].set_ylabel(r"$S_{9\mathrm{GHz}}$ Offset (\%)", fontsize=30)
-
+    fig.text(0.5, 0.04, f"Time since start of first scan (minutes)", ha='center', fontsize=30)
     # formating!
     # customize tick directions and lengths
     axc[0].tick_params(
@@ -608,8 +588,8 @@ def plt_lightcurve(
         axis="both", which="major", direction="in", length=6, width=1.5, pad=5
     )
     axc[1].tick_params(axis="both", which="minor", direction="in", length=4, width=1.5)
-    axc[0].tick_params(axis="both", which="both", labelsize="15", right=True, top=True)
-    axc[1].tick_params(axis="both", which="both", labelsize="15", right=True, top=True)
+    axc[0].tick_params(axis="both", which="both", labelsize="20", right=True, top=True)
+    axc[1].tick_params(axis="both", which="both", labelsize="20", right=True, top=True)
 
     axx[0].tick_params(
         axis="both", which="major", direction="in", length=6, width=1.5, pad=5
@@ -619,8 +599,8 @@ def plt_lightcurve(
         axis="both", which="major", direction="in", length=6, width=1.5, pad=5
     )
     axx[1].tick_params(axis="both", which="minor", direction="in", length=4, width=1.5)
-    axx[0].tick_params(axis="both", which="both", labelsize="15", right=True, top=True)
-    axx[1].tick_params(axis="both", which="both", labelsize="15", right=True, top=True)
+    axx[0].tick_params(axis="both", which="both", labelsize="20", right=True, top=True)
+    axx[1].tick_params(axis="both", which="both", labelsize="20", right=True, top=True)
 
     axc[0].legend(loc="lower right", fontsize=20)
     axx[0].legend(loc="lower right", fontsize=20)
@@ -665,7 +645,9 @@ def plt_lightcurve(
     axx[0].axhline(y=0, color="k", alpha=0.5, linestyle="--")
     axx[1].axhline(y=0, color="k", alpha=0.5, linestyle="--")
     plt.tight_layout()
-    plt.savefig(f"{save_dir}_lightcurve.{ext}", overwrite=True)
+    plt.savefig(f"{save_dir}/lightcurve.{ext}", overwrite=True)
+    plt.clf()
+    plt.close()
     return
 
 
@@ -674,7 +656,7 @@ def plt_mwa_sed(
     save_dir,
     gleam_target,
     model,
-    ext="png",
+    ext="pdf",
     colors=cmr.take_cmap_colors(
         "cmr.gothic", 8, cmap_range=(0.15, 0.8), return_fmt="hex"
     ),
@@ -789,7 +771,7 @@ def plt_sed(
     err_src_flux,
     extra_surveys,
     yvals,
-    ext="png",
+    ext="pdf",
     colors=cmr.take_cmap_colors(
         "cmr.gothic", 8, cmap_range=(0.15, 0.8), return_fmt="hex"
     ),
@@ -894,7 +876,6 @@ def run_everything(save_dir, data_dir, gleam_tar):
     fit_flux, err_fit_flux, fit_freq = fitfuncts.createfitflux(data_dir, gleam_tar)
     src_flux, err_src_flux = fitfuncts.createsrcflux(data_dir, gleam_tar)
     extra_fluxes = fitfuncts.read_extra_fluxes("/data/MWA", gleam_tar)
-    print(extra_fluxes)
     for i in range(len(epoch_nms)):
         if epoch_nms[i] == "2020-04" and target == "J020507":
             print(f"{target} {epoch_nms[i]}, skipping .... ")
@@ -966,17 +947,18 @@ def run_everything(save_dir, data_dir, gleam_tar):
     yvals, nu_p, err_nu_p = calc_modelnparams(
         f"{save_dir}/{target}", target, model
     )
-
-    # analysis_functs.plt_peakftime(
-    #     f"{save_dir}Plots/{target}",
-    #     nu_p,
-    #     err_nu_p,
-    #     r"GLEAM J020507-110922 Peak Frequency ($\nu_p$)",
-    # )
     plt.clf()
     plt.close()
-    plt_mwa_sed(f"{save_dir}/{target}", f"{save_dir}Plots/", gleam_tar, model)
-    plt.clf()
-    plt.close()
+    if target in ["J015445", "J020507", "J024838", "J223933"]:
+        plt_mwa_sed(f"{save_dir}/{target}", f"{save_dir}Plots/", gleam_tar, model)
+        plt.clf()
+        plt.close()
     plt_sed(data_dir, f"{save_dir}Plots/", gleam_tar, src_flux, err_fit_flux, extra_fluxes, yvals)
-    return 
+    if target in ["J015445", "J020507", "J024838"]:
+        plt_peakftime(
+                f"{save_dir}Plots/{target}",
+                nu_p,
+                err_nu_p,
+                f"{gleam_tar} Peak Frequency",
+            )
+    return nu_p, err_nu_p
