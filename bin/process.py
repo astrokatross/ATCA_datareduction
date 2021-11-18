@@ -367,7 +367,7 @@ def imgmfs_ms(src_dir, msname, targetms, epoch, ATCA_band, n_spw, tar):
     robust = 0.5
     interactive = True
     gain = 0.01
-    if epoch == "2021-10-15":
+    if tar == "2211-388":
         uvrange = "<1000"
         cell = "1arcsec"
         imsize = 1152
@@ -468,7 +468,7 @@ def img_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar):
     interactive = False
     gain = 0.01
     threshold = "5e-3Jy"
-    if epoch == "2021-10-15":
+    if tar == "2211-388":
         uvrange = "<1000"
         cell = "1arcsec"
         imsize = 1152
@@ -583,8 +583,8 @@ def slefcal_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar):
         minsnr = 3.0
         minblperant = 3
         cell = "0.2arcsec"
-    if epoch == "2021-10-15":
-        print(epoch)
+    if tar == "2211-388":
+        # print(epoch)
         uvrange = "<1000"
         cell = "1arcsec"
         imsize = 1152

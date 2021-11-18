@@ -122,95 +122,38 @@ model_params_dict = {
 }
 
 
-def calc_S_v(model, params, vp):
-    # Firstly for 150MHz:
-    S_150mhz = model(0.15, *params)
-
-    # Calculating at 2.1GHz
-    S_2Ghz = model(2.1, *params)
-
-    # 5.5GHz
-    S_5Ghz = model(5.5, *params)
-
-    # 9.5GHz
-    S_9Ghz = model(9.5, *params)
-
-    # At Peak Frequency caluclated from fitting previously
-    S_vp = model(vp, *params)
-    return np.array([S_150mhz, S_2Ghz, S_5Ghz, S_9Ghz, S_vp])
-
-
-def plot_S_v(directory, target, epochs, model_nm, model):
-    S_v_temp = []
-    vp = []
-    for epoch in epochs:
-        sampler = open(
-            f"/data/ATCA/analysis/{target}/{epoch}/{model_nm}/run1/info/results.json"
-        )
+def calc_yvals(directory, target, epoch):
+    freq_cont = np.linspace(0.01, 25, num=10000)
+    yvals = []
+    logz = []
+    model_nms = [
+        "SSA",
+        "FFA",
+        "inFFA",
+        "SSAb",
+        "FFAb",
+        "inFFAb",
+    ]
+    models = [gpscssmodels.singSSA, gpscssmodels.singhomobremss, gpscssmodels.singinhomobremss, gpscssmodels.singSSAbreakexp, gpscssmodels.singhomobremssbreakexp, gpscssmodels.singinhomobremssbreakexp]
+    for i in range(len(models)):
+        sampler = open(f"{directory}/{epoch}/{model_nms[i]}/run1/info/results.json")
         results = json.load(sampler)
-        paramnames = np.array(results["paramnames"])
-        parameters = np.array(results["maximum_likelihood"]["point"])
-        vp_temp = np.squeeze(np.array(parameters[paramnames == "freqpeak"]))
-        S_v_temp.append(calc_S_v(model, parameters, vp_temp))
-        vp.append(vp_temp)
-    S_v = list(zip(*S_v_temp))
-    delta_S150 = max(S_v[0]) - min(S_v[0])
-    delta_S2 = max(S_v[1]) - min(S_v[1])
-    delta_S5 = max(S_v[2]) - min(S_v[2])
-    delta_S9 = max(S_v[3]) - min(S_v[3])
-    delta_Svp = max(S_v[4]) - min(S_v[4])
-    colors = cmr.take_cmap_colors(
-        "cmr.bubblegum", len(S_v[0]), cmap_range=(0.15, 0.85), return_fmt="hex"
-    )
-    num_epochs = np.array([-10, -5, 1, 4, 5, 7, 10])
-    fig = plt.figure(1, figsize=(40, 18))
-    gs = fig.add_gridspec(5, hspace=0)
-    axes = gs.subplots(sharex=True)
-    # fig, axes = plt.subplots(5, 1)
-    fig.suptitle("Flux Density With Time", fontsize=30)
-    axes[0].set_title(
-        f"$\Delta$S\_150MHz={delta_S150:.3f}Jy, $\Delta$S\_2.1GHz={delta_S2:.3f}Jy, $\Delta$S\_5.5GHz={delta_S5:.3f}Jy, $\Delta$S\_9.5GHz={delta_S9:.3f}, $\Delta$S\_vp={delta_Svp:.3f}",
-        fontsize=20,
-    )
-    for i in range(len(S_v[0])):
-        axes[0].scatter(num_epochs[i], S_v[0][i], color=colors[i])
-        axes[1].scatter(num_epochs[i], S_v[1][i], color=colors[i])
-        axes[2].scatter(num_epochs[i], S_v[2][i], color=colors[i])
-        axes[3].scatter(num_epochs[i], S_v[3][i], color=colors[i])
-        axes[4].scatter(
-            num_epochs[i], S_v[4][i], color=colors[i], label=f"vp={vp[i]:.2f}GHz"
-        )
-    axes[0].set_ylabel("S\_150MHz (Jy)", fontsize=20)
-    axes[1].set_ylabel("S\_2.1GHz (Jy)", fontsize=20)
-    axes[2].set_ylabel("S\_5.5GHz (Jy)", fontsize=20)
-    axes[3].set_ylabel("S\_9.5GHz (Jy)", fontsize=20)
-    axes[4].set_ylabel("S\_vp (Jy)", fontsize=20)
-
-    axes[0].set_ylim([0.9 * np.min(S_v[0]), 1.1 * np.max(S_v[0])])
-    axes[1].set_ylim([0.9 * np.min(S_v[1]), 1.1 * np.max(S_v[1])])
-    axes[2].set_ylim([0.9 * np.min(S_v[2]), 1.1 * np.max(S_v[2])])
-    axes[3].set_ylim([0.9 * np.min(S_v[3]), 1.1 * np.max(S_v[3])])
-    axes[4].set_ylim([0.9 * np.min(S_v[4]), 1.1 * np.max(S_v[4])])
-
-    axes[4].legend(loc="upper center", bbox_to_anchor=(0.48, -0.2), ncol=7, fontsize=14)
-
-    axes[4].set_xticks(num_epochs)
-    axes[4].set_xticklabels(epochs, fontsize=20)
-    axes[0].tick_params(axis="y", labelsize=20)
-    axes[1].tick_params(axis="y", labelsize=20)
-    axes[2].tick_params(axis="y", labelsize=20)
-    axes[3].tick_params(axis="y", labelsize=20)
-    axes[4].tick_params(axis="y", labelsize=20)
-    plt.savefig(f"{directory}/{target}_Sv_vs_time.png", overwrite=True)
-    return
+        param_mod = results["maximum_likelihood"]["point"]
+        yvals_mod = models[i](freq_cont, *param_mod)
+        yvals.append(yvals_mod)
+        logz.append(results["logz"])
+    return yvals, logz
 
 
 def calc_modelnparams(directory, target, model):
     freq_cont = np.linspace(0.01, 25, num=10000)
     yvals = []
     nu_p = []
+    alpha = []
     errlo_nu_p = []
     errup_nu_p = []
+    errlo_alpha = []
+    errup_alpha = []
     model_nm = model[0]
     model_funct = model[1]
     epochs = [
@@ -225,7 +168,7 @@ def calc_modelnparams(directory, target, model):
     ]
     for i in range(len(epochs)):
         try:
-            sampler = open(f"{directory}/{epochs[i]}/{model_nm}/run2/info/results.json")
+            sampler = open(f"{directory}/{epochs[i]}/{model_nm}/run1/info/results.json")
             results = json.load(sampler)
             param_mod = results["maximum_likelihood"]["point"]
             paramnames = results["paramnames"]
@@ -238,19 +181,28 @@ def calc_modelnparams(directory, target, model):
             nu_p.append(param_mod[paramnames.index("peak_frequency")])
             errlo_nu_p.append(abs(errs_low[paramnames.index("peak_frequency")]))
             errup_nu_p.append(abs(errs_up[paramnames.index("peak_frequency")]))
+            # try:
+            alpha.append(param_mod[paramnames.index("alpha")])
+            errlo_alpha.append(abs(errs_low[paramnames.index("alpha")]))
+            errup_alpha.append(abs(errs_up[paramnames.index("alpha")]))
+            # except:
         except FileNotFoundError:
             yvals.append(np.full(len(freq_cont), np.nan))
             nu_p.append(np.nan)
             errlo_nu_p.append(np.nan)
             errup_nu_p.append(np.nan)
+            alpha.append(np.nan)
+            errlo_alpha.append(np.nan)
+            errup_alpha.append(np.nan)
             print("Can't find sampler....")
         err_nu_p = np.stack((errlo_nu_p, errup_nu_p))
-    return yvals, nu_p, err_nu_p
+        err_alpha = np.stack((errlo_alpha, errup_alpha))
+    return yvals, nu_p, err_nu_p, alpha, err_alpha
 
 
 def read_results(dir):
     try:
-        sampler = open(f"{dir}/run2/info/results.json")
+        sampler = open(f"{dir}/run1/info/results.json")
         results = json.load(sampler)
         logz = results["logz"]
         return logz
@@ -328,6 +280,92 @@ def read_timeranges(start_times, end_times):
             current_str = new_time.strftime("%H:%M:%S")
             timeranges.append(current_str)
     return timeranges
+
+
+def plt_alphatime(
+    save_dir,
+    alpha,
+    err_alpha,
+    plot_title,
+    ext="pdf",
+    colors=cmr.take_cmap_colors(
+        "cmr.gothic", 8, cmap_range=(0.15, 0.8), return_fmt="hex"
+    ),
+):
+    figsize = (20, 10)
+    # fig = plt.figure(1, figsize=figsize, facecolor="white")
+    fig = plt.figure(figsize=figsize)
+    gs = fig.add_gridspec(1, 2, wspace=0.05, width_ratios=[1, 3])
+    ax = gs.subplots()
+    fig.suptitle(plot_title, fontsize=40)
+    ax[0].set_ylabel(r"$\nu_p$", fontsize=30)
+    ax[0].tick_params(
+        axis="both", which="major", direction="in", length=6, width=1.5, pad=5
+    )
+    ax[0].tick_params(axis="both", which="minor", direction="in", length=4, width=1.5)
+    ax[0].tick_params(axis="both", which="both", labelsize="25", right=True, top=True)
+    ax[1].tick_params(
+        axis="both", which="major", direction="in", length=6, width=1.5, pad=5
+    )
+    ax[1].tick_params(axis="both", which="minor", direction="in", length=4, width=1.5)
+    ax[1].tick_params(axis="both", which="both", labelsize="25", right=True, top=True)
+    ax[0].spines["right"].set_visible(False)
+    ax[1].spines["left"].set_visible(False)
+    ax[0].yaxis.set_ticks_position("left")
+    ax[1].yaxis.set_ticks_position("right")
+    ax[1].yaxis.set_ticklabels([])
+    d = 1
+    kwargs = dict(
+        marker=[(-1, -d), (1, d)],
+        markersize=12,
+        linestyle="none",
+        color="k",
+        mec="k",
+        mew=1,
+        clip_on=False,
+    )
+    ax[0].plot([1, 1], [0, 1], transform=ax[0].transAxes, **kwargs)
+    ax[1].plot([0, 0], [0, 1], transform=ax[1].transAxes, **kwargs)
+
+    months = [-5, -4, 1, 3, 4, 5, 7, 10]
+    for i in range(len(months)):
+        ax[0].errorbar(
+            months[i],
+            alpha[i],
+            yerr=np.array([[err_alpha[0, i], err_alpha[1, i]]]).T,
+            fmt="o",
+            color=colors[i],
+            capsize=3,
+            markersize=10,
+        )
+        ax[1].errorbar(
+            months[i],
+            alpha[i],
+            yerr=np.array([[err_alpha[0, i], err_alpha[1, i]]]).T,
+            fmt="o",
+            color=colors[i],
+            capsize=3,
+            markersize=10,
+        )
+    for axis in ["top", "bottom", "left", "right"]:
+        ax[0].spines[axis].set_linewidth(2)
+        ax[1].spines[axis].set_linewidth(2)
+    ax[0].set_xticks(months)
+    ax[1].set_xticks(months)
+    ax[0].set_xticklabels(
+        ["2013", "2014", "Jan20", "Mar20", "Apr20", "May20", "July20", "Oct20"]
+    )
+    ax[1].set_xticklabels(
+        ["2013", "2014", "Jan20", "Mar20", "Apr20", "May20", "July20", "Oct20"]
+    )
+    ax[0].set_xlim([-6, -3])
+    ax[1].set_xlim([0, 12])
+    plt.tight_layout()
+    
+    plt.savefig(f"{save_dir}_alphavstime.{ext}", overwrite=True)
+    plt.clf()
+    plt.close()
+    return
 
 
 def plt_peakftime(
@@ -422,7 +460,7 @@ def read_lightcurveflux(data_dir, outfile_dir, timeranges):
     for i in range(len(timeranges)):
         timerange = f"{timeranges[i]}+00:00:30"
         outfile = f"{outfile_dir}_{timerange}.cl"
-        tar_ms = f"{data_dir}_selfcaltime.ms"
+        tar_ms = f"{data_dir}_selfcal.ms"
         print(tar_ms)
         if (os.path.exists(outfile)) is False:
             uvmodelfit(
@@ -445,10 +483,151 @@ def read_lightcurveflux(data_dir, outfile_dir, timeranges):
             err = np.sqrt((flux * 0.05) ** 2 + (0.002 ** 2))
             fluxes.append(flux)
             err_fluxes.append(err)
+    print(np.std(fluxes)/np.median(fluxes))
     mod = round(np.std(fluxes)/np.median(fluxes), -int(math.floor(math.log10(abs(np.std(fluxes)/np.median(fluxes))))))
     err_fluxes = (err_fluxes/np.median(fluxes))
     fluxes = (fluxes/np.median(fluxes)) - 1
     return fluxes, err_fluxes, mod
+
+
+def plt_lightcurve_continual(
+    save_dir,
+    scan_times_src1,
+    src1_fluxes,
+    err_src1_fluxes,
+    mod_src1,
+    scan_times_src2,
+    src2_fluxes,
+    err_src2_fluxes,
+    mod_src2,
+    ext="pdf",
+    src1_nm="J215436",
+    src2_nm="2211-388"
+):
+    src1_fluxes_c = src1_fluxes[0]
+    src1_fluxes_x = src1_fluxes[1]
+    err_src1_fluxes_c = err_src1_fluxes[0]
+    err_src1_fluxes_x = err_src1_fluxes[1]
+
+    mod_src1_c = mod_src1[0]
+    mod_src1_x = mod_src1[1]
+
+    src2_fluxes_c = src2_fluxes[0]
+    src2_fluxes_x = src2_fluxes[1]
+    err_src2_fluxes_c = err_src2_fluxes[0]
+    err_src2_fluxes_x = err_src2_fluxes[1]
+
+    mod_src2_c = mod_src2[0]
+    mod_src2_x = mod_src2[1]
+    
+    fig = plt.figure(figsize=(15, 10))
+    gs = fig.add_gridspec(2, 1, hspace=0, wspace=0.05)
+    ax = gs.subplots(sharey=True)
+    fig.suptitle(f"Light Curve {src1_nm}", fontsize=40)
+
+    axc = ax[0]
+    axx = ax[1]
+    axc.errorbar(
+        scan_times_src1,
+        src1_fluxes_c,
+        err_src1_fluxes_c,
+        color="C4",
+        label=f"{src1_nm}, $m=$ {mod_src1_c}",
+        linestyle="None",
+        marker="o",
+        markersize=5,
+    )
+
+    axx.errorbar(
+        scan_times_src1,
+        src1_fluxes_x,
+        err_src1_fluxes_x,
+        color="C4",
+        label=f"{src1_nm}, $m=$ {mod_src1_x}",
+        linestyle="None",
+        marker="o",
+        markersize=5,
+    )
+    axc.errorbar(
+        scan_times_src2,
+        src2_fluxes_c,
+        err_src2_fluxes_c,
+        color="C6",
+        label=f"{src2_nm}, $m=$ {mod_src2_c}",
+        linestyle="None",
+        marker="o",
+        markersize=5,
+    )
+
+    axx.errorbar(
+        scan_times_src2,
+        src2_fluxes_x,
+        err_src2_fluxes_x,
+        color="C6",
+        label=f"{src2_nm}, $m=$ {mod_src2_x}",
+        linestyle="None",
+        marker="o",
+        markersize=5,
+    )
+
+    axc.set_ylabel(r"$S_{5.5\mathrm{GHz}}$ Offset (\%)", fontsize=30)
+    axx.set_ylabel(r"$S_{9\mathrm{GHz}}$ Offset (\%)", fontsize=30)
+    fig.text(0.5, 0.04, f"Time since start of first scan (minutes)", ha='center', fontsize=30)
+    # formating!
+    # customize tick directions and lengths
+    axc.tick_params(
+        axis="both", which="major", direction="in", length=6, width=1.5, pad=5
+    )
+    axc.tick_params(axis="both", which="minor", direction="in", length=4, width=1.5)
+    axc.tick_params(axis="both", which="both", labelsize="20", right=True, top=True)
+    axc.tick_params(axis="both", which="both", labelsize="20", right=True, top=True)
+
+    axx.tick_params(
+        axis="both", which="major", direction="in", length=6, width=1.5, pad=5
+    )
+    axx.tick_params(axis="both", which="minor", direction="in", length=4, width=1.5)
+    axx.tick_params(axis="both", which="both", labelsize="20", right=True, top=True)
+    axc.legend(loc="lower left", fontsize=20)
+    axx.legend(loc="lower left", fontsize=20)
+
+    # axc.spines["right"].set_visible(False)
+    # axc[1].spines["left"].set_visible(False)
+    # axc[0].yaxis.set_ticks_position("left")
+    # axc[1].yaxis.set_ticks_position("right")
+    # axx[0].spines["right"].set_visible(False)
+    # axx[1].spines["left"].set_visible(False)
+    # axx[0].yaxis.set_ticks_position("left")
+    # axx[1].yaxis.set_ticks_position("right")
+
+    axc.xaxis.set_ticklabels([])
+
+    # axc.set_xlim([-2.5, 27.5])
+    # axx.set_xlim([-2.5, 27.5])
+    # d = 1
+
+    # kwargs = dict(
+    #     marker=[(-1, -d), (1, d)],
+    #     markersize=12,
+    #     linestyle="none",
+    #     color="k",
+    #     mec="k",
+    #     mew=1,
+    #     clip_on=False,
+    # )
+
+    # axc[0].plot([1, 1], [0, 1], transform=axc[0].transAxes, **kwargs)
+    # axc[1].plot([0, 0], [0, 1], transform=axc[1].transAxes, **kwargs)
+
+    # axx[0].plot([1, 1], [0, 1], transform=axx[0].transAxes, **kwargs)
+    # axx[1].plot([0, 0], [0, 1], transform=axx[1].transAxes, **kwargs)
+
+    axc.axhline(y=0, color="k", alpha=0.5, linestyle="--")
+    axx.axhline(y=0, color="k", alpha=0.5, linestyle="--")
+    plt.tight_layout()
+    plt.savefig(f"{save_dir}/lightcurve_j215436.{ext}", overwrite=True)
+    plt.clf()
+    plt.close()
+    return
 
 
 def plt_lightcurve(
@@ -645,7 +824,7 @@ def plt_lightcurve(
     axx[0].axhline(y=0, color="k", alpha=0.5, linestyle="--")
     axx[1].axhline(y=0, color="k", alpha=0.5, linestyle="--")
     plt.tight_layout()
-    plt.savefig(f"{save_dir}/lightcurve.{ext}", overwrite=True)
+    plt.savefig(f"{save_dir}/lightcurve_j001513.{ext}", overwrite=True)
     plt.clf()
     plt.close()
     return
@@ -715,7 +894,7 @@ def plt_mwa_sed(
     may_normfact = np.nanmedian(mwaflux_2020[4][10:20] - mwaflux_2020[5][10:20])
     jul_normfact = np.nanmedian(mwaflux_2020[4][10:20] - mwaflux_2020[6][10:20])
     oct_normfact = np.nanmedian(mwaflux_2020[4][10:20] - mwaflux_2020[7][10:20])
-    yvals, nu_p, err_nu_p = calc_modelnparams(data_dir, target, model)
+    yvals, nu_p, err_nu_p, alpha, err_alpha = calc_modelnparams(data_dir, target, model)
     if target == "J223933":
         ylabel = "Relative Flux Density"
         yunit = ""
@@ -761,6 +940,49 @@ def plt_mwa_sed(
     plt.clf()
     plt.close()
     return
+
+
+def plt_modelsonly(
+    save_dir,
+    gleam_target,
+    fit_freq,
+    src_flux,
+    err_src_flux,
+    yvals,
+    logz,
+    epoch_nm,
+    ext="pdf",
+    colors=cmr.take_cmap_colors(
+        "cmr.cosmic", 8, cmap_range=(0.15, 0.8), return_fmt="hex"
+    ),
+):
+
+    model_nms = [
+        "SSA",
+        "FFA",
+        "inFFA",
+        "SSAb",
+        "FFAb",
+        "inFFAb",
+    ]
+    target = gleam_target.strip("GLEAM ")[0:7]
+    f = CF.sed_fig()
+    f.plot_spectrum(
+        fit_freq,
+        src_flux,
+        err_src_flux,
+        marker="o",
+        marker_color="k",
+        s=60,
+    )
+    for i in range((6)):
+        f.display_model(np.linspace(0.01, 25, num=10000), yvals[i], colors[i], lw=1, label=f"{model_nms[i]}, logz: {logz[i]}")
+    f.legend(loc="lower center")
+    f.format(xunit="GHz")
+    f.title(f"{gleam_target} {epoch_nm}")
+    f.save(f"{save_dir}{target}_{epoch_nm}_models", ext=ext)
+    plt.close()
+    plt.clf()
 
 
 def plt_sed(
@@ -877,6 +1099,7 @@ def run_everything(save_dir, data_dir, gleam_tar):
     src_flux, err_src_flux = fitfuncts.createsrcflux(data_dir, gleam_tar)
     extra_fluxes = fitfuncts.read_extra_fluxes("/data/MWA", gleam_tar)
     for i in range(len(epoch_nms)):
+        print(f"Running for {target} and {epoch_nms[i]}")
         if epoch_nms[i] == "2020-04" and target == "J020507":
             print(f"{target} {epoch_nms[i]}, skipping .... ")
         elif epoch_nms[i] == "2020-04" and target == "J024838":
@@ -889,9 +1112,9 @@ def run_everything(save_dir, data_dir, gleam_tar):
                 labels = model_params_dict[model][2:]
                 try:
                     sampler = open(
-                        f"{save_dir}{target}/{epoch_nms[i]}/{model}/run2/info/results.json"
+                        f"{save_dir}{target}/{epoch_nms[i]}/{model}/run1/info/results.json"
                     )
-                    # print("Found results of run, continuing with analysis")
+                    print("Found results of run, continuing with analysis")
                 except FileNotFoundError:
                     sampler = fitfuncts.run_ultranest_mcmc(
                         f"{save_dir}{target}/{epoch_nms[i]}/{model}",
@@ -901,41 +1124,16 @@ def run_everything(save_dir, data_dir, gleam_tar):
                         err_fit_flux[i],
                         model_funct,
                         model_trans,
-                        run_num=2,
+                        run_num=1,
                     )
                     sampler.run(max_iters=50000)
                     print(f"Finished fitting for {model} {epoch_nms[i]}")
                     sampler.store_tree()
                     sampler = open(
-                        f"{save_dir}{target}/{epoch_nms[i]}/{model}/run2/info/results.json"
+                        f"{save_dir}{target}/{epoch_nms[i]}/{model}/run1/info/results.json"
                     )
-                # if (
-                #     os.path.exists(
-                #         f"{save_dir}/{target}/seds/{target}_{epoch_nm}_{model}_sed.png"
-                #     )
-                #     is False
-                # ):
-                #     sequence, final = ultranest.integrator.read_file(
-                #         f"{save_dir}{target}/{epoch_nm}/{model}/run2/",
-                #         len(labels),
-                #         check_insertion_order=False,
-                #     )
-
-                # band = PredictionBand(freq_cont)
-                # for params in final["samples"]:
-                #     band.add(model_funct(freq_cont, *params))
-
-                # fitfuncts.plot_epochsed(
-                #     f"{save_dir}/{target}/seds/{target}_{epoch_nm}_{model}",
-                #     freq,
-                #     src_flux,
-                #     err_src_flux,
-                #     band,
-                #     color,
-                #     target,
-                #     model,
-                #     epoch,
-                # )
+        yvals_epoch, logz_epoch = calc_yvals(f"{save_dir}/{target}", target, epoch_nms[i])
+        plt_modelsonly(f"{save_dir}", gleam_tar, fit_freq[i], fit_flux[i], err_fit_flux[i], yvals_epoch, logz_epoch, epoch_nms[i], ext="png")
 
     # Plotting section
     avg_logz = calc_logzmod(target)
@@ -944,21 +1142,38 @@ def run_everything(save_dir, data_dir, gleam_tar):
     print(f"Best model: {model_nm}")
     model_funct = model_params_dict[model_nm][0]
     model = [model_nm, model_funct]
-    yvals, nu_p, err_nu_p = calc_modelnparams(
+    yvals, nu_p, err_nu_p, alpha, err_alpha = calc_modelnparams(
         f"{save_dir}/{target}", target, model
     )
     plt.clf()
     plt.close()
-    if target in ["J015445", "J020507", "J024838", "J223933"]:
-        plt_mwa_sed(f"{save_dir}/{target}", f"{save_dir}Plots/", gleam_tar, model)
+    if target in ["J015445", "J020507", "J024838", "J223933", "J215436"]:
+        plt_mwa_sed(f"{save_dir}/{target}", f"{save_dir}Plots/", gleam_tar, model, ext="png")
         plt.clf()
         plt.close()
-    plt_sed(data_dir, f"{save_dir}Plots/", gleam_tar, src_flux, err_fit_flux, extra_fluxes, yvals)
-    if target in ["J015445", "J020507", "J024838"]:
-        plt_peakftime(
-                f"{save_dir}Plots/{target}",
-                nu_p,
-                err_nu_p,
-                f"{gleam_tar} Peak Frequency",
-            )
+    plt_sed(data_dir, f"{save_dir}Plots/", gleam_tar, src_flux, err_src_flux, extra_fluxes, yvals, ext="png")
+    plt_peakftime(
+            f"{save_dir}{target}",
+            nu_p,
+            err_nu_p,
+            f"{gleam_tar} Peak Frequency",
+            ext="png"
+        )
+    plt_alphatime(
+        f"{save_dir}{target}",
+        alpha,
+        err_alpha,
+        f"{gleam_tar} Spectral Index",
+        ext="png",
+    )
+    if target == "J020507":
+        yvals_oct = calc_yvals(f"{save_dir}/{target}", target, "2020-10")
+        oct_flux1 = src_flux[7][0:20]
+        err_oct_flux1 = err_src_flux[7][0:20]
+        oct_flux2 = src_flux[4][20:37]
+        err_oct_flux2 = err_src_flux[4][20:37]
+
+        oct_flux = np.concatenate((oct_flux1, oct_flux2))
+        err_oct_flux = np.concatenate((err_oct_flux1, err_oct_flux2))
+        plt_modelsonly(f"{save_dir}Plots/", gleam_tar, oct_flux, err_oct_flux, yvals_oct, ext="png")
     return nu_p, err_nu_p

@@ -143,7 +143,7 @@ def read_mwa_fluxes(directory, tarcomp, name, epoch):
                     mwa_flux.append(mwa_flux_chan)
                     mwa_errs.append(mwa_errs_chan)
                 else:
-                    print("empty pd")
+                    # print("empty pd")
                     mwa_flux.append(np.nan)
                     mwa_errs.append(np.nan)
                     pass
@@ -287,22 +287,40 @@ def createfitflux(data_dir, gleam_target):
         err_mwa_flux_yr2,
         extra_surveys,
     ) = read_gleam_fluxes("/data/MWA", gleam_target)
-    fit_flux1 = np.hstack((mwa_flux_yr1, src_epoch4[20:37]))
-    fit_flux2 = np.hstack((mwa_flux_yr2, src_epoch4[20:37]))
-    fit_flux3 = np.hstack((mwa_flux_yr1, src_epoch1[20:37]))
-    fit_flux4 = np.hstack((mwa_flux_yr1, src_epoch2[20:37]))
-    fit_flux5 = src_epoch3
-    fit_flux6 = src_epoch4
-    fit_flux7 = np.hstack((src_epoch5[0:20], src_epoch4[20:37]))
-    fit_flux8 = np.hstack((src_epoch6[0:20], src_epoch4[20:37]))
-    err_fit_flux1 = np.hstack((err_mwa_flux_yr1, err_src_epoch4[20:37]))
-    err_fit_flux2 = np.hstack((err_mwa_flux_yr2, err_src_epoch4[20:37]))
-    err_fit_flux3 = np.hstack((err_mwa_flux_yr1, err_src_epoch1[20:37]))
-    err_fit_flux4 = np.hstack((err_mwa_flux_yr1, err_src_epoch2[20:37]))
-    err_fit_flux5 = err_src_epoch3
-    err_fit_flux6 = err_src_epoch4
-    err_fit_flux7 = np.hstack((err_src_epoch5[0:20], err_src_epoch4[20:37]))
-    err_fit_flux8 = np.hstack((err_src_epoch6[0:20], err_src_epoch4[20:37]))
+    if target == "J215436":
+        fit_flux1 = np.hstack((mwa_flux_yr1, src_epoch4[20:37]))
+        fit_flux2 = np.hstack((mwa_flux_yr2, src_epoch4[20:37]))
+        fit_flux3 = np.hstack((mwa_flux_yr1, src_epoch4[20:37]))
+        fit_flux4 = np.hstack((mwa_flux_yr1, src_epoch4[20:37]))
+        fit_flux5 = src_epoch4
+        fit_flux6 = src_epoch4
+        fit_flux7 = np.hstack((src_epoch5[0:20], src_epoch4[20:37]))
+        fit_flux8 = np.hstack((src_epoch6[0:20], src_epoch4[20:37]))
+        err_fit_flux1 = np.hstack((err_mwa_flux_yr1, err_src_epoch4[20:37]))
+        err_fit_flux2 = np.hstack((err_mwa_flux_yr2, err_src_epoch4[20:37]))
+        err_fit_flux3 = np.hstack((err_mwa_flux_yr1, err_src_epoch4[20:37]))
+        err_fit_flux4 = np.hstack((err_mwa_flux_yr1, err_src_epoch4[20:37]))
+        err_fit_flux5 = err_src_epoch4
+        err_fit_flux6 = err_src_epoch4
+        err_fit_flux7 = np.hstack((err_src_epoch5[0:20], err_src_epoch4[20:37]))
+        err_fit_flux8 = np.hstack((err_src_epoch6[0:20], err_src_epoch4[20:37]))
+    else:
+        fit_flux1 = np.hstack((mwa_flux_yr1, src_epoch4[20:37]))
+        fit_flux2 = np.hstack((mwa_flux_yr2, src_epoch4[20:37]))
+        fit_flux3 = np.hstack((mwa_flux_yr1, src_epoch1[20:37]))
+        fit_flux4 = np.hstack((mwa_flux_yr1, src_epoch2[20:37]))
+        fit_flux5 = src_epoch3
+        fit_flux6 = src_epoch4
+        fit_flux7 = np.hstack((src_epoch5[0:20], src_epoch4[20:37]))
+        fit_flux8 = np.hstack((src_epoch6[0:20], src_epoch4[20:37]))
+        err_fit_flux1 = np.hstack((err_mwa_flux_yr1, err_src_epoch4[20:37]))
+        err_fit_flux2 = np.hstack((err_mwa_flux_yr2, err_src_epoch4[20:37]))
+        err_fit_flux3 = np.hstack((err_mwa_flux_yr1, err_src_epoch1[20:37]))
+        err_fit_flux4 = np.hstack((err_mwa_flux_yr1, err_src_epoch2[20:37]))
+        err_fit_flux5 = err_src_epoch3
+        err_fit_flux6 = err_src_epoch4
+        err_fit_flux7 = np.hstack((err_src_epoch5[0:20], err_src_epoch4[20:37]))
+        err_fit_flux8 = np.hstack((err_src_epoch6[0:20], err_src_epoch4[20:37]))
     fit_flux = np.stack(
         (
             fit_flux1,
@@ -358,6 +376,7 @@ def createsrcflux(data_dir, gleam_target):
     err_mwa_flux_yr1 = np.hstack((err_mwa_flux_yr1, atca_buffer))
     mwa_flux_yr2 = np.hstack((mwa_flux_yr2, atca_buffer))
     err_mwa_flux_yr2 = np.hstack((err_mwa_flux_yr2, atca_buffer))
+    # print(len(mwa_flux_yr1), len(mwa_flux_yr2), len(src_epoch1), len(src_epoch2), len(src_epoch3), len(src_epoch4), len(src_epoch5), len(src_epoch6))
     src_flux = np.stack(
         (
             mwa_flux_yr1,
