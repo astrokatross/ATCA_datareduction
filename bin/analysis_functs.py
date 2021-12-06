@@ -136,12 +136,16 @@ def calc_yvals(directory, target, epoch):
     ]
     models = [gpscssmodels.singSSA, gpscssmodels.singhomobremss, gpscssmodels.singinhomobremss, gpscssmodels.singSSAbreakexp, gpscssmodels.singhomobremssbreakexp, gpscssmodels.singinhomobremssbreakexp]
     for i in range(len(models)):
-        sampler = open(f"{directory}/{epoch}/{model_nms[i]}/run1/info/results.json")
-        results = json.load(sampler)
-        param_mod = results["maximum_likelihood"]["point"]
-        yvals_mod = models[i](freq_cont, *param_mod)
-        yvals.append(yvals_mod)
-        logz.append(results["logz"])
+        try: 
+            sampler = open(f"{directory}/{epoch}/{model_nms[i]}/run1/info/results.json")
+            results = json.load(sampler)
+            param_mod = results["maximum_likelihood"]["point"]
+            yvals_mod = models[i](freq_cont, *param_mod)
+            yvals.append(yvals_mod)
+            logz.append(results["logz"])
+        except FileNotFoundError:
+            yvals.append(np.full(10000, np.nan))
+            logz.append(np.nan)
     return yvals, logz
 
 
@@ -182,9 +186,14 @@ def calc_modelnparams(directory, target, model):
             errlo_nu_p.append(abs(errs_low[paramnames.index("peak_frequency")]))
             errup_nu_p.append(abs(errs_up[paramnames.index("peak_frequency")]))
             # try:
-            alpha.append(param_mod[paramnames.index("alpha")])
-            errlo_alpha.append(abs(errs_low[paramnames.index("alpha")]))
-            errup_alpha.append(abs(errs_up[paramnames.index("alpha")]))
+            if model_nm in ["SSAb", "SSA"]:
+                alpha.append(param_mod[paramnames.index("beta")])
+                errlo_alpha.append(abs(errs_low[paramnames.index("beta")]))
+                errup_alpha.append(abs(errs_up[paramnames.index("beta")]))
+            else: 
+                alpha.append(param_mod[paramnames.index("alpha")])
+                errlo_alpha.append(abs(errs_low[paramnames.index("alpha")]))
+                errup_alpha.append(abs(errs_up[paramnames.index("alpha")]))
             # except:
         except FileNotFoundError:
             yvals.append(np.full(len(freq_cont), np.nan))
@@ -233,8 +242,8 @@ def calc_logzmod(target):
     epochs = [
         "2013",
         "2014",
-        "2020-01",
-        "2020-03",
+        # "2020-01",
+        # "2020-03",
         "2020-04",
         "2020-05",
         "2020-07",
@@ -253,9 +262,9 @@ def calc_logzmod(target):
     for i in range(len(logz[0])):
         sum_logz[i] = np.nansum(logz[:, i])
     if target in ["J020507", "J024838"]:
-        avg_logz = sum_logz / 7
+        avg_logz = sum_logz / 5
     else:
-        avg_logz = sum_logz / 8
+        avg_logz = sum_logz / 6
     return avg_logz
 
 
@@ -298,7 +307,7 @@ def plt_alphatime(
     gs = fig.add_gridspec(1, 2, wspace=0.05, width_ratios=[1, 3])
     ax = gs.subplots()
     fig.suptitle(plot_title, fontsize=40)
-    ax[0].set_ylabel(r"$\nu_p$", fontsize=30)
+    ax[0].set_ylabel(r"$\alpha$", fontsize=30)
     ax[0].tick_params(
         axis="both", which="major", direction="in", length=6, width=1.5, pad=5
     )
@@ -327,7 +336,7 @@ def plt_alphatime(
     ax[0].plot([1, 1], [0, 1], transform=ax[0].transAxes, **kwargs)
     ax[1].plot([0, 0], [0, 1], transform=ax[1].transAxes, **kwargs)
 
-    months = [-5, -4, 1, 3, 4, 5, 7, 10]
+    months = [-5, -4, 4, 5, 7, 10]
     for i in range(len(months)):
         ax[0].errorbar(
             months[i],
@@ -353,10 +362,10 @@ def plt_alphatime(
     ax[0].set_xticks(months)
     ax[1].set_xticks(months)
     ax[0].set_xticklabels(
-        ["2013", "2014", "Jan20", "Mar20", "Apr20", "May20", "July20", "Oct20"]
+        ["2013", "2014", "Apr20", "May20", "July20", "Oct20"]
     )
     ax[1].set_xticklabels(
-        ["2013", "2014", "Jan20", "Mar20", "Apr20", "May20", "July20", "Oct20"]
+        ["2013", "2014", "Apr20", "May20", "July20", "Oct20"]
     )
     ax[0].set_xlim([-6, -3])
     ax[1].set_xlim([0, 12])
@@ -413,7 +422,7 @@ def plt_peakftime(
     ax[0].plot([1, 1], [0, 1], transform=ax[0].transAxes, **kwargs)
     ax[1].plot([0, 0], [0, 1], transform=ax[1].transAxes, **kwargs)
 
-    months = [-5, -4, 1, 3, 4, 5, 7, 10]
+    months = [-5, -4, 4, 5, 7, 10]
     for i in range(len(months)):
         ax[0].errorbar(
             months[i],
@@ -439,10 +448,10 @@ def plt_peakftime(
     ax[0].set_xticks(months)
     ax[1].set_xticks(months)
     ax[0].set_xticklabels(
-        ["2013", "2014", "Jan20", "Mar20", "Apr20", "May20", "July20", "Oct20"]
+        ["2013", "2014", "Apr20", "May20", "July20", "Oct20"]
     )
     ax[1].set_xticklabels(
-        ["2013", "2014", "Jan20", "Mar20", "Apr20", "May20", "July20", "Oct20"]
+        ["2013", "2014", "Apr20", "May20", "July20", "Oct20"]
     )
     ax[0].set_xlim([-6, -3])
     ax[1].set_xlim([0, 12])
@@ -824,7 +833,7 @@ def plt_lightcurve(
     axx[0].axhline(y=0, color="k", alpha=0.5, linestyle="--")
     axx[1].axhline(y=0, color="k", alpha=0.5, linestyle="--")
     plt.tight_layout()
-    plt.savefig(f"{save_dir}/lightcurve_j001513.{ext}", overwrite=True)
+    plt.savefig(f"{save_dir}/lightcurve.{ext}", overwrite=True)
     plt.clf()
     plt.close()
     return
@@ -836,9 +845,11 @@ def plt_mwa_sed(
     gleam_target,
     model,
     ext="pdf",
+    epochs=["2013", "2014", "2020-01", "2020-03", "2020-04", "2020-05", "2020-07", "2020-10"],
     colors=cmr.take_cmap_colors(
         "cmr.gothic", 8, cmap_range=(0.15, 0.8), return_fmt="hex"
     ),
+    epoch_nms = ["2013", "2014", "Jan20", "Mar20", "Apr20", "May20", "Jul20", "Oct20"],
 ):
     target = gleam_target.strip("GLEAM ")[0:7]
     frequency = np.array(
@@ -865,35 +876,12 @@ def plt_mwa_sed(
             0.227,
         ]
     )
-    (
-        mwa_flux_2013,
-        err_mwa_flux_2013,
-        mwa_flux_2014,
-        err_mwa_flux_2014,
-        fluxes_extra,
-    ) = fitfuncts.read_gleam_fluxes("/data/MWA", gleam_target)
-    mwaflux_2020 = []
-    errmwaflux_2020 = []
-    mwaflux_2020.append(mwa_flux_2013)
-    mwaflux_2020.append(mwa_flux_2014)
-    errmwaflux_2020.append(err_mwa_flux_2013)
-    errmwaflux_2020.append(err_mwa_flux_2014)
-    empty_buffer = np.full(20, np.nan)
-    mwaflux_2020.append(empty_buffer)
-    errmwaflux_2020.append(empty_buffer)
-    mwaflux_2020.append(empty_buffer)
-    errmwaflux_2020.append(empty_buffer)
-    epoch_nms = ["2013", "2014", "Jan20", "Mar20", "Apr20", "May20", "Jul20", "Oct20"]
-    for epochs in ["epoch3", "epoch4", "epoch5", "epoch6"]:
-        mwa_flux, err_mwa = fitfuncts.read_mwa_fluxes(
-            "/data/MWA", target, gleam_target, epochs
-        )
-        mwaflux_2020.append(mwa_flux)
-        errmwaflux_2020.append(err_mwa)
-    apr_normfact = np.nanmax(mwaflux_2020[4])
-    may_normfact = np.nanmedian(mwaflux_2020[4][10:20] - mwaflux_2020[5][10:20])
-    jul_normfact = np.nanmedian(mwaflux_2020[4][10:20] - mwaflux_2020[6][10:20])
-    oct_normfact = np.nanmedian(mwaflux_2020[4][10:20] - mwaflux_2020[7][10:20])
+    
+    mwa_fluxes, err_mwa_fluxes = fitfuncts.read_mwa_fluxes("/data/MWA", target, gleam_target, epochs)
+    apr_normfact = np.nanmax(mwa_fluxes[4])
+    may_normfact = np.nanmedian(mwa_fluxes[4][10:20] - mwa_fluxes[5][10:20])
+    jul_normfact = np.nanmedian(mwa_fluxes[4][10:20] - mwa_fluxes[6][10:20])
+    oct_normfact = np.nanmedian(mwa_fluxes[4][10:20] - mwa_fluxes[7][10:20])
     yvals, nu_p, err_nu_p, alpha, err_alpha = calc_modelnparams(data_dir, target, model)
     if target == "J223933":
         ylabel = "Relative Flux Density"
@@ -901,8 +889,8 @@ def plt_mwa_sed(
         yvals = yvals[4:8]
         colors = colors[4:8]
         epochnms = epoch_nms[4:8]
-        mwaflux_2020 = mwaflux_2020[4:8]
-        errmwaflux_2020 = errmwaflux_2020[4:8]
+        mwaflux_2020 = mwa_fluxes[4:8]
+        errmwaflux_2020 = err_mwa_fluxes[4:8]
         errmwaflux_2020 = errmwaflux_2020 / apr_normfact
         mwaflux_2020[0] = mwaflux_2020[0] / apr_normfact
         mwaflux_2020[1] = (mwaflux_2020[1] + may_normfact) / apr_normfact
@@ -918,6 +906,8 @@ def plt_mwa_sed(
         yunit = "Jy"
         yvals_2020 = yvals
         epochnms = epoch_nms
+        mwaflux_2020 = mwa_fluxes
+        errmwaflux_2020 = err_mwa_fluxes
     f = CF.sed_fig()
     for i in range(len(epochnms)):
         if epochnms[i] in ["2013", "2014", "Apr20", "May20", "Jul20", "Oct20"]:
@@ -976,10 +966,10 @@ def plt_modelsonly(
         s=60,
     )
     for i in range((6)):
-        f.display_model(np.linspace(0.01, 25, num=10000), yvals[i], colors[i], lw=1, label=f"{model_nms[i]}, logz: {logz[i]}")
+        f.display_model(np.linspace(0.01, 25, num=10000), yvals[i], colors[i], lw=1, label=f"{model_nms[i]}, logz: {logz[i]:.2f}")
     f.legend(loc="lower center")
     f.format(xunit="GHz")
-    f.title(f"{gleam_target} {epoch_nm}")
+    f.title(f"{gleam_target}: {epoch_nm} Models")
     f.save(f"{save_dir}{target}_{epoch_nm}_models", ext=ext)
     plt.close()
     plt.clf()
@@ -997,10 +987,8 @@ def plt_sed(
     colors=cmr.take_cmap_colors(
         "cmr.gothic", 8, cmap_range=(0.15, 0.8), return_fmt="hex"
     ),
-):
-
-    epochnms = ["2013", "2014", "Jan20", "Mar20", "Apr20", "May20", "July20", "Oct20"]
-    frequency = np.array(
+    epochnms=["2013", "2014", "Jan20", "Mar20", "Apr20", "May20", "July20", "Oct20", "2020"],
+    frequency=np.array(
         [
             0.076,
             0.084,
@@ -1041,6 +1029,7 @@ def plt_sed(
             10.269,
         ]
     )
+):
     extra_frequencies = [
         0.150,
         0.408,
@@ -1076,6 +1065,7 @@ def plt_sed(
             s=60,
         )
         f.display_model(np.linspace(0.01, 25, num=10000), yvals[i], colors[i], lw=1)
+    f.plot_spectrum(frequency, src_flux[-1], err_src_flux[-1], marker="o", label="2020", marker_color="k",s=60)
     f.legend(loc="lower center")
     f.format(xunit="GHz")
     f.title(f"{gleam_target}")
@@ -1085,7 +1075,7 @@ def plt_sed(
     return
 
 
-def run_everything(save_dir, data_dir, gleam_tar):
+def run_everything(save_dir, data_dir, gleam_tar, epochs=["2013", "2014", "2020-01", "2020-03", "2020-04", "2020-05", "2020-07", "2020-10", "2020"]):
     target = gleam_tar.strip("GLEAM ")[0:7]
     fit_models = [
         "SSA",
@@ -1096,10 +1086,11 @@ def run_everything(save_dir, data_dir, gleam_tar):
         "inFFAb",
     ]
     fit_flux, err_fit_flux, fit_freq = fitfuncts.createfitflux(data_dir, gleam_tar)
-    src_flux, err_src_flux = fitfuncts.createsrcflux(data_dir, gleam_tar)
+    src_flux, err_src_flux = fitfuncts.createsrcflux(data_dir, gleam_tar, epochs)
+    # print(src_flux)
     extra_fluxes = fitfuncts.read_extra_fluxes("/data/MWA", gleam_tar)
-    for i in range(len(epoch_nms)):
-        print(f"Running for {target} and {epoch_nms[i]}")
+    print(f"Running for {target}")
+    for i in range(len(fit_flux)):
         if epoch_nms[i] == "2020-04" and target == "J020507":
             print(f"{target} {epoch_nms[i]}, skipping .... ")
         elif epoch_nms[i] == "2020-04" and target == "J024838":
@@ -1114,7 +1105,7 @@ def run_everything(save_dir, data_dir, gleam_tar):
                     sampler = open(
                         f"{save_dir}{target}/{epoch_nms[i]}/{model}/run1/info/results.json"
                     )
-                    print("Found results of run, continuing with analysis")
+                    # print("Found results of run, continuing with analysis")
                 except FileNotFoundError:
                     sampler = fitfuncts.run_ultranest_mcmc(
                         f"{save_dir}{target}/{epoch_nms[i]}/{model}",
@@ -1126,7 +1117,7 @@ def run_everything(save_dir, data_dir, gleam_tar):
                         model_trans,
                         run_num=1,
                     )
-                    sampler.run(max_iters=50000)
+                    sampler.run(max_iters=50000, show_status=False, viz_callback=False)
                     print(f"Finished fitting for {model} {epoch_nms[i]}")
                     sampler.store_tree()
                     sampler = open(
@@ -1148,26 +1139,28 @@ def run_everything(save_dir, data_dir, gleam_tar):
     plt.clf()
     plt.close()
     if target in ["J015445", "J020507", "J024838", "J223933", "J215436"]:
-        plt_mwa_sed(f"{save_dir}/{target}", f"{save_dir}Plots/", gleam_tar, model, ext="png")
+        plt_mwa_sed(f"{save_dir}/{target}", f"{save_dir}Plots/", gleam_tar, model)
         plt.clf()
         plt.close()
+    
     plt_sed(data_dir, f"{save_dir}Plots/", gleam_tar, src_flux, err_src_flux, extra_fluxes, yvals, ext="png")
-    plt_peakftime(
-            f"{save_dir}{target}",
-            nu_p,
-            err_nu_p,
-            f"{gleam_tar} Peak Frequency",
-            ext="png"
-        )
+    if target in ["J015445", "J020507", "J024838"]:
+        plt_peakftime(
+                f"{save_dir}Plots/{target}",
+                nu_p,
+                err_nu_p,
+                f"{gleam_tar} Peak Frequency",
+                # ext="png"
+            )
     plt_alphatime(
         f"{save_dir}{target}",
         alpha,
         err_alpha,
         f"{gleam_tar} Spectral Index",
-        ext="png",
+        # ext="png",
     )
     if target == "J020507":
-        yvals_oct = calc_yvals(f"{save_dir}/{target}", target, "2020-10")
+        yvals_oct, logz_oct = calc_yvals(f"{save_dir}/{target}", target, "2020-10")
         oct_flux1 = src_flux[7][0:20]
         err_oct_flux1 = err_src_flux[7][0:20]
         oct_flux2 = src_flux[4][20:37]
@@ -1175,5 +1168,5 @@ def run_everything(save_dir, data_dir, gleam_tar):
 
         oct_flux = np.concatenate((oct_flux1, oct_flux2))
         err_oct_flux = np.concatenate((err_oct_flux1, err_oct_flux2))
-        plt_modelsonly(f"{save_dir}Plots/", gleam_tar, oct_flux, err_oct_flux, yvals_oct, ext="png")
-    return nu_p, err_nu_p
+        plt_modelsonly(f"{save_dir}Plots/", gleam_tar, fit_freq[0], oct_flux, err_oct_flux, yvals_oct, logz_oct, "October 2020")
+    return avg_logz

@@ -11,28 +11,30 @@ save_dir = "/data/ATCA/analysis/"
 data_dir = "/data/ATCA/ATCA_datareduction/"
 gleam_targets = [
     # "GLEAM J215436-410853",
-    "GLEAM J001513-472706",
+    # "GLEAM J001513-472706",
     "GLEAM J015445-232950",
-    "GLEAM J020507-110922",
-    "GLEAM J021246-305454",
-    "GLEAM J022744-062106",
-    "GLEAM J024838-321336",
-    "GLEAM J032213-462646",
-    "GLEAM J032836-202138",
-    "GLEAM J033023-074052",
-    "GLEAM J042502-245129",
-    "GLEAM J044033-422918",
-    "GLEAM J044737-220335",
-    "GLEAM J052824-331104",
-    "GLEAM J223933-451414",
-    "GLEAM J224408-202719",
+    # "GLEAM J020507-110922",
+    # "GLEAM J021246-305454",
+    # "GLEAM J022744-062106",
+    # "GLEAM J024838-321336",
+    # "GLEAM J032213-462646",
+    # "GLEAM J032836-202138",
+    # "GLEAM J033023-074052",
+    # "GLEAM J042502-245129",
+    # "GLEAM J044033-422918",
+    # "GLEAM J044737-220335",
+    # "GLEAM J052824-331104",
+    # "GLEAM J223933-451414",
+    # "GLEAM J224408-202719",
 ]
 
-
+avg_logz = {}
 for i in range(len(gleam_targets)):
     gleam_tar = gleam_targets[i]
     target = gleam_tar.strip("GLEAM ")[0:7]
-    nu_p, err_nu_p = analysis_functs.run_everything(save_dir, data_dir, gleam_tar)
+    avg_logz_src = analysis_functs.run_everything(save_dir, data_dir, gleam_tar)
+    avg_logz_src = np.array(avg_logz_src)
+    avg_logz[gleam_tar] = np.around(avg_logz_src, decimals=1)
     if target == "J215436":
         start_times = [
             "09:37:44",
@@ -261,5 +263,8 @@ for i in range(len(gleam_targets)):
             err_fluxes_j020507,
             mod_j001513,
             mod_j020507,
-            ext="png",
+            # ext="png",
         )
+
+
+print(avg_logz)

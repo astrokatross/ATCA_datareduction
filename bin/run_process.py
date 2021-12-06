@@ -2,23 +2,25 @@
 # This script calls process.py with all functions to analyse ATCA data and executes them in order, only changes needed to script should just be what stepyou need/commenting out whatever you don't need
 # By K.Ross 19/5/21
 
+# TODO: introduce epoch processing 
+
 # Importing relevant python packages
 import process
 import os
 
 
 data_dir = str(os.environ["PROJECT"])
-epoch = str(os.environ["EPOCH"])
+run_epoch = str(os.environ["EPOCH"])
 ATCA_band = str(os.environ["BAND"])
 tar = str(os.environ["TARGET"])
 calibrator = str(os.environ["CALIBRATOR"])
 
-print(f"Target: {tar}\nEpoch: {epoch}\nATCA band: {ATCA_band}")
+print(f"Target: {tar}\nATCA band: {ATCA_band}")
 
 # Setting sourcepar dictionary to measrue flux
 source_dict = {
-    "J001513": ["j2357-4838", (0.1, 0, 0), (0.5, 0, 0)],
-    "J015445": ["0237-233", (0.15, 14, -2.8), (0.5, 0, 0)],
+    "J001513": ["2327-459", (0.1, 12, -0.22), (0.5, 0, 0)],
+    "J015445": ["0237-233", (0.15, 0, 0), (0.5, 0, 0)],
     "J020507": ["0159-117", (0.3, 2.6, 0.7), (0.5, 0, 0)],
     "J021246": ["0237-233", (0.15, 12.9, -5.2), (0.5, 0, 0)],
     "J022744": ["0238-084", (0.25, 6, 0.3), (0.5, 0, 0)],
@@ -37,56 +39,24 @@ source_dict = {
     "j032237": ["j0307-4857", (0.1, 0.0, 0.0), (0.5, 0.0, 0.0)],
 }
 
-
+# Defining constant variables for all sources
 ref = "CA04"
 export_pngs = True
-offset = False
 sec = source_dict[tar][0]
 sourcepar = source_dict[tar][1]
-
-# Defining constant variables for all sources
 src_dir = f"{data_dir}{tar}"
-process_dir = f"{data_dir}processing/"
-img_dir = f"{data_dir}{tar}/images/"
-visname = f"{data_dir}data/{epoch}_{ATCA_band}.ms"
-msname = f"{data_dir}data/{epoch}_{ATCA_band}_{tar}.ms"
-targetms = f"{data_dir}data/{epoch}_{ATCA_band}_{tar}_img.ms"
-tar_ms = f"{data_dir}data/{epoch}_{ATCA_band}_{tar}_selfcal.ms"
+visname = f"{data_dir}data/atca_2020_{ATCA_band}.ms"
+msname = f"{data_dir}data/{tar}_{ATCA_band}.ms"
 
 if ATCA_band == "L":
-    n_spw = 1
+    n_spw = 8
     pri = "1934_cal_l"
-    visname = f"{data_dir}data/{epoch}_{ATCA_band}.ms"
 elif ATCA_band == "C":
-    n_spw = 1
+    n_spw = 5
     pri = "1934_cal_cx"
-    # msname = f"{data_dir}data/{epoch}_{ATCA_band}_{tar}_second.ms"
 elif ATCA_band == "X":
     pri = "1934_cal_cx"
-    if offset is True:
-        visname = f"{data_dir}data/epoch2_X_9000_nspw1_join.ms"
-    if epoch == "epoch2":
-        visname = f"{data_dir}data/{epoch}_{ATCA_band}_9500.ms"
-    if epoch == "epoch3":
-        pri = "1934_cal_CX"
-        # msname = f"{data_dir}data/{epoch}_{ATCA_band}_first.ms"
-    # if (tar in ["J001513", "J224408", "J223933"]) and (epoch == "epoch2"):
-
-    # visname = f"{data_dir}data/{epoch}_casa_xycorr.ms"
-    n_spw = 1
-
-if calibrator == "SEC":
-    msname = f"{data_dir}data/{epoch}_{ATCA_band}_{sec}.ms"
-    targetms = f"{data_dir}data/{epoch}_{ATCA_band}_{sec}_img.ms"
-    tar_ms = f"{data_dir}data/{epoch}_{ATCA_band}_{sec}_selfcal.ms"
-    sourcepar = source_dict[tar][2]
-    export_pngs = False
-elif calibrator == "PRI":
-    msname = f"{data_dir}data/{epoch}_{ATCA_band}_{pri}.ms"
-    targetms = f"{data_dir}data/{epoch}_{ATCA_band}_{pri}_img.ms"
-    tar_ms = f"{data_dir}data/{epoch}_{ATCA_band}_{pri}_selfcal.ms"
-    sourcepar = source_dict[tar][2]
-    export_pngs = True
+    n_spw = 4
 
 print("Here we go! Time to analyse some ATCA data!")
 # Uncomment whichever step you don't need to do
@@ -94,63 +64,60 @@ print("Here we go! Time to analyse some ATCA data!")
 # process.flag_ms(visname)
 
 # Split to make its own ms
-process.split_ms(
-    src_dir,
-    img_dir,
-    visname,
-    msname,
-    epoch,
-    ATCA_band,
-    pri,
-    sec,
-    tar,
-    n_spw,
-)
+# process.split_ms(
+#     src_dir,
+#     f"{src_dir}/images",
+#     visname,
+#     msname,
+#     ATCA_band,
+#     pri,
+#     sec,
+#     tar,
+#     n_spw,
+# )
 
-# Calibrate, and apply cal ms using primary and secondary
-process.calibrate_ms(src_dir, msname, epoch, ATCA_band, ref, pri, sec, tar)
-process.applycal_ms(src_dir, msname, epoch, ATCA_band, pri, sec, tar)
 
-# Post cal inspection and flagging
-process.flagcal_ms(img_dir, msname, epoch, ATCA_band, pri, sec)
+# # Calibrate, and apply cal ms using primary and secondary
+# process.calibrate_ms(src_dir, msname, ATCA_band, ref, pri, sec, tar)
+# process.applycal_ms(src_dir, msname, ATCA_band, pri, sec, tar)
 
-# Imaging of target
-if calibrator == "SEC":
-    process.imgmfs_ms(src_dir, msname, targetms, epoch, ATCA_band, n_spw, sec)
-    process.img_ms(src_dir, targetms, epoch, ATCA_band, n_spw, sec)
-    process.slefcal_ms(src_dir, targetms, epoch, ATCA_band, n_spw, sec)
-    process.measureflux_ms(
-        src_dir, msname, tar_ms, epoch, ATCA_band, sourcepar, n_spw, sec, calibrator
-    )
-elif calibrator == "PRI":
-    # process.imgmfs_ms(src_dir, msname, targetms, epoch, ATCA_band, n_spw, pri)
-    # process.img_ms(src_dir, targetms, epoch, ATCA_band, n_spw, pri)
-    # process.slefcal_ms(src_dir, targetms, epoch, ATCA_band, n_spw, pri)
-    process.measureflux_ms(
-        src_dir, msname, tar_ms, epoch, ATCA_band, sourcepar, n_spw, pri, calibrator
-    )
-    # print("Skipping for tests")
-else:
-    process.flagcaltar_ms(src_dir, img_dir, msname, epoch, ATCA_band, pri, sec, tar)
-    process.imgmfs_ms(src_dir, msname, targetms, epoch, ATCA_band, n_spw, tar)
-    process.img_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar)
-    process.slefcal_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar)
-    process.measureflux_ms(
-        src_dir, targetms, tar_ms, epoch, ATCA_band, sourcepar, n_spw, tar, calibrator,
-    )
-    # process.measureflux_ms(
-    #     src_dir, targetms, tar_ms, epoch, ATCA_band, sourcepar, 1, tar, calibrator, timerange="17:10:30+00:00:30",
-    # )
+# # Post cal inspection and flagging
+# process.flagcal_ms(f"{src_dir}/images", msname, ATCA_band, pri, sec)
+# process.flagcaltar_ms(src_dir, msname, ATCA_band, pri, sec, tar)
+
+# process.split_imgms(data_dir, tar, "", ATCA_band, n_spw)
+imagems = f"2020-_{tar}_{ATCA_band}.ms"
+imagename = f"2020-{tar}_{ATCA_band}"
+
+# imagems = [f"{data_dir}data/previous_processing/epoch1_L_{tar}_img.ms", f"{data_dir}data/previous_processing/epoch2_L_{tar}_img.ms", f"{data_dir}data/previous_processing/epoch3_L_{tar}_img.ms", f"{data_dir}data/previous_processing/epoch4_L_{tar}_img.ms"]
+
+# # process.imgmfs_ms(src_dir, imagems, imagename, ATCA_band, n_spw)
+# process.img_ms(src_dir, imagems, imagename, ATCA_band, n_spw)
+# process.slefcal_ms(src_dir, imagems, imagename, ATCA_band, n_spw)
+process.measureflux_ms(
+    src_dir, imagems, f"2020_{tar}_{ATCA_band}_postscal.ms", f"2020_{tar}_{ATCA_band}", ATCA_band, sourcepar, n_spw)
+
+if run_epoch == "TRUE":
+    for epoch in ["01", "03", "04", "05"]:
+        process.split_imgms(data_dir, tar, epoch, ATCA_band, n_spw)
+        imagems = f"2020-{epoch}_{tar}_{ATCA_band}.ms"
+        imagename = f"2020-{epoch}_{tar}_{ATCA_band}"
+        process.imgmfs_ms(src_dir, imagems, imagename, ATCA_band, n_spw)
+        process.img_ms(src_dir, imagems, imagename, ATCA_band, n_spw)
+        process.slefcal_ms(src_dir, imagems, imagename, ATCA_band, n_spw)
+        process.measureflux_ms(
+            src_dir, imagems, f"2020-{epoch}_{tar}_{ATCA_band}_postscal.ms", f"2020-{epoch}_{tar}_{ATCA_band}", ATCA_band, sourcepar, n_spw)
+
+
 
 # Post image analysis: pbcor, measure flux
-process.pbcor_ms(src_dir, targetms, epoch, ATCA_band, n_spw, tar)
+# process.pbcor_ms(src_dir, targetms, ATCA_band, n_spw, tar)
 
 
-# Post analysis
-if export_pngs is True:
-    process.inspection_plots(
-        src_dir, img_dir, visname, msname, targetms, epoch, ATCA_band, pri, sec, tar
-    )
-process.export_fitspng(src_dir, n_spw, epoch, ATCA_band, tar)
+# # Post analysis
+# if export_pngs is True:
+#     process.inspection_plots(
+#         src_dir, img_dir, visname, msname, targetms, epoch, ATCA_band, pri, sec, tar
+#     )
+# process.export_fitspng(src_dir, n_spw, epoch, ATCA_band, tar)
 
-print(f"Completed running for {tar} {epoch} {ATCA_band}")

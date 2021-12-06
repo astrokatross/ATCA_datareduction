@@ -3,10 +3,10 @@
 # By K.Ross 
 
 PROJECT=/data/ATCA/ATCA_datareduction/
-EPOCH="epoch5"
-BAND=C
-TARGET=J215436
-CALIBRATOR=SEC
+EPOCH=FALSE
+BAND=L
+TARGET=J015445
+CALIBRATOR=TAR
 
 export PROJECT
 export EPOCH
@@ -16,7 +16,7 @@ export CALIBRATOR
 
 cd $PROJECT/processing/
 
-if [[ ! -e "${PROJECT}${TARGET}" ]]
+if [[ ! -e "${PROJECT}${TARGET}/images" ]]
 then 
     echo "No folder for source found, making them"
     mkdir ${PROJECT}${TARGET}
