@@ -251,8 +251,18 @@ def createfitflux(data_dir, gleam_target):
     )
 
     mwa_fluxes, err_mwa_fluxes = read_mwa_fluxes("/data/MWA", target, gleam_target, ["2013", "2014", "2020-04", "2020-05", "2020-07", "2020-10"])
-    atca_fluxes, err_atca_fluxes = read_atca_fluxes(data_dir, target, ["2020"])
-    print(atca_fluxes)
+    try:
+        atca_fluxes, err_atca_fluxes = read_atca_fluxes(data_dir, target, ["2020"])
+        atca_fluxes_sum = np.sum(atca_fluxes)
+        # print(atca_fluxes_sum)
+        if np.isnan(atca_fluxes_sum) == True:
+            print("No 2020 csv, finding average")
+            raise ValueError
+    except ValueError:
+        atca_fluxes_all, err_atca_fluxes_all = read_atca_fluxes(data_dir, target, ["2020-01", "2020-03", "2020-04", "2020-05"])
+        atca_fluxes = np.nanmean(atca_fluxes_all, axis=0)
+        err_atca_fluxes = np.nanmean(err_atca_fluxes_all, axis=0)
+    # print(atca_fluxes)
     src_flux = []
     err_src_flux = []
     for i in range(len(mwa_fluxes)):
@@ -269,7 +279,7 @@ def createfitflux(data_dir, gleam_target):
     return fit_flux_mask, err_fit_flux_mask, fit_freq
 
 
-def createsrcflux(data_dir, gleam_target, epochs):
+def createsrcflux(data_dir, gleam_target, epochs=["2013", "2014", "2020-01", "2020-03", "2020-04", "2020-05", "2020-07", "2020-10"]):
     target = gleam_target.strip("GLEAM ")[0:7]
 
     frequency = np.array(
@@ -316,12 +326,30 @@ def createsrcflux(data_dir, gleam_target, epochs):
 
     mwa_fluxes, err_mwa_fluxes = read_mwa_fluxes("/data/MWA", target, gleam_target, epochs)
     atca_fluxes, err_atca_fluxes = read_atca_fluxes(data_dir, target, epochs)
+    try:
+        atca_fluxes_2020, err_atca_fluxes_2020 = read_atca_fluxes(data_dir, target, ["2020"])
+        atca_fluxes_sum = np.sum(atca_fluxes_2020)
+        # print(atca_fluxes_sum)
+        if np.isnan(atca_fluxes_sum) == True:
+            print("No 2020 csv, finding average")
+            raise ValueError
+    except ValueError:
+        atca_fluxes_all, err_atca_fluxes_all = read_atca_fluxes(data_dir, target, ["2020-01", "2020-03", "2020-04", "2020-05"])
+        atca_fluxes_2020 = np.nanmean(atca_fluxes_all, axis=0)
+        err_atca_fluxes_2020 = np.nanmean(err_atca_fluxes_all, axis=0)
+    # atca_fluxes = np.concatenate((atca_fluxes, atca_fluxes_2020), axis=0)
+    # err_atca_fluxes = np.concatenate((err_atca_fluxes, err_atca_fluxes_2020), axis=0)
+    # print(atca_fluxes)
     src_flux = []
     err_src_flux = []
     for i in range(len(epochs)):
         src_flux.append(np.concatenate((mwa_fluxes[i], atca_fluxes[i]), axis=None))
         err_src_flux.append(np.concatenate((err_mwa_fluxes[i], err_atca_fluxes[i]),axis=None))
-    print(len(src_flux))
+    mwa_buffer = np.empty((20,))
+    mwa_buffer[:] = np.nan
+    src_flux.append(np.concatenate((mwa_buffer, atca_fluxes_2020), axis=None))
+    err_src_flux.append(np.concatenate((mwa_buffer, err_atca_fluxes_2020), axis=None))
+    # print(len(src_flux))
     return src_flux, err_src_flux
 
 

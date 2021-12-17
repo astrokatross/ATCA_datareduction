@@ -20,14 +20,14 @@ print(f"Target: {tar}\nATCA band: {ATCA_band}")
 # Setting sourcepar dictionary to measrue flux
 source_dict = {
     "J001513": ["2327-459", (0.1, 12, -0.22), (0.5, 0, 0)],
-    "J015445": ["0237-233", (0.15, 0, 0), (0.5, 0, 0)],
-    "J020507": ["0159-117", (0.3, 2.6, 0.7), (0.5, 0, 0)],
-    "J021246": ["0237-233", (0.15, 12.9, -5.2), (0.5, 0, 0)],
+    "J015445": ["0237-233", (0.15, 15, -3.5), (0.5, 0, 0)],
+    "J020507": ["0238-084", (0.3, 2.6, 4.7), (0.5, 0, 0)],
+    "J021246": ["0237-233", (0.15, 12.9, -3.2), (0.5, 0, 0)],
     "J022744": ["0238-084", (0.25, 6, 0.3), (0.5, 0, 0)],
     "J024838": ["0237-233", (0.1, 1.5, 0.5), (0.5, 0, 0)],
     "J032213": ["0355-483", (0.35, 2.6, -3.4), (0.5, 0, 0)],
     "J032836": ["0310-150", (0.35, 4, -2.5), (0.5, 0, 0)],
-    "J033023": ["0336-019", (0.15, 1.1, 0.86), (0.5, 0, 0)],
+    "J033023": ["0310-150", (0.15, 1.1, 0.86), (0.5, 0, 0)],
     "J042502": ["0445-221", (0.1, 4.6, 1.9), (0.5, 0, 0)],
     "J044033": ["0355-483", (0.2, 8.2, -0.3), (0.5, 0, 0)],
     "J044737": ["0445-221", (0.25, 3.4, -2.2), (0.5, 0, 0)],
@@ -86,27 +86,34 @@ print("Here we go! Time to analyse some ATCA data!")
 # process.flagcaltar_ms(src_dir, msname, ATCA_band, pri, sec, tar)
 
 # process.split_imgms(data_dir, tar, "", ATCA_band, n_spw)
-imagems = f"2020-_{tar}_{ATCA_band}.ms"
+imagems = f"{data_dir}data/2020_{tar}_{ATCA_band}.ms"
 imagename = f"2020-{tar}_{ATCA_band}"
 
-# imagems = [f"{data_dir}data/previous_processing/epoch1_L_{tar}_img.ms", f"{data_dir}data/previous_processing/epoch2_L_{tar}_img.ms", f"{data_dir}data/previous_processing/epoch3_L_{tar}_img.ms", f"{data_dir}data/previous_processing/epoch4_L_{tar}_img.ms"]
+# # # imagems = [f"{data_dir}data/previous_processing/epoch1_L_{tar}_img.ms", f"{data_dir}data/previous_processing/epoch2_L_{tar}_img.ms", f"{data_dir}data/previous_processing/epoch3_L_{tar}_img.ms", f"{data_dir}data/previous_processing/epoch4_L_{tar}_img.ms"]
 
-# # process.imgmfs_ms(src_dir, imagems, imagename, ATCA_band, n_spw)
+# process.imgmfs_ms(src_dir, imagems, imagename, ATCA_band, n_spw)
 # process.img_ms(src_dir, imagems, imagename, ATCA_band, n_spw)
 # process.slefcal_ms(src_dir, imagems, imagename, ATCA_band, n_spw)
 process.measureflux_ms(
-    src_dir, imagems, f"2020_{tar}_{ATCA_band}_postscal.ms", f"2020_{tar}_{ATCA_band}", ATCA_band, sourcepar, n_spw)
+    src_dir, imagems, f"{data_dir}data/2020-_{tar}_{ATCA_band}.ms", f"2020_{tar}_{ATCA_band}", ATCA_band, sourcepar, n_spw)#, field="1")
+# # process.measureflux_ms(
+# #     src_dir, imagems, f"{data_dir}data/2020_{tar}_{ATCA_band}.ms", f"2020_{tar}_{ATCA_band}", ATCA_band, sourcepar, n_spw)
 
-if run_epoch == "TRUE":
-    for epoch in ["01", "03", "04", "05"]:
-        process.split_imgms(data_dir, tar, epoch, ATCA_band, n_spw)
-        imagems = f"2020-{epoch}_{tar}_{ATCA_band}.ms"
-        imagename = f"2020-{epoch}_{tar}_{ATCA_band}"
-        process.imgmfs_ms(src_dir, imagems, imagename, ATCA_band, n_spw)
-        process.img_ms(src_dir, imagems, imagename, ATCA_band, n_spw)
-        process.slefcal_ms(src_dir, imagems, imagename, ATCA_band, n_spw)
-        process.measureflux_ms(
-            src_dir, imagems, f"2020-{epoch}_{tar}_{ATCA_band}_postscal.ms", f"2020-{epoch}_{tar}_{ATCA_band}", ATCA_band, sourcepar, n_spw)
+for epoch in ["01", "03", "04", "05"]:
+    timerange = f"2020/{epoch}/01/00:00:00~2020/{epoch}/30/23:59:59"
+    process.measureflux_ms(
+        src_dir, imagems, f"{data_dir}data/2020-_{tar}_{ATCA_band}.ms", f"2020-{epoch}_{tar}_{ATCA_band}", ATCA_band, sourcepar, n_spw, timerange=timerange)#, field="1")
+
+# if run_epoch == "TRUE":
+#     for epoch in ["01", "03", "04", "05"]:
+#         process.split_imgms(data_dir, tar, epoch, ATCA_band, n_spw)
+#         imagems = f"2020-{epoch}_{tar}_{ATCA_band}.ms"
+#         imagename = f"2020-{epoch}_{tar}_{ATCA_band}"
+#         process.imgmfs_ms(src_dir, imagems, imagename, ATCA_band, n_spw)
+#         process.img_ms(src_dir, imagems, imagename, ATCA_band, n_spw)
+#         process.slefcal_ms(src_dir, imagems, imagename, ATCA_band, n_spw)
+#         process.measureflux_ms(
+#             src_dir, imagems, f"2020-{epoch}_{tar}_{ATCA_band}_postscal.ms", f"2020-{epoch}_{tar}_{ATCA_band}", ATCA_band, sourcepar, n_spw)
 
 
 

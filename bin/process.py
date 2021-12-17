@@ -355,16 +355,15 @@ def split_imgms(data_dir, tar, epoch, ATCA_band, n_spw):
         timerange = f"2020/{epoch}/01/00:00:00~2020/{epoch}/30/23:59:59"
     else:
         timerange = ""
-    visname = f"{data_dir}data/{tar}_{ATCA_band}.ms"
-    outputvis = f"2020-{epoch}_{tar}_{ATCA_band}.ms"
+    visname = f"{data_dir}data/2020_{tar}_{ATCA_band}.ms"
+    outputvis = f"{data_dir}data/2020-{epoch}_{tar}_{ATCA_band}.ms"
     if os.path.exists(outputvis):
         os.system(f"rm -r {outputvis}*")
     mstransform(
         vis=visname,
         outputvis=outputvis,
         datacolumn="corrected",
-        regridms=True,
-        nspw=n_spw,
+        # regridms=True,
         field=tar,
         timerange=timerange,
     )
@@ -832,12 +831,14 @@ def pbcor_ms(src_dir, targetms, ATCA_band, n_spw, tar):
 
 
 def measureflux_ms(
-    src_dir, imagems, fitms, catname, ATCA_band, sourcepar, n_spw, timerange="",
+    src_dir, imagems, fitms, catname, ATCA_band, sourcepar, n_spw, timerange="", field="",
 ):
-
-    # split(
-    #     vis=imagems, datacolumn="corrected", outputvis=fitms)
-
+    try:
+        split(
+            vis=imagems, datacolumn="data", outputvis=fitms)
+        listobs(vis=fitms, filename=f"listobs_{fitms}.dat", overwrite=True)
+    except:
+        print("Not splitting")
     int_flux_c = []
     uvrange = ""
 
@@ -848,13 +849,13 @@ def measureflux_ms(
         os.system(f"rm -r {outfile}")
         uvmodelfit(
             vis=fitms,
-            niter=25,
+            niter=15,
             comptype="P",
             spw=spw,
             sourcepar=sourcepar,
             outfile=outfile,
             uvrange=uvrange,
-            field="1",
+            field=field,
             selectdata=True,
             timerange=timerange,
         )
@@ -862,6 +863,8 @@ def measureflux_ms(
         flux = tbl.getcell("Flux", 0)[0].astype("float64")
         int_flux_c.append(flux)
         print(flux)
+
+
     if ATCA_band == "C":
         np.savetxt(
             f"{src_dir}/{catname}.csv",

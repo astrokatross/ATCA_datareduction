@@ -64,12 +64,12 @@ frequency = np.array(
 epoch_nms = [
     "2013",
     "2014",
-    "2020-01",
-    "2020-03",
+    # "2020-01",
+    # "2020-03",
     "2020-04",
     "2020-05",
     "2020-07",
-    "2020-10",
+    "2020-09",
 ]
 model_params_dict = {
     "FFA": [
@@ -168,7 +168,7 @@ def calc_modelnparams(directory, target, model):
         "2020-04",
         "2020-05",
         "2020-07",
-        "2020-10",
+        "2020-09",
     ]
     for i in range(len(epochs)):
         try:
@@ -247,7 +247,7 @@ def calc_logzmod(target):
         "2020-04",
         "2020-05",
         "2020-07",
-        "2020-10",
+        "2020-09",
     ]
     logz = []
     for i in range(len(epochs)):
@@ -362,10 +362,10 @@ def plt_alphatime(
     ax[0].set_xticks(months)
     ax[1].set_xticks(months)
     ax[0].set_xticklabels(
-        ["2013", "2014", "Apr20", "May20", "July20", "Oct20"]
+        ["2013", "2014", "Apr20", "May20", "July20", "Sept20"]
     )
     ax[1].set_xticklabels(
-        ["2013", "2014", "Apr20", "May20", "July20", "Oct20"]
+        ["2013", "2014", "Apr20", "May20", "July20", "Sept20"]
     )
     ax[0].set_xlim([-6, -3])
     ax[1].set_xlim([0, 12])
@@ -448,10 +448,10 @@ def plt_peakftime(
     ax[0].set_xticks(months)
     ax[1].set_xticks(months)
     ax[0].set_xticklabels(
-        ["2013", "2014", "Apr20", "May20", "July20", "Oct20"]
+        ["2013", "2014", "Apr20", "May20", "July20", "Sept20"]
     )
     ax[1].set_xticklabels(
-        ["2013", "2014", "Apr20", "May20", "July20", "Oct20"]
+        ["2013", "2014", "Apr20", "May20", "July20", "Sept20"]
     )
     ax[0].set_xlim([-6, -3])
     ax[1].set_xlim([0, 12])
@@ -532,7 +532,7 @@ def plt_lightcurve_continual(
     fig = plt.figure(figsize=(15, 10))
     gs = fig.add_gridspec(2, 1, hspace=0, wspace=0.05)
     ax = gs.subplots(sharey=True)
-    fig.suptitle(f"Light Curve {src1_nm}", fontsize=40)
+    fig.suptitle(f"Light Curve 2021-07-24", fontsize=40)
 
     axc = ax[0]
     axx = ax[1]
@@ -596,8 +596,8 @@ def plt_lightcurve_continual(
     )
     axx.tick_params(axis="both", which="minor", direction="in", length=4, width=1.5)
     axx.tick_params(axis="both", which="both", labelsize="20", right=True, top=True)
-    axc.legend(loc="lower left", fontsize=20)
-    axx.legend(loc="lower left", fontsize=20)
+    axc.legend(loc="lower center", fontsize=20)
+    axx.legend(loc="lower center", fontsize=20)
 
     # axc.spines["right"].set_visible(False)
     # axc[1].spines["left"].set_visible(False)
@@ -633,6 +633,7 @@ def plt_lightcurve_continual(
     axc.axhline(y=0, color="k", alpha=0.5, linestyle="--")
     axx.axhline(y=0, color="k", alpha=0.5, linestyle="--")
     plt.tight_layout()
+    print("saving figure")
     plt.savefig(f"{save_dir}/lightcurve_j215436.{ext}", overwrite=True)
     plt.clf()
     plt.close()
@@ -845,11 +846,11 @@ def plt_mwa_sed(
     gleam_target,
     model,
     ext="pdf",
-    epochs=["2013", "2014", "2020-01", "2020-03", "2020-04", "2020-05", "2020-07", "2020-10"],
+    epochs=["2013", "2014", "2020-01", "2020-03", "2020-04", "2020-05", "2020-07", "2020-09"],
     colors=cmr.take_cmap_colors(
         "cmr.gothic", 8, cmap_range=(0.15, 0.8), return_fmt="hex"
     ),
-    epoch_nms = ["2013", "2014", "Jan20", "Mar20", "Apr20", "May20", "Jul20", "Oct20"],
+    epoch_nms = ["2013", "2014", "Jan20", "Mar20", "Apr20", "May20", "Jul20", "Sept20"],
 ):
     target = gleam_target.strip("GLEAM ")[0:7]
     frequency = np.array(
@@ -910,7 +911,7 @@ def plt_mwa_sed(
         errmwaflux_2020 = err_mwa_fluxes
     f = CF.sed_fig()
     for i in range(len(epochnms)):
-        if epochnms[i] in ["2013", "2014", "Apr20", "May20", "Jul20", "Oct20"]:
+        if epochnms[i] in ["2013", "2014", "Apr20", "May20", "Jul20", "Sept20"]:
             f.plot_spectrum(
                 frequency,
                 mwaflux_2020[i],
@@ -965,7 +966,7 @@ def plt_modelsonly(
         marker_color="k",
         s=60,
     )
-    for i in range((6)):
+    for i in range((len(yvals))):
         f.display_model(np.linspace(0.01, 25, num=10000), yvals[i], colors[i], lw=1, label=f"{model_nms[i]}, logz: {logz[i]:.2f}")
     f.legend(loc="lower center")
     f.format(xunit="GHz")
@@ -987,7 +988,7 @@ def plt_sed(
     colors=cmr.take_cmap_colors(
         "cmr.gothic", 8, cmap_range=(0.15, 0.8), return_fmt="hex"
     ),
-    epochnms=["2013", "2014", "Jan20", "Mar20", "Apr20", "May20", "July20", "Oct20", "2020"],
+    epochnms=["2013", "2014", "Jan20", "Mar20", "Apr20", "May20", "July20", "Sept20", "2020"],
     frequency=np.array(
         [
             0.076,
@@ -1044,6 +1045,9 @@ def plt_sed(
     target = gleam_target.strip("GLEAM ")[0:7]
     f = CF.sed_fig()
     extra_markers = ["X", "s", "*", "p", "D", "1", "2", "3", "4"]
+    print(np.shape(yvals))
+    for i in range((len(yvals))):
+        f.display_model(np.linspace(0.01, 25, num=10000), yvals[i], colors[i], lw=1)
     for i in range(len(extra_surveys)):
         if extra_surveys[i] == 0.:
             extra_surveys[i] = np.nan
@@ -1064,8 +1068,8 @@ def plt_sed(
             marker_color=colors[i],
             s=60,
         )
-        f.display_model(np.linspace(0.01, 25, num=10000), yvals[i], colors[i], lw=1)
-    f.plot_spectrum(frequency, src_flux[-1], err_src_flux[-1], marker="o", label="2020", marker_color="k",s=60)
+        
+    # f.plot_spectrum(frequency, src_flux[-1], err_src_flux[-1], marker="X", label="2020", marker_color="k",s=60)
     f.legend(loc="lower center")
     f.format(xunit="GHz")
     f.title(f"{gleam_target}")
@@ -1075,7 +1079,7 @@ def plt_sed(
     return
 
 
-def run_everything(save_dir, data_dir, gleam_tar, epochs=["2013", "2014", "2020-01", "2020-03", "2020-04", "2020-05", "2020-07", "2020-10", "2020"]):
+def run_everything(save_dir, data_dir, gleam_tar, epochs=["2013", "2014", "2020-01", "2020-03", "2020-04", "2020-05", "2020-07", "2020-09", "2020"]):
     target = gleam_tar.strip("GLEAM ")[0:7]
     fit_models = [
         "SSA",
@@ -1086,8 +1090,9 @@ def run_everything(save_dir, data_dir, gleam_tar, epochs=["2013", "2014", "2020-
         "inFFAb",
     ]
     fit_flux, err_fit_flux, fit_freq = fitfuncts.createfitflux(data_dir, gleam_tar)
-    src_flux, err_src_flux = fitfuncts.createsrcflux(data_dir, gleam_tar, epochs)
-    # print(src_flux)
+    print(np.shape(fit_flux))
+    src_flux, err_src_flux = fitfuncts.createsrcflux(data_dir, gleam_tar)
+    # print(np.shape(src_flux))
     extra_fluxes = fitfuncts.read_extra_fluxes("/data/MWA", gleam_tar)
     print(f"Running for {target}")
     for i in range(len(fit_flux)):
@@ -1160,13 +1165,13 @@ def run_everything(save_dir, data_dir, gleam_tar, epochs=["2013", "2014", "2020-
         # ext="png",
     )
     if target == "J020507":
-        yvals_oct, logz_oct = calc_yvals(f"{save_dir}/{target}", target, "2020-10")
-        oct_flux1 = src_flux[7][0:20]
-        err_oct_flux1 = err_src_flux[7][0:20]
-        oct_flux2 = src_flux[4][20:37]
-        err_oct_flux2 = err_src_flux[4][20:37]
+        yvals_oct, logz_oct = calc_yvals(f"{save_dir}/{target}", target, "2020-09")
+        oct_flux = fit_flux[-1]
+        err_oct_flux = err_fit_flux[-1]
+        # oct_flux2 = src_flux[4][20:37]
+        # err_oct_flux2 = err_src_flux[4][20:37]
 
-        oct_flux = np.concatenate((oct_flux1, oct_flux2))
-        err_oct_flux = np.concatenate((err_oct_flux1, err_oct_flux2))
-        plt_modelsonly(f"{save_dir}Plots/", gleam_tar, fit_freq[0], oct_flux, err_oct_flux, yvals_oct, logz_oct, "October 2020")
+        # oct_flux = np.concatenate((oct_flux1, oct_flux2))
+        # err_oct_flux = np.concatenate((err_oct_flux1, err_oct_flux2))
+        plt_modelsonly(f"{save_dir}Plots/", gleam_tar, fit_freq[0], oct_flux, err_oct_flux, yvals_oct, logz_oct, "September 2020")
     return avg_logz
