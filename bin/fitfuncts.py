@@ -108,7 +108,7 @@ def read_mwa_fluxes(directory, tar, name, epochs):
             )
         elif epoch == "2014":
             buffer = np.full(4, np.nan)
-        
+
             chan_flux_temp = np.squeeze(src_pd[mwa_2014_fluxes].values)
             err_chan_flux_temp = np.squeeze(
                 np.sqrt(src_pd[mwa_2014_errors]) ** 2 + (0.02 * chan_flux_temp) ** 2
@@ -250,7 +250,7 @@ def createfitflux(data_dir, gleam_target):
         ]
     )
 
-    mwa_fluxes, err_mwa_fluxes = read_mwa_fluxes("/data/MWA", target, gleam_target, ["2013", "2014", "2020-04", "2020-05", "2020-07", "2020-10"])
+    mwa_fluxes, err_mwa_fluxes = read_mwa_fluxes("/data/MWA", target, gleam_target, ["2013", "2014", "2020-04", "2020-05", "2020-07", "2020-09"])
     try:
         atca_fluxes, err_atca_fluxes = read_atca_fluxes(data_dir, target, ["2020"])
         atca_fluxes_sum = np.sum(atca_fluxes)

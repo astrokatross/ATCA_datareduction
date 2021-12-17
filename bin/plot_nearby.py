@@ -1,9 +1,9 @@
 # Script just to plot the nearby MWA sources because it's too messy to do somewhere else
 
-import numpy as np 
-import matplotlib.pyplot as plt 
+import numpy as np
 import pandas as pd
-
+import CFigTools.CustomFigure as CF
+import cmasher as cmr
 
 subchans_dict = {
     "69": ["072-080", "080-088", "088-095", "095-103"],
@@ -12,7 +12,7 @@ subchans_dict = {
     "145": ["170-177", "177-185", "185-193", "193-200"],
     "169": ["200-208", "208-216", "216-223", "223-231"],
 }
-epochs = ["2020-04", "2020-05", "2020-07", "2020-09"]
+epochs = ["2013", "2014", "2020-04", "2020-05", "2020-07", "2020-09"]
 chans = ["69", "93", "121", "145", "169"]
 exts = [
     "107",
@@ -41,6 +41,40 @@ for ext in exts:
     mwa_2014_fluxes.append(f"S_{ext}_yr2")
     mwa_2013_errors.append(f"local_rms_{ext}_yr1")
     mwa_2014_errors.append(f"local_rms_{ext}_yr2")
+nearby_srcs = [
+    "GLEAM J002130-465755",
+    "GLEAM J015010-225841",
+    "GLEAM J020510-113515",
+    "GLEAM J021622-300933",
+    "GLEAM J023253-064552",
+    "GLEAM J025040-313523",
+    "GLEAM J033336-443859",
+    "GLEAM J032843-205825",
+    "GLEAM J033156-071220",
+    "GLEAM J042256-250339",
+    "GLEAM J044149-430658",
+    "GLEAM J044313-220224",
+    "GLEAM J053114-334532",
+    "GLEAM J224320-454100",
+    "GLEAM J224252-200050",
+]
+targets = [
+    "J001513",
+    "J015445",
+    "J020507",
+    "J021246",
+    "J022744",
+    "J024838",
+    "J032213",
+    "J032836",
+    "J033023",
+    "J042502",
+    "J044033",
+    "J044737",
+    "J052824",
+    "J223933",
+    "J224408",
+]
 
 
 def read_MWA_fluxes(directory, cat_nm, name):
@@ -48,7 +82,6 @@ def read_MWA_fluxes(directory, cat_nm, name):
     print(name)
     mask = master_pop_pd["Name"] == name
     src_pd = master_pop_pd[mask]
-
     mwa_flux = np.full([len(epochs), 20], np.nan)
     err_mwa = np.full([len(epochs), 20], np.nan)
 
@@ -101,8 +134,68 @@ def read_MWA_fluxes(directory, cat_nm, name):
                         chan_flux.append(np.nan)
                         err_chan_flux.append(np.nan)
                         pass
+        # print(np.shape(mwa_flux[j]))
+        mwa_flux[j] = chan_flux
+        err_mwa[j] = err_chan_flux
+    return mwa_flux, err_mwa
 
-        # mwa_flux[j] = chan_flux
-        # err_mwa[j] = err_chan_flux
-        mwa_flux = 0
-    return mwa_flux
+
+def plot_mwa_nearby(
+    save_dir,
+    target,
+    cat_tar,
+    ext="png",
+    epochs=["2013", "2014", "2020-04", "2020-05", "2020-07", "2020-09"],
+    colors=cmr.take_cmap_colors(
+        "cmr.gothic", 8, cmap_range=(0.15, 0.8), return_fmt="hex"
+    ),
+    frequency=np.array(
+        [
+            0.076,
+            0.084,
+            0.092,
+            0.099,
+            0.107,
+            0.115,
+            0.122,
+            0.130,
+            0.143,
+            0.151,
+            0.158,
+            0.166,
+            0.174,
+            0.181,
+            0.189,
+            0.197,
+            0.204,
+            0.212,
+            0.220,
+            0.227,
+        ]
+    ),
+):
+    tar = target.strip("GLEAM ")[0:7]
+    fluxes, err_fluxes = read_MWA_fluxes("/data/MWA/", cat_tar, target)
+    ylabel = "Flux Density"
+    yunit = "Jy"
+    epochnms = ["2013", "2014", "Apr20", "May20", "Jul20", "Sept20"]
+    f = CF.sed_fig()
+    for i in range(len(epochnms)):
+        f.plot_spectrum(
+            frequency,
+            fluxes[i],
+            err_fluxes[i],
+            marker="o",
+            label=epochnms[i],
+            marker_color=colors[i],
+            s=60,
+        )
+    f.legend(loc="lower center")
+    f.format(xunit="GHz", ylabel=ylabel, yunit=yunit)
+    f.title(f"{target}")
+    f.save(f"{save_dir}{cat_tar}_nearbysrc_{tar}", ext=ext)
+    return
+
+
+for i in range(len(nearby_srcs)):
+    plot_mwa_nearby("/data/ATCA/analysis/Plots/", nearby_srcs[i], targets[i])
