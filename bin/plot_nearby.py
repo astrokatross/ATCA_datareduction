@@ -174,13 +174,14 @@ def plot_mwa_nearby(
         ]
     ),
 ):
+
     tar = target.strip("GLEAM ")[0:7]
     fluxes, err_fluxes = read_MWA_fluxes("/data/MWA/", cat_tar, target)
     ylabel = "Flux Density"
     yunit = "Jy"
     epochnms = ["2013", "2014", "Apr20", "May20", "Jul20", "Sept20"]
     f = CF.sed_fig()
-    for i in range(len(epochnms)):
+    for i in [0, 1]:
         f.plot_spectrum(
             frequency,
             fluxes[i],
@@ -188,9 +189,19 @@ def plot_mwa_nearby(
             marker="o",
             label=epochnms[i],
             marker_color=colors[i],
-            s=60,
+            s=5,
         )
-    f.legend(loc="lower center")
+    for i in [2, 3, 4, 5]:
+        f.plot_spectrum(
+            frequency,
+            fluxes[i],
+            err_fluxes[i],
+            marker="o",
+            label=epochnms[i],
+            marker_color=colors[i+2],
+            s=5,
+        )
+    f.legend()#loc="lower center")
     f.format(xunit="GHz", ylabel=ylabel, yunit=yunit)
     f.title(f"{target}")
     f.save(f"{save_dir}{cat_tar}_nearbysrc_{tar}", ext=ext)
@@ -198,4 +209,4 @@ def plot_mwa_nearby(
 
 
 for i in range(len(nearby_srcs)):
-    plot_mwa_nearby("/data/ATCA/analysis/Plots/", nearby_srcs[i], targets[i])
+    plot_mwa_nearby("/data/ATCA/analysis/Plots/", nearby_srcs[i], targets[i], ext="pdf")

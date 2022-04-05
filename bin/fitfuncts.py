@@ -279,7 +279,7 @@ def createfitflux(data_dir, gleam_target):
     return fit_flux_mask, err_fit_flux_mask, fit_freq
 
 
-def createsrcflux(data_dir, gleam_target, epochs=["2013", "2014", "2020-01", "2020-03", "2020-04", "2020-05", "2020-07", "2020-10"]):
+def createsrcflux(data_dir, gleam_target, epochs=["2013", "2014", "2020-01", "2020-03", "2020-04", "2020-05", "2020-07", "2020-09"]):
     target = gleam_target.strip("GLEAM ")[0:7]
 
     frequency = np.array(

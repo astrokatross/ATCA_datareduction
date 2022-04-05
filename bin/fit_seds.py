@@ -13,7 +13,7 @@ gleam_targets = [
     # "GLEAM J215436-410853",
     # "GLEAM J001513-472706",
     # "GLEAM J015445-232950",
-    # "GLEAM J020507-110922",
+    "GLEAM J020507-110922",
     # "GLEAM J021246-305454",
     # "GLEAM J022744-062106",
     # "GLEAM J024838-321336",
@@ -26,16 +26,16 @@ gleam_targets = [
     # "GLEAM J052824-331104",
     # "GLEAM J223933-451414",
     # "GLEAM J224408-202719",
-    "GLEAM J215436-410853",
+    # "GLEAM J215436-410853",
 ]
 
 avg_logz = {}
 for i in range(len(gleam_targets)):
     gleam_tar = gleam_targets[i]
     target = gleam_tar.strip("GLEAM ")[0:7]
-    # avg_logz_src = analysis_functs.run_everything(save_dir, data_dir, gleam_tar)
-    # avg_logz_src = np.array(avg_logz_src)
-    # avg_logz[gleam_tar] = np.around(avg_logz_src, decimals=1)
+    avg_logz_src = analysis_functs.run_everything(save_dir, data_dir, gleam_tar)
+    avg_logz_src = np.array(avg_logz_src)
+    avg_logz[gleam_tar] = np.around(avg_logz_src, decimals=1)
     if target == "J215436":
         start_times = [
             "09:37:44",
@@ -203,18 +203,18 @@ for i in range(len(gleam_targets)):
             (err_fluxes_j215436_sec_c, err_fluxes_j215436_sec_x)
         )
         mod_j215436_sec = np.stack((mod_j215436_sec_c, mod_j215436_sec_x))
-        analysis_functs.plt_lightcurve_continual(
-            f"{save_dir}Plots/",
-            scan_times,
-            fluxes_j215436,
-            err_fluxes_j215436,
-            mod_j215436,
-            scan_times_sec,
-            fluxes_j215436_sec,
-            err_fluxes_j215436_sec,
-            mod_j215436_sec,
-            ext="png",
-        )
+        # analysis_functs.plt_lightcurve_continual(
+        #     f"{save_dir}Plots/",
+        #     scan_times,
+        #     fluxes_j215436,
+        #     err_fluxes_j215436,
+        #     mod_j215436,
+        #     scan_times_sec,
+        #     fluxes_j215436_sec,
+        #     err_fluxes_j215436_sec,
+        #     mod_j215436_sec,
+        #     ext="png",
+        # )
     if target == "J001513":
         plt.close()
         plt.clf()
@@ -251,44 +251,44 @@ for i in range(len(gleam_targets)):
         outfile_dir = (
             f"/data/ATCA/ATCA_datareduction/J020507/casa_files/{target}_C_2021-10-15"
         )
-        (
-            fluxes_j020507_c,
-            err_fluxes_j020507_c,
-            mod_j020507_c,
-        ) = analysis_functs.read_lightcurveflux(
-            f"{data_dir}data/2021-10-15_C_{target}", outfile_dir, timeranges_020507
-        )
-        outfile_dir = (
-            f"/data/ATCA/ATCA_datareduction/J020507/casa_files/{target}_X_2021-10-15"
-        )
-        (
-            fluxes_j020507_x,
-            err_fluxes_j020507_x,
-            mod_j020507_x,
-        ) = analysis_functs.read_lightcurveflux(
-            f"{data_dir}data/2021-10-15_X_{target}", outfile_dir, timeranges_020507
-        )
-        fluxes_j020507 = np.stack((fluxes_j020507_c, fluxes_j020507_x))
-        err_fluxes_j020507 = np.stack((err_fluxes_j020507_c, err_fluxes_j020507_x))
-        mod_j020507 = np.stack((mod_j020507_c, mod_j020507_x))
-        scan_times_arr = np.arange(0, 10, 0.5)
-        scan_times_0015_2 = np.arange(98.5, 108.5, 0.5)
-        scan_times_0205_2 = np.arange(104.3333333, 114.3333333, 0.5)
-        scan_times_src1 = np.stack((scan_times_arr, scan_times_0015_2))
-        scan_times_src2 = np.stack((scan_times_arr, scan_times_0205_2))
-        print("plotting!!!!")
-        analysis_functs.plt_lightcurve(
-            f"{save_dir}Plots/",
-            scan_times_src1,
-            scan_times_src2,
-            fluxes_j001513,
-            fluxes_j020507,
-            err_fluxes_j001513,
-            err_fluxes_j020507,
-            mod_j001513,
-            mod_j020507,
-            # ext="png",
-        )
+        # (
+        #     fluxes_j020507_c,
+        #     err_fluxes_j020507_c,
+        #     mod_j020507_c,
+        # ) = analysis_functs.read_lightcurveflux(
+        #     f"{data_dir}data/2021-10-15_C_{target}", outfile_dir, timeranges_020507
+        # )
+        # outfile_dir = (
+        #     f"/data/ATCA/ATCA_datareduction/J020507/casa_files/{target}_X_2021-10-15"
+        # )
+        # (
+        #     fluxes_j020507_x,
+        #     err_fluxes_j020507_x,
+        #     mod_j020507_x,
+        # ) = analysis_functs.read_lightcurveflux(
+        #     f"{data_dir}data/2021-10-15_X_{target}", outfile_dir, timeranges_020507
+        # )
+        # fluxes_j020507 = np.stack((fluxes_j020507_c, fluxes_j020507_x))
+        # err_fluxes_j020507 = np.stack((err_fluxes_j020507_c, err_fluxes_j020507_x))
+        # mod_j020507 = np.stack((mod_j020507_c, mod_j020507_x))
+        # scan_times_arr = np.arange(0, 10, 0.5)
+        # scan_times_0015_2 = np.arange(98.5, 108.5, 0.5)
+        # scan_times_0205_2 = np.arange(104.3333333, 114.3333333, 0.5)
+        # scan_times_src1 = np.stack((scan_times_arr, scan_times_0015_2))
+        # scan_times_src2 = np.stack((scan_times_arr, scan_times_0205_2))
+        # print("plotting!!!!")
+        # analysis_functs.plt_lightcurve(
+        #     f"{save_dir}Plots/",
+        #     scan_times_src1,
+        #     scan_times_src2,
+        #     fluxes_j001513,
+        #     fluxes_j020507,
+        #     err_fluxes_j001513,
+        #     err_fluxes_j020507,
+        #     mod_j001513,
+        #     mod_j020507,
+        #     # ext="png",
+        # )
 
 
 print(avg_logz)

@@ -8,13 +8,16 @@ import json
 import cmasher as cmr
 import matplotlib.pyplot as plt
 import math
-from casatasks import uvmodelfit
+
+# from casatasks import uvmodelfit
 import datetime
 import os
+
 from casacore.tables import table
 import fitfuncts
 import CFigTools.CustomFigure as CF
 import priortransfuncts
+
 num_colors = 8
 colors = cmr.take_cmap_colors(
     "cmr.gothic", num_colors, cmap_range=(0.15, 0.8), return_fmt="hex"
@@ -134,9 +137,16 @@ def calc_yvals(directory, target, epoch):
         "FFAb",
         "inFFAb",
     ]
-    models = [gpscssmodels.singSSA, gpscssmodels.singhomobremss, gpscssmodels.singinhomobremss, gpscssmodels.singSSAbreakexp, gpscssmodels.singhomobremssbreakexp, gpscssmodels.singinhomobremssbreakexp]
+    models = [
+        gpscssmodels.singSSA,
+        gpscssmodels.singhomobremss,
+        gpscssmodels.singinhomobremss,
+        gpscssmodels.singSSAbreakexp,
+        gpscssmodels.singhomobremssbreakexp,
+        gpscssmodels.singinhomobremssbreakexp,
+    ]
     for i in range(len(models)):
-        try: 
+        try:
             sampler = open(f"{directory}/{epoch}/{model_nms[i]}/run1/info/results.json")
             results = json.load(sampler)
             param_mod = results["maximum_likelihood"]["point"]
@@ -190,7 +200,7 @@ def calc_modelnparams(directory, target, model):
                 alpha.append(param_mod[paramnames.index("beta")])
                 errlo_alpha.append(abs(errs_low[paramnames.index("beta")]))
                 errup_alpha.append(abs(errs_up[paramnames.index("beta")]))
-            else: 
+            else:
                 alpha.append(param_mod[paramnames.index("alpha")])
                 errlo_alpha.append(abs(errs_low[paramnames.index("alpha")]))
                 errup_alpha.append(abs(errs_up[paramnames.index("alpha")]))
@@ -285,7 +295,7 @@ def read_timeranges(start_times, end_times):
         current_time = start_time
         timeranges.append(start_times[i])
         while new_time < end_time:
-            new_time = (new_time + datetime.timedelta(0,30))
+            new_time = new_time + datetime.timedelta(0, 30)
             current_str = new_time.strftime("%H:%M:%S")
             timeranges.append(current_str)
     return timeranges
@@ -301,23 +311,23 @@ def plt_alphatime(
         "cmr.gothic", 8, cmap_range=(0.15, 0.8), return_fmt="hex"
     ),
 ):
-    figsize = (20, 10)
+    figsize = (3.5, 1.25)
     # fig = plt.figure(1, figsize=figsize, facecolor="white")
     fig = plt.figure(figsize=figsize)
     gs = fig.add_gridspec(1, 2, wspace=0.05, width_ratios=[1, 3])
     ax = gs.subplots()
-    fig.suptitle(plot_title, fontsize=40)
-    ax[0].set_ylabel(r"$\alpha$", fontsize=30)
+    fig.suptitle(plot_title, fontsize=8)
+    ax[0].set_ylabel(r"$\alpha$", fontsize=8)
     ax[0].tick_params(
-        axis="both", which="major", direction="in", length=6, width=1.5, pad=5
+        axis="both", which="major", direction="in", length=2.5, width=0.5, pad=5
     )
-    ax[0].tick_params(axis="both", which="minor", direction="in", length=4, width=1.5)
-    ax[0].tick_params(axis="both", which="both", labelsize="25", right=True, top=True)
+    ax[0].tick_params(axis="both", which="minor", direction="in", length=2, width=0.5)
+    ax[0].tick_params(axis="both", which="both", labelsize="8", right=True, top=True)
     ax[1].tick_params(
-        axis="both", which="major", direction="in", length=6, width=1.5, pad=5
+        axis="both", which="major", direction="in", length=2.5, width=1.5, pad=5
     )
-    ax[1].tick_params(axis="both", which="minor", direction="in", length=4, width=1.5)
-    ax[1].tick_params(axis="both", which="both", labelsize="25", right=True, top=True)
+    ax[1].tick_params(axis="both", which="minor", direction="in", length=2, width=0.5)
+    ax[1].tick_params(axis="both", which="both", labelsize="8", right=True, top=True)
     ax[0].spines["right"].set_visible(False)
     ax[1].spines["left"].set_visible(False)
     ax[0].yaxis.set_ticks_position("left")
@@ -326,7 +336,7 @@ def plt_alphatime(
     d = 1
     kwargs = dict(
         marker=[(-1, -d), (1, d)],
-        markersize=12,
+        markersize=5,
         linestyle="none",
         color="k",
         mec="k",
@@ -345,7 +355,8 @@ def plt_alphatime(
             fmt="o",
             color=colors[i],
             capsize=3,
-            markersize=10,
+            markersize=5,
+            elinewidth=0.5,
         )
         ax[1].errorbar(
             months[i],
@@ -354,23 +365,20 @@ def plt_alphatime(
             fmt="o",
             color=colors[i],
             capsize=3,
-            markersize=10,
+            markersize=5,
+            elinewidth=0.5,
         )
-    for axis in ["top", "bottom", "left", "right"]:
-        ax[0].spines[axis].set_linewidth(2)
-        ax[1].spines[axis].set_linewidth(2)
+    # for axis in ["top", "bottom", "left", "right"]:
+    #     ax[0].spines[axis].set_linewidth(2)
+    #     ax[1].spines[axis].set_linewidth(2)
     ax[0].set_xticks(months)
     ax[1].set_xticks(months)
-    ax[0].set_xticklabels(
-        ["2013", "2014", "Apr20", "May20", "July20", "Sept20"]
-    )
-    ax[1].set_xticklabels(
-        ["2013", "2014", "Apr20", "May20", "July20", "Sept20"]
-    )
+    ax[0].set_xticklabels(["2013", "2014", "Apr20", "May20", "Jul20", "Sept20"])
+    ax[1].set_xticklabels(["2013", "2014", "Apr20", "May20", "Jul20", "Sept20"])
     ax[0].set_xlim([-6, -3])
     ax[1].set_xlim([0, 12])
     plt.tight_layout()
-    
+
     plt.savefig(f"{save_dir}_alphavstime.{ext}", overwrite=True)
     plt.clf()
     plt.close()
@@ -387,23 +395,27 @@ def plt_peakftime(
         "cmr.gothic", 8, cmap_range=(0.15, 0.8), return_fmt="hex"
     ),
 ):
-    figsize = (20, 10)
+    figsize = (3.5, 1.5)
     # fig = plt.figure(1, figsize=figsize, facecolor="white")
     fig = plt.figure(figsize=figsize)
     gs = fig.add_gridspec(1, 2, wspace=0.05, width_ratios=[1, 3])
     ax = gs.subplots()
-    fig.suptitle(plot_title, fontsize=40)
-    ax[0].set_ylabel(r"$\nu_p$", fontsize=30)
+    fig.suptitle(plot_title, fontsize=8)
+    ax[0].set_ylabel(r"$\nu_p$ (GHz)", fontsize=8)
+    # ax[1].set_xlabel(r"Date", fontsize=8)
+    fig.text(
+        0.5, -0.06, f"Date", ha="center", fontsize=8
+    )
     ax[0].tick_params(
-        axis="both", which="major", direction="in", length=6, width=1.5, pad=5
+        axis="both", which="major", direction="in", length=2.5, width=0.5, pad=5
     )
-    ax[0].tick_params(axis="both", which="minor", direction="in", length=4, width=1.5)
-    ax[0].tick_params(axis="both", which="both", labelsize="25", right=True, top=True)
+    ax[0].tick_params(axis="both", which="minor", direction="in", length=2, width=0.5)
+    ax[0].tick_params(axis="both", which="both", labelsize="8", right=True, top=True)
     ax[1].tick_params(
-        axis="both", which="major", direction="in", length=6, width=1.5, pad=5
+        axis="both", which="major", direction="in", length=2.5, width=0.5, pad=5
     )
-    ax[1].tick_params(axis="both", which="minor", direction="in", length=4, width=1.5)
-    ax[1].tick_params(axis="both", which="both", labelsize="25", right=True, top=True)
+    ax[1].tick_params(axis="both", which="minor", direction="in", length=2, width=0.5)
+    ax[1].tick_params(axis="both", which="both", labelsize="8", right=True, top=True)
     ax[0].spines["right"].set_visible(False)
     ax[1].spines["left"].set_visible(False)
     ax[0].yaxis.set_ticks_position("left")
@@ -412,7 +424,7 @@ def plt_peakftime(
     d = 1
     kwargs = dict(
         marker=[(-1, -d), (1, d)],
-        markersize=12,
+        markersize=3,
         linestyle="none",
         color="k",
         mec="k",
@@ -422,7 +434,7 @@ def plt_peakftime(
     ax[0].plot([1, 1], [0, 1], transform=ax[0].transAxes, **kwargs)
     ax[1].plot([0, 0], [0, 1], transform=ax[1].transAxes, **kwargs)
 
-    months = [-5, -4, 4, 5, 7, 10]
+    months = [-5, -4, 1, 3, 4, 5, 7, 9]
     for i in range(len(months)):
         ax[0].errorbar(
             months[i],
@@ -430,8 +442,9 @@ def plt_peakftime(
             yerr=np.array([[err_nu_p[0, i], err_nu_p[1, i]]]).T,
             fmt="o",
             color=colors[i],
-            capsize=3,
-            markersize=10,
+            capsize=1,
+            markersize=2,
+            elinewidth=0.5,
         )
         ax[1].errorbar(
             months[i],
@@ -439,64 +452,61 @@ def plt_peakftime(
             yerr=np.array([[err_nu_p[0, i], err_nu_p[1, i]]]).T,
             fmt="o",
             color=colors[i],
-            capsize=3,
-            markersize=10,
+            capsize=1,
+            markersize=2,
+            elinewidth=0.5,
         )
-    for axis in ["top", "bottom", "left", "right"]:
-        ax[0].spines[axis].set_linewidth(2)
-        ax[1].spines[axis].set_linewidth(2)
-    ax[0].set_xticks(months)
-    ax[1].set_xticks(months)
-    ax[0].set_xticklabels(
-        ["2013", "2014", "Apr20", "May20", "July20", "Sept20"]
-    )
-    ax[1].set_xticklabels(
-        ["2013", "2014", "Apr20", "May20", "July20", "Sept20"]
-    )
+    # for axis in ["top", "bottom", "left", "right"]:
+    #     ax[0].spines[axis].set_linewidth(2)
+    #     ax[1].spines[axis].set_linewidth(2)
+    ax[0].set_xticks([-5, -4, 4, 5, 7, 9])
+    ax[1].set_xticks([-5, -4, 4, 5, 7, 9])
+    ax[0].set_xticklabels(["'13", "'14", "Apr20", "May20", "Jul20", "Sept20"])
+    ax[1].set_xticklabels(["'13", "'14", "Apr20", "May20", "Jul20", "Sept20"])
     ax[0].set_xlim([-6, -3])
-    ax[1].set_xlim([0, 12])
-    plt.tight_layout()
-    
-    plt.savefig(f"{save_dir}_peakfreqvstime.{ext}", overwrite=True)
+    ax[1].set_xlim([3.5, 9.5])
+    # plt.tight_layout()
+
+    plt.savefig(f"{save_dir}_peakfreqvstime.{ext}", overwrite=True, bbox_inches='tight')
     plt.clf()
     plt.close()
     return
 
 
-def read_lightcurveflux(data_dir, outfile_dir, timeranges):
-    fluxes = []
-    err_fluxes = []
-    for i in range(len(timeranges)):
-        timerange = f"{timeranges[i]}+00:00:30"
-        outfile = f"{outfile_dir}_{timerange}.cl"
-        tar_ms = f"{data_dir}_selfcal.ms"
-        print(tar_ms)
-        if (os.path.exists(outfile)) is False:
-            uvmodelfit(
-                vis=tar_ms,
-                niter=10,
-                comptype="P",
-                outfile=outfile,
-                field="0",
-                selectdata=True,
-                timerange=timerange,
-            )
-            tbl = table(outfile)
-            flux = tbl.getcell("Flux", 0)[0].astype("float64")
-            err = np.sqrt((flux * 0.05) ** 2 + (0.002 ** 2))
-            fluxes.append(flux)
-            err_fluxes.append(err)
-        else:
-            tbl = table(outfile)
-            flux = tbl.getcell("Flux", 0)[0].astype("float64")
-            err = np.sqrt((flux * 0.05) ** 2 + (0.002 ** 2))
-            fluxes.append(flux)
-            err_fluxes.append(err)
-    print(np.std(fluxes)/np.median(fluxes))
-    mod = round(np.std(fluxes)/np.median(fluxes), -int(math.floor(math.log10(abs(np.std(fluxes)/np.median(fluxes))))))
-    err_fluxes = (err_fluxes/np.median(fluxes))
-    fluxes = (fluxes/np.median(fluxes)) - 1
-    return fluxes, err_fluxes, mod
+# def read_lightcurveflux(data_dir, outfile_dir, timeranges):
+#     fluxes = []
+#     err_fluxes = []
+#     for i in range(len(timeranges)):
+#         timerange = f"{timeranges[i]}+00:00:30"
+#         outfile = f"{outfile_dir}_{timerange}.cl"
+#         tar_ms = f"{data_dir}_selfcal.ms"
+#         print(tar_ms)
+#         if (os.path.exists(outfile)) is False:
+#             uvmodelfit(
+#                 vis=tar_ms,
+#                 niter=10,
+#                 comptype="P",
+#                 outfile=outfile,
+#                 field="0",
+#                 selectdata=True,
+#                 timerange=timerange,
+#             )
+#             tbl = table(outfile)
+#             flux = tbl.getcell("Flux", 0)[0].astype("float64")
+#             err = np.sqrt((flux * 0.05) ** 2 + (0.002 ** 2))
+#             fluxes.append(flux)
+#             err_fluxes.append(err)
+#         else:
+#             tbl = table(outfile)
+#             flux = tbl.getcell("Flux", 0)[0].astype("float64")
+#             err = np.sqrt((0.002 ** 2))# + (flux * 0.05) ** 2)
+#             fluxes.append(flux)
+#             err_fluxes.append(err)
+#     print(np.std(fluxes)/np.median(fluxes))
+#     mod = round(np.std(fluxes)/np.median(fluxes), -int(math.floor(math.log10(abs(np.std(fluxes)/np.median(fluxes))))))
+#     err_fluxes = (err_fluxes/np.median(fluxes))*100
+#     fluxes = ((fluxes/np.median(fluxes)) - 1)*100
+#     return fluxes, err_fluxes, mod
 
 
 def plt_lightcurve_continual(
@@ -511,7 +521,7 @@ def plt_lightcurve_continual(
     mod_src2,
     ext="pdf",
     src1_nm="J215436",
-    src2_nm="2211-388"
+    src2_nm="2211-388",
 ):
     src1_fluxes_c = src1_fluxes[0]
     src1_fluxes_x = src1_fluxes[1]
@@ -528,11 +538,11 @@ def plt_lightcurve_continual(
 
     mod_src2_c = mod_src2[0]
     mod_src2_x = mod_src2[1]
-    
-    fig = plt.figure(figsize=(15, 10))
+
+    fig = plt.figure(figsize=(3.5, 2.2))
     gs = fig.add_gridspec(2, 1, hspace=0, wspace=0.05)
     ax = gs.subplots(sharey=True)
-    fig.suptitle(f"Light Curve 2021-07-24", fontsize=40)
+    fig.suptitle(f"Light Curve 2021-07-24", fontsize=8)
 
     axc = ax[0]
     axx = ax[1]
@@ -543,7 +553,7 @@ def plt_lightcurve_continual(
         color="C4",
         label=f"{src1_nm}, $m=$ {mod_src1_c}",
         linestyle="None",
-        marker="o",
+        marker=".",
         markersize=5,
     )
 
@@ -554,7 +564,7 @@ def plt_lightcurve_continual(
         color="C4",
         label=f"{src1_nm}, $m=$ {mod_src1_x}",
         linestyle="None",
-        marker="o",
+        marker=".",
         markersize=5,
     )
     axc.errorbar(
@@ -564,7 +574,7 @@ def plt_lightcurve_continual(
         color="C6",
         label=f"{src2_nm}, $m=$ {mod_src2_c}",
         linestyle="None",
-        marker="o",
+        marker=".",
         markersize=5,
     )
 
@@ -575,29 +585,31 @@ def plt_lightcurve_continual(
         color="C6",
         label=f"{src2_nm}, $m=$ {mod_src2_x}",
         linestyle="None",
-        marker="o",
+        marker=".",
         markersize=5,
     )
 
-    axc.set_ylabel(r"$S_{5.5\mathrm{GHz}}$ Offset (\%)", fontsize=30)
-    axx.set_ylabel(r"$S_{9\mathrm{GHz}}$ Offset (\%)", fontsize=30)
-    fig.text(0.5, 0.04, f"Time since start of first scan (minutes)", ha='center', fontsize=30)
+    axc.set_ylabel(r"$S_{5.5\mathrm{GHz}}$ Offset (\%)", fontsize=8)
+    axx.set_ylabel(r"$S_{9\mathrm{GHz}}$ Offset (\%)", fontsize=8)
+    fig.text(
+        0.5, 0.04, f"Time since start of first scan (minutes)", ha="center", fontsize=8
+    )
     # formating!
     # customize tick directions and lengths
     axc.tick_params(
-        axis="both", which="major", direction="in", length=6, width=1.5, pad=5
+        axis="both", which="major", direction="in", length=2.5, width=0.5, pad=5
     )
-    axc.tick_params(axis="both", which="minor", direction="in", length=4, width=1.5)
-    axc.tick_params(axis="both", which="both", labelsize="20", right=True, top=True)
-    axc.tick_params(axis="both", which="both", labelsize="20", right=True, top=True)
+    axc.tick_params(axis="both", which="minor", direction="in", length=2, width=0.5)
+    axc.tick_params(axis="both", which="both", labelsize="8", right=True, top=True)
+    axc.tick_params(axis="both", which="both", labelsize="8", right=True, top=True)
 
     axx.tick_params(
-        axis="both", which="major", direction="in", length=6, width=1.5, pad=5
+        axis="both", which="major", direction="in", length=2.5, width=0.5, pad=5
     )
-    axx.tick_params(axis="both", which="minor", direction="in", length=4, width=1.5)
-    axx.tick_params(axis="both", which="both", labelsize="20", right=True, top=True)
-    axc.legend(loc="lower center", fontsize=20)
-    axx.legend(loc="lower center", fontsize=20)
+    axx.tick_params(axis="both", which="minor", direction="in", length=2, width=0.5)
+    axx.tick_params(axis="both", which="both", labelsize="8", right=True, top=True)
+    axc.legend(loc="lower center", fontsize=8)
+    axx.legend(loc="lower center", fontsize=8)
 
     # axc.spines["right"].set_visible(False)
     # axc[1].spines["left"].set_visible(False)
@@ -634,7 +646,7 @@ def plt_lightcurve_continual(
     axx.axhline(y=0, color="k", alpha=0.5, linestyle="--")
     plt.tight_layout()
     print("saving figure")
-    plt.savefig(f"{save_dir}/lightcurve_j215436.{ext}", overwrite=True)
+    plt.savefig(f"{save_dir}/lightcurve_j215436.{ext}", overwrite=True, bbox_inches='tight')
     plt.clf()
     plt.close()
     return
@@ -668,11 +680,11 @@ def plt_lightcurve(
     mod_src1_x = mod_src1[1]
     mod_src2_c = mod_src2[0]
     mod_src2_x = mod_src2[1]
-    
-    fig = plt.figure(figsize=(15, 10))
+
+    fig = plt.figure(figsize=(3.5, 2.2))
     gs = fig.add_gridspec(2, 2, hspace=0, wspace=0.05)
     ax = gs.subplots(sharey=True)
-    fig.suptitle("Light Curves 2021-10-15", fontsize=40)
+    fig.suptitle("Light Curves October 2021", fontsize=8)
 
     axc = ax[0]
     axx = ax[1]
@@ -683,8 +695,9 @@ def plt_lightcurve(
         color="C4",
         label=f"{src1_nm}, $m=$ {mod_src1_c}",
         linestyle="None",
-        marker="o",
-        markersize=5,
+        marker=".",
+        elinewidth=0.5,
+        markersize=2,
     )
 
     axc[1].errorbar(
@@ -694,8 +707,9 @@ def plt_lightcurve(
         color="C4",
         label=f"{src1_nm}, $m=$ {mod_src1_c}",
         linestyle="None",
-        marker="o",
-        markersize=5,
+        marker=".",
+        elinewidth=0.5,
+        markersize=2,
     )
 
     axx[0].errorbar(
@@ -703,10 +717,11 @@ def plt_lightcurve(
         src1_fluxes_x[0:20],
         yerr=err_src1_fluxes_x[20:40],
         color="C4",
+        elinewidth=0.5,
         label=f"{src1_nm}, $m=$ {mod_src1_x}",
         linestyle="None",
-        marker="o",
-        markersize=5,
+        marker=".",
+        markersize=2,
     )
 
     axx[1].errorbar(
@@ -714,10 +729,11 @@ def plt_lightcurve(
         src1_fluxes_x[20:40],
         yerr=err_src1_fluxes_x[0:20],
         color="C4",
+        elinewidth=0.5,
         label=f"{src1_nm}, $m=$ {mod_src1_x}",
         linestyle="None",
-        marker="o",
-        markersize=5,
+        marker=".",
+        markersize=2,
     )
 
     axc[0].errorbar(
@@ -725,10 +741,11 @@ def plt_lightcurve(
         src2_fluxes_c[0:20],
         yerr=err_src2_fluxes_c[0:20],
         color="C6",
+        elinewidth=0.5,
         label=f"{src2_nm}, $m=$ {mod_src2_c}",
         linestyle="None",
-        marker="o",
-        markersize=5,
+        marker=".",
+        markersize=2,
     )
 
     axc[1].errorbar(
@@ -736,10 +753,11 @@ def plt_lightcurve(
         src2_fluxes_c[20:40],
         yerr=err_src2_fluxes_c[20:40],
         color="C6",
+        elinewidth=0.5,
         label=f"{src2_nm}, $m=$ {mod_src2_c}",
         linestyle="None",
-        marker="o",
-        markersize=5,
+        marker=".",
+        markersize=2,
     )
 
     axx[0].errorbar(
@@ -747,10 +765,11 @@ def plt_lightcurve(
         src2_fluxes_x[0:20],
         yerr=err_src2_fluxes_x[20:40],
         color="C6",
+        elinewidth=0.5,
         label=f"{src2_nm}, $m=$ {mod_src2_x}",
         linestyle="None",
-        marker="o",
-        markersize=5,
+        marker=".",
+        markersize=2,
     )
 
     axx[1].errorbar(
@@ -758,41 +777,44 @@ def plt_lightcurve(
         src2_fluxes_x[20:40],
         yerr=err_src2_fluxes_x[0:20],
         color="C6",
+        elinewidth=0.5,
         label=f"{src2_nm}, $m=$ {mod_src2_x}",
         linestyle="None",
-        marker="o",
-        markersize=5,
+        marker=".",
+        markersize=2,
     )
 
-    axc[0].set_ylabel(r"$S_{5.5\mathrm{GHz}}$ Offset (\%)", fontsize=30)
-    axx[0].set_ylabel(r"$S_{9\mathrm{GHz}}$ Offset (\%)", fontsize=30)
-    fig.text(0.5, 0.04, f"Time since start of first scan (minutes)", ha='center', fontsize=30)
+    axc[0].set_ylabel(r"$S_{5.5\mathrm{GHz}}$ Offset (\%)", fontsize=6)
+    axx[0].set_ylabel(r"$S_{9\mathrm{GHz}}$ Offset (\%)", fontsize=6)
+    fig.text(
+        0.5, -0.04, f"Time since start of first scan (minutes)", ha="center", fontsize=6
+    )
     # formating!
     # customize tick directions and lengths
     axc[0].tick_params(
-        axis="both", which="major", direction="in", length=6, width=1.5, pad=5
+        axis="both", which="major", direction="in", length=2.5, width=0.5, pad=5
     )
-    axc[0].tick_params(axis="both", which="minor", direction="in", length=4, width=1.5)
+    axc[0].tick_params(axis="both", which="minor", direction="in", length=2, width=0.5)
     axc[1].tick_params(
-        axis="both", which="major", direction="in", length=6, width=1.5, pad=5
+        axis="both", which="major", direction="in", length=2.5, width=0.5, pad=5
     )
-    axc[1].tick_params(axis="both", which="minor", direction="in", length=4, width=1.5)
-    axc[0].tick_params(axis="both", which="both", labelsize="20", right=True, top=True)
-    axc[1].tick_params(axis="both", which="both", labelsize="20", right=True, top=True)
+    axc[1].tick_params(axis="both", which="minor", direction="in", length=2, width=0.5)
+    axc[0].tick_params(axis="both", which="both", labelsize="8", right=True, top=True)
+    axc[1].tick_params(axis="both", which="both", labelsize="8", right=True, top=True)
 
     axx[0].tick_params(
-        axis="both", which="major", direction="in", length=6, width=1.5, pad=5
+        axis="both", which="major", direction="in", length=2.5, width=0.5, pad=5
     )
-    axx[0].tick_params(axis="both", which="minor", direction="in", length=4, width=1.5)
+    axx[0].tick_params(axis="both", which="minor", direction="in", length=2, width=0.5)
     axx[1].tick_params(
-        axis="both", which="major", direction="in", length=6, width=1.5, pad=5
+        axis="both", which="major", direction="in", length=2.5, width=0.5, pad=5
     )
-    axx[1].tick_params(axis="both", which="minor", direction="in", length=4, width=1.5)
-    axx[0].tick_params(axis="both", which="both", labelsize="20", right=True, top=True)
-    axx[1].tick_params(axis="both", which="both", labelsize="20", right=True, top=True)
+    axx[1].tick_params(axis="both", which="minor", direction="in", length=2, width=0.5)
+    axx[0].tick_params(axis="both", which="both", labelsize="8", right=True, top=True)
+    axx[1].tick_params(axis="both", which="both", labelsize="8", right=True, top=True)
 
-    axc[0].legend(loc="lower right", fontsize=20)
-    axx[0].legend(loc="lower right", fontsize=20)
+    axc[0].legend(loc="lower right", fontsize=6)
+    axx[0].legend(loc="lower right", fontsize=6)
 
     axc[0].spines["right"].set_visible(False)
     axc[1].spines["left"].set_visible(False)
@@ -815,7 +837,7 @@ def plt_lightcurve(
 
     kwargs = dict(
         marker=[(-1, -d), (1, d)],
-        markersize=12,
+        markersize=5,
         linestyle="none",
         color="k",
         mec="k",
@@ -829,12 +851,12 @@ def plt_lightcurve(
     axx[0].plot([1, 1], [0, 1], transform=axx[0].transAxes, **kwargs)
     axx[1].plot([0, 0], [0, 1], transform=axx[1].transAxes, **kwargs)
 
-    axc[0].axhline(y=0, color="k", alpha=0.5, linestyle="--")
-    axc[1].axhline(y=0, color="k", alpha=0.5, linestyle="--")
-    axx[0].axhline(y=0, color="k", alpha=0.5, linestyle="--")
-    axx[1].axhline(y=0, color="k", alpha=0.5, linestyle="--")
-    plt.tight_layout()
-    plt.savefig(f"{save_dir}/lightcurve.{ext}", overwrite=True)
+    axc[0].axhline(y=0, color="k", alpha=0.5, linestyle="--", linewidth=0.5)
+    axc[1].axhline(y=0, color="k", alpha=0.5, linestyle="--", linewidth=0.5)
+    axx[0].axhline(y=0, color="k", alpha=0.5, linestyle="--", linewidth=0.5)
+    axx[1].axhline(y=0, color="k", alpha=0.5, linestyle="--", linewidth=0.5)
+    # plt.tight_layout()
+    plt.savefig(f"{save_dir}/lightcurve.{ext}", overwrite=True, bbox_inches='tight')
     plt.clf()
     plt.close()
     return
@@ -846,11 +868,20 @@ def plt_mwa_sed(
     gleam_target,
     model,
     ext="pdf",
-    epochs=["2013", "2014", "2020-01", "2020-03", "2020-04", "2020-05", "2020-07", "2020-09"],
+    epochs=[
+        "2013",
+        "2014",
+        "2020-01",
+        "2020-03",
+        "2020-04",
+        "2020-05",
+        "2020-07",
+        "2020-09",
+    ],
     colors=cmr.take_cmap_colors(
         "cmr.gothic", 8, cmap_range=(0.15, 0.8), return_fmt="hex"
     ),
-    epoch_nms = ["2013", "2014", "Jan20", "Mar20", "Apr20", "May20", "Jul20", "Sept20"],
+    epoch_nms=["2013", "2014", "Jan20", "Mar20", "Apr20", "May20", "Jul20", "Sept20"],
 ):
     target = gleam_target.strip("GLEAM ")[0:7]
     frequency = np.array(
@@ -877,8 +908,10 @@ def plt_mwa_sed(
             0.227,
         ]
     )
-    
-    mwa_fluxes, err_mwa_fluxes = fitfuncts.read_mwa_fluxes("/data/MWA", target, gleam_target, epochs)
+
+    mwa_fluxes, err_mwa_fluxes = fitfuncts.read_mwa_fluxes(
+        "/data/MWA", target, gleam_target, epochs
+    )
     apr_normfact = np.nanmax(mwa_fluxes[4])
     may_normfact = np.nanmedian(mwa_fluxes[4][10:20] - mwa_fluxes[5][10:20])
     jul_normfact = np.nanmedian(mwa_fluxes[4][10:20] - mwa_fluxes[6][10:20])
@@ -919,14 +952,15 @@ def plt_mwa_sed(
                 marker="o",
                 label=epochnms[i],
                 marker_color=colors[i],
-                s=60,
+                s=5,
             )
             f.display_model(
-                np.linspace(0.01, 25, num=10000), yvals_2020[i], colors[i], lw=3
+                np.linspace(0.01, 25, num=10000), yvals_2020[i], colors[i], lw=1
             )
-    f.legend(loc="lower center")
+    f.legend(loc="lower right")#, fontsize=20)
+    # f.format(xunit="GHz",xlabelfontsize=25, ylabelfontsize=25, ticklabelfontsize=20,majorticklength=7.5, minorticklength=6, tickwidth=1, ylabel=ylabel, yunit=yunit)
     f.format(xunit="GHz", ylabel=ylabel, yunit=yunit)
-    f.title(f"{gleam_target}")
+    f.title(f"{gleam_target}")#, fontsize=40)
     f.save(f"{save_dir}{target}_mwa", ext=ext)
     plt.clf()
     plt.close()
@@ -964,11 +998,17 @@ def plt_modelsonly(
         err_src_flux,
         marker="o",
         marker_color="k",
-        s=60,
+        s=5,
     )
     for i in range((len(yvals))):
-        f.display_model(np.linspace(0.01, 25, num=10000), yvals[i], colors[i], lw=1, label=f"{model_nms[i]}, logz: {logz[i]:.2f}")
-    f.legend(loc="lower center")
+        f.display_model(
+            np.linspace(0.01, 25, num=10000),
+            yvals[i],
+            colors[i],
+            lw=0.5,
+            label=f"{model_nms[i]}, logz: {logz[i]:.2f}",
+        )
+    f.legend(loc="lower left", ncol=1)
     f.format(xunit="GHz")
     f.title(f"{gleam_target}: {epoch_nm} Models")
     f.save(f"{save_dir}{target}_{epoch_nm}_models", ext=ext)
@@ -988,7 +1028,17 @@ def plt_sed(
     colors=cmr.take_cmap_colors(
         "cmr.gothic", 8, cmap_range=(0.15, 0.8), return_fmt="hex"
     ),
-    epochnms=["2013", "2014", "Jan20", "Mar20", "Apr20", "May20", "July20", "Sept20", "2020"],
+    epochnms=[
+        "2013",
+        "2014",
+        "Jan20",
+        "Mar20",
+        "Apr20",
+        "May20",
+        "Jul20",
+        "Sept20",
+        "2020",
+    ],
     frequency=np.array(
         [
             0.076,
@@ -1029,7 +1079,7 @@ def plt_sed(
             9.758,
             10.269,
         ]
-    )
+    ),
 ):
     extra_frequencies = [
         0.150,
@@ -1044,19 +1094,21 @@ def plt_sed(
     ]
     target = gleam_target.strip("GLEAM ")[0:7]
     f = CF.sed_fig()
-    extra_markers = ["X", "s", "*", "p", "D", "1", "2", "3", "4"]
+    extra_markers = ["X", "s", "*", "p", "D", ">", "<", "^", "1"]
     print(np.shape(yvals))
+    print(np.shape(src_flux))
     for i in range((len(yvals))):
-        f.display_model(np.linspace(0.01, 25, num=10000), yvals[i], colors[i], lw=1)
+        f.display_model(np.linspace(0.01, 25, num=10000), yvals[i], colors[i])
     for i in range(len(extra_surveys)):
-        if extra_surveys[i] == 0.:
+        if extra_surveys[i] == 0.0:
             extra_surveys[i] = np.nan
         f.plot_point(
             extra_frequencies[i],
             extra_surveys[i],
             marker=extra_markers[i],
-            marker_color='k',
-            s=30,
+            marker_color="k",
+            s=10,
+            alpha=0.5,
         )
     for i in range((8)):
         f.plot_spectrum(
@@ -1066,20 +1118,35 @@ def plt_sed(
             marker="o",
             label=epochnms[i],
             marker_color=colors[i],
-            s=60,
+            s=5,
         )
-        
-    # f.plot_spectrum(frequency, src_flux[-1], err_src_flux[-1], marker="X", label="2020", marker_color="k",s=60)
-    f.legend(loc="lower center")
-    f.format(xunit="GHz")
-    f.title(f"{gleam_target}")
+
+    # f.plot_spectrum(frequency, src_flux[-1], err_src_flux[-1], marker="X", label="2020", marker_color="k",s=5)
+    f.legend(loc="lower center")#, fontsize=20)
+    f.format(xunit="GHz")#,xlabelfontsize=25, ylabelfontsize=25, ticklabelfontsize=20,majorticklength=7.5, minorticklength=6, tickwidth=1)
+    f.title(f"{gleam_target}")#, fontsize=40)
     f.save(f"{save_dir}{target}_sed", ext=ext)
     plt.close()
     plt.clf()
     return
 
 
-def run_everything(save_dir, data_dir, gleam_tar, epochs=["2013", "2014", "2020-01", "2020-03", "2020-04", "2020-05", "2020-07", "2020-09", "2020"]):
+def run_everything(
+    save_dir,
+    data_dir,
+    gleam_tar,
+    epochs=[
+        "2013",
+        "2014",
+        "2020-01",
+        "2020-03",
+        "2020-04",
+        "2020-05",
+        "2020-07",
+        "2020-09",
+        "2020",
+    ],
+):
     target = gleam_tar.strip("GLEAM ")[0:7]
     fit_models = [
         "SSA",
@@ -1093,6 +1160,17 @@ def run_everything(save_dir, data_dir, gleam_tar, epochs=["2013", "2014", "2020-
     print(np.shape(fit_flux))
     src_flux, err_src_flux = fitfuncts.createsrcflux(data_dir, gleam_tar)
     # print(np.shape(src_flux))
+    diff = src_flux[0][4:20] - src_flux[1][4:20]
+    diff_err = np.sqrt((err_src_flux[0][4:20])**2+(err_src_flux[1][4:20])**2)
+    var_param = (np.sum(((src_flux[0][4:20]-src_flux[1][4:20])**2)/(diff_err)**2))
+    print(var_param)
+    extra_fluxes = fitfuncts.read_extra_fluxes("/data/MWA", gleam_tar)
+    # moss = np.zeros(len(flux_yr1[0]))
+    # for i in range(len(flux_yr1[0])):
+    mean_resid = np.mean(diff)
+    diff_median = np.median(diff)
+    moss = np.sum((diff_median-diff)**2/(diff_err)**2)
+    print(moss)
     extra_fluxes = fitfuncts.read_extra_fluxes("/data/MWA", gleam_tar)
     print(f"Running for {target}")
     for i in range(len(fit_flux)):
@@ -1128,8 +1206,20 @@ def run_everything(save_dir, data_dir, gleam_tar, epochs=["2013", "2014", "2020-
                     sampler = open(
                         f"{save_dir}{target}/{epoch_nms[i]}/{model}/run1/info/results.json"
                     )
-        yvals_epoch, logz_epoch = calc_yvals(f"{save_dir}/{target}", target, epoch_nms[i])
-        plt_modelsonly(f"{save_dir}", gleam_tar, fit_freq[i], fit_flux[i], err_fit_flux[i], yvals_epoch, logz_epoch, epoch_nms[i], ext="png")
+        yvals_epoch, logz_epoch = calc_yvals(
+            f"{save_dir}/{target}", target, epoch_nms[i]
+        )
+        plt_modelsonly(
+            f"{save_dir}",
+            gleam_tar,
+            fit_freq[i],
+            fit_flux[i],
+            err_fit_flux[i],
+            yvals_epoch,
+            logz_epoch,
+            epoch_nms[i],
+            ext="pdf",
+        )
 
     # Plotting section
     avg_logz = calc_logzmod(target)
@@ -1147,22 +1237,31 @@ def run_everything(save_dir, data_dir, gleam_tar, epochs=["2013", "2014", "2020-
         plt_mwa_sed(f"{save_dir}/{target}", f"{save_dir}Plots/", gleam_tar, model)
         plt.clf()
         plt.close()
-    
-    plt_sed(data_dir, f"{save_dir}Plots/", gleam_tar, src_flux, err_src_flux, extra_fluxes, yvals, ext="png")
+
+    plt_sed(
+        data_dir,
+        f"{save_dir}Plots/",
+        gleam_tar,
+        src_flux,
+        err_src_flux,
+        extra_fluxes,
+        yvals,
+        ext="pdf",
+    )
     if target in ["J015445", "J020507", "J024838"]:
         plt_peakftime(
-                f"{save_dir}Plots/{target}",
-                nu_p,
-                err_nu_p,
-                f"{gleam_tar} Peak Frequency",
-                # ext="png"
-            )
+            f"{save_dir}Plots/{target}",
+            nu_p,
+            err_nu_p,
+            f"{gleam_tar} Peak Frequency",
+            # ext="pdf"
+        )
     plt_alphatime(
         f"{save_dir}{target}",
         alpha,
         err_alpha,
         f"{gleam_tar} Spectral Index",
-        # ext="png",
+        ext="pdf",
     )
     if target == "J020507":
         yvals_oct, logz_oct = calc_yvals(f"{save_dir}/{target}", target, "2020-09")
@@ -1173,5 +1272,14 @@ def run_everything(save_dir, data_dir, gleam_tar, epochs=["2013", "2014", "2020-
 
         # oct_flux = np.concatenate((oct_flux1, oct_flux2))
         # err_oct_flux = np.concatenate((err_oct_flux1, err_oct_flux2))
-        plt_modelsonly(f"{save_dir}Plots/", gleam_tar, fit_freq[0], oct_flux, err_oct_flux, yvals_oct, logz_oct, "September 2020")
+        plt_modelsonly(
+            f"{save_dir}Plots/",
+            gleam_tar,
+            fit_freq[0],
+            oct_flux,
+            err_oct_flux,
+            yvals_oct,
+            logz_oct,
+            "Sept20",
+        )
     return avg_logz
