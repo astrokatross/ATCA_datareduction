@@ -957,10 +957,10 @@ def plt_mwa_sed(
             f.display_model(
                 np.linspace(0.01, 25, num=10000), yvals_2020[i], colors[i], lw=1
             )
-    f.legend(loc="lower right")#, fontsize=20)
-    # f.format(xunit="GHz",xlabelfontsize=25, ylabelfontsize=25, ticklabelfontsize=20,majorticklength=7.5, minorticklength=6, tickwidth=1, ylabel=ylabel, yunit=yunit)
+    f.legend(loc="lower right", fontsize=20)
+    f.format(xunit="GHz",xlabelfontsize=25, ylabelfontsize=25, ticklabelfontsize=20,majorticklength=7.5, minorticklength=6, tickwidth=1, ylabel=ylabel, yunit=yunit)
     f.format(xunit="GHz", ylabel=ylabel, yunit=yunit)
-    f.title(f"{gleam_target}")#, fontsize=40)
+    f.title(f"{gleam_target}", fontsize=40)
     f.save(f"{save_dir}{target}_mwa", ext=ext)
     plt.clf()
     plt.close()
@@ -1122,9 +1122,9 @@ def plt_sed(
         )
 
     # f.plot_spectrum(frequency, src_flux[-1], err_src_flux[-1], marker="X", label="2020", marker_color="k",s=5)
-    f.legend(loc="lower center")#, fontsize=20)
-    f.format(xunit="GHz")#,xlabelfontsize=25, ylabelfontsize=25, ticklabelfontsize=20,majorticklength=7.5, minorticklength=6, tickwidth=1)
-    f.title(f"{gleam_target}")#, fontsize=40)
+    f.legend(loc="lower center", fontsize=20)
+    f.format(xunit="GHz",xlabelfontsize=25, ylabelfontsize=25, ticklabelfontsize=20,majorticklength=7.5, minorticklength=6, tickwidth=1)
+    f.title(f"{gleam_target}", fontsize=40)
     f.save(f"{save_dir}{target}_sed", ext=ext)
     plt.close()
     plt.clf()

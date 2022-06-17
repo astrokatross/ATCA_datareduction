@@ -11,11 +11,11 @@ save_dir = "/data/ATCA/analysis/"
 data_dir = "/data/ATCA/ATCA_datareduction/"
 gleam_targets = [
     # "GLEAM J215436-410853",
-    # "GLEAM J001513-472706",
-    # "GLEAM J015445-232950",
+    "GLEAM J001513-472706",
+    "GLEAM J015445-232950",
     "GLEAM J020507-110922",
     # "GLEAM J021246-305454",
-    # "GLEAM J022744-062106",
+    "GLEAM J022744-062106",
     # "GLEAM J024838-321336",
     # "GLEAM J032213-462646",
     # "GLEAM J032836-202138",
@@ -25,7 +25,7 @@ gleam_targets = [
     # "GLEAM J044737-220335",
     # "GLEAM J052824-331104",
     # "GLEAM J223933-451414",
-    # "GLEAM J224408-202719",
+    "GLEAM J224408-202719",
     # "GLEAM J215436-410853",
 ]
 
